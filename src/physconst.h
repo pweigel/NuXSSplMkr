@@ -45,7 +45,7 @@ class PhysConst {
         double year;
         // distance
         double meter;
-	double fm;
+	      double fm;
         double cm;
         double km;
         double fermi;
@@ -53,8 +53,8 @@ class PhysConst {
         double AU;
         double parsec;
         double kpc;
-	// Area
-	double barn;
+        // Area
+        double barn;
         // luminocity
         double picobarn;
         double femtobarn;
@@ -67,10 +67,14 @@ class PhysConst {
         double Kelvin;
         // angle
         double degree;
+        // mass
         double proton_mass;
         double neutron_mass;
-	double Wboson_mass;
-	double Zboson_mass;        
+        double Wboson_mass;
+        double Zboson_mass;
+        double electron_mass;
+        double muon_mass;
+        double tau_mass;
         PhysConst(void);
 };
 

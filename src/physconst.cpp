@@ -96,7 +96,10 @@ PhysConst::PhysConst(void){
     neutron_mass = 0.939565*GeV; 
     Wboson_mass = 80.385*GeV;
     Zboson_mass = 91.1876*GeV;
-
+    
+    electron_mass = 0.51099895*MeV;
+    muon_mass = 105.6583755*MeV;
+    tau_mass = 1776.86*MeV;
  
 };
 
