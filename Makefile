@@ -13,8 +13,7 @@ SOURCES 	= $(wildcard src/*.cpp)
 OBJECTS 	= $(SOURCES:.cpp=.o)
 
 INCLUDE_PATH 	= -I/usr/local/include -I./inc
-INCLUDE_PATH  	+= -I$(CURRENT_DIR)/inc
-INCLUDE_PATH  	+= -I$(CURRENT_DIR)/inc/Dipole_models
+INCLUDE_PATH  	+= -I$(CURRENT_DIR)/src
 INCLUDE_PATH  	+= -I$(LHAPDF)/include
 INCLUDE_PATH  	+= -I$(BOOST)/include
 INCLUDE_PATH    += -I$(SROOT)/include
@@ -33,11 +32,13 @@ CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++11
 # LD 		= clang++
 LD 		= g++
 LD_FLAGS 	= -L/usr/local/lib/ -L/usr/lib -L$(LHAPDF)/lib -L$(BOOST)/lib -L$(PHOTOSPLINE)/lib
-LD_FLAGS    += -L$(SROOT)/lib
-LD_FLAGS    += -L$(SROOT)/lib64
+LD_FLAGS  += -L$(SROOT)/lib
+LD_FLAGS  += -L$(SROOT)/lib64
 LD_FLAGS 	+= -lLHAPDF
 LD_FLAGS 	+= -lgsl -lgslcblas
 LD_FLAGS	+= -lboost_system -lboost_iostreams -lboost_filesystem -lboost_regex
+# New features:
+# LDFLAGS+=-lAPFEL -lLHAPDF
 
 .PHONY: all clean
 

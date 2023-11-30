@@ -43,7 +43,7 @@ PhysConst::PhysConst(void){
     */
     GF = 1.16639e-23;	            // [eV^-2] Fermi Constant
     Na = 6.0221415e+23;		    // [mol cm^-3] Avogadro Number
-    sw_sq = 0.2312;                 // [dimensionless] sin(th_weinberg) ^2
+    sw_sq = 0.2229;                 // [dimensionless] sin(th_weinberg) ^2
     G  = 6.67300e-11;               // [m^3 kg^-1 s^-2]
     alpha = 1.0/137.0;              // [dimensionless] fine-structure constant
 

@@ -26,7 +26,7 @@ LHAXS::LHAXS(std::string PDFname){
     //error_band = 68;
 
     // fundamental couplings
-    s_w = 0.2229; // sin^2(weak_angle) from CODATA 2018
+    s_w = pc->sw_sq; // sin^2(weak_angle) from CODATA 2018
     Lu2 = ( 1. - (4./3.)*s_w) * ( 1. - (4./3.)*s_w);
     Ld2 = (-1. + (2./3.)*s_w) * (-1. + (2./3.)*s_w);
     Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
