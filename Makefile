@@ -36,9 +36,9 @@ LD_FLAGS  += -L$(SROOT)/lib
 LD_FLAGS  += -L$(SROOT)/lib64
 LD_FLAGS 	+= -lLHAPDF
 LD_FLAGS 	+= -lgsl -lgslcblas
-LD_FLAGS	+= -lboost_system -lboost_iostreams -lboost_filesystem -lboost_regex -lboost_program_options
+LD_FLAGS	+= -lboost_system -lboost_iostreams -lboost_filesystem -lboost_regex 
 # New features:
-LDFLAGS+=-lAPFEL
+LD_FLAGS  += -lAPFEL -lboost_program_options
 
 .PHONY: all clean
 

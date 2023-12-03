@@ -23,8 +23,6 @@ void Configuration::Populate() {
     sf_info.NQ2 = config.get<int>("NQ2");
     sf_info.xmin = config.get<double>("xmin");
     sf_info.xmax = config.get<double>("xmax");
-    // sf_info.Qmin = config.get<double>("Qmin");
-    // sf_info.Qmax = config.get<double>("Qmax");
     sf_info.Q2min = config.get<double>("Q2min");
     sf_info.Q2max = config.get<double>("Q2max");
 
