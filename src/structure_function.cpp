@@ -204,7 +204,7 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 
     std::map<int,double> xq_arr;
     for ( int p : partons ){
-      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/SQ(pc->GeV));
+      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
     }
     return xq_arr;
 }
@@ -217,7 +217,6 @@ double StructureFunction::CrossSection(double x, double Q2) {
 
 double StructureFunction::Evaluate(double Q2, double x, double y){
     // only evaluates central values
-    double q = sqrt(Q2)/pc->GeV;
 
     LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
     string xt = "nearest";
@@ -225,7 +224,7 @@ double StructureFunction::Evaluate(double Q2, double x, double y){
 
     map<int,double> xq_arr;
     for ( int p : partons ){
-      xq_arr[p] = grid_central -> xfxQ(p,x,q);
+      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2 / (pc->GeV2));
     }
     
     return SigR_Nu_LO(x, y, xq_arr);

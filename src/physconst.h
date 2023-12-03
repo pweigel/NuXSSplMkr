@@ -77,6 +77,8 @@ class PhysConst {
         double electron_mass;
         double muon_mass;
         double tau_mass;
+
+        double GeV2;
         PhysConst(void);
 };
 

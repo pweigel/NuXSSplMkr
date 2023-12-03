@@ -102,6 +102,9 @@ PhysConst::PhysConst(void){
     electron_mass = 0.51099895*MeV;
     muon_mass = 105.6583755*MeV;
     tau_mass = 1776.86*MeV;
+
+    // Extras
+    GeV2 = GeV * GeV;
  
 };
 
