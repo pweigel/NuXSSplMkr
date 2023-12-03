@@ -16,6 +16,9 @@ class StructureFunction {
         double M_boson2;
         double M_lepton, d_lepton;
         double ENU; // neutrino energy
+
+        double CP_factor = std::numeric_limits<double>::max();
+
         Configuration config;
 
     public:
@@ -33,7 +36,7 @@ class StructureFunction {
         double F1(double x, double Q2);
         double F2(double x, double Q2);
         double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
-        // double F2_NLO
+        // double F2_NLO(map<int, double>& xq_arr);
         double xF3(double x, double Q2);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
         double F3(double x, double Q2);

@@ -21,6 +21,8 @@ StructureFunction::StructureFunction(Configuration &_config)
     Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
     Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
 
+    CP_factor = CPFactorMap.at(sf_info.neutrino_type);
+
 }
 
 void StructureFunction::InitializeAPFEL() {
@@ -173,7 +175,6 @@ double StructureFunction::Evaluate(double Q2, double x, double y){
 double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
 	double k = 0.;
     d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
-    double CP_factor = 1.;
 	double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
 	double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
 	double a = y_p + CP_factor*y_m;

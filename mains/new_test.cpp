@@ -13,11 +13,12 @@ int main(int argc, char* argv[]){
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     std::cout << sf.F2(0., 0.) << std::endl;
 
-    sf.InitializeAPFEL();
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
     double enu = 100.;
     sf.Set_Neutrino_Energy(enu*pc->GeV);
     sf.Set_Lepton_Mass(enu*pc->muon_mass);
+
+    // sf.InitializeAPFEL();
 
     return 0;
 }

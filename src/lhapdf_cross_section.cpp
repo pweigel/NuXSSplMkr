@@ -4,11 +4,12 @@
 //#define _DIPOLE__
 
 // CONSTRUCTOR
+namespace legacy_nuxssplmkr {
 
 LHAXS::LHAXS(std::string PDFname){
     //initialize Constants
     pdfname = PDFname;
-    pc = new PhysConst();
+    pc = new nuxssplmkr::PhysConst();
     GF2 = SQ(pc->GF);
     M_iso  =    0.5*(pc->proton_mass + pc->neutron_mass);
     Mw2 = SQ(pc->Wboson_mass);
@@ -412,16 +413,16 @@ double LHAXS::SigR_Nu_LO_NC(double x,double y, map<int, double> xq_arr){
 double LHAXS::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
 	double k = 0.;
 
-  d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
+    d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
 
 	double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
 	double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
 	double a = y_p + CP_factor*y_m;
 	double b = y_p - CP_factor*y_m;
 
-  map<int,double> SigRcoef;
+    map<int,double> SigRcoef;
 
-  // Coefficients for CC
+    // Coefficients for CC
 	SigRcoef[1]  =    a ;
 	SigRcoef[-1] =    b ;
 	SigRcoef[2]  =    a ;
@@ -434,23 +435,23 @@ double LHAXS::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
 	SigRcoef[-5] =   0. ;
 	SigRcoef[21] =   0. ;
 
-  if (CP_factor < 0 ){
-    //fixes for antineutrinos
-    SigRcoef[3]   = 0. ;
-    SigRcoef[-3]  = 2.*b ;
-    SigRcoef[4]   = 2.*a ;
-    SigRcoef[-4]  = 0. ;
-    SigRcoef[5]   = 0. ;
-    SigRcoef[-5]  = 2.*b ;
-  }
+    if (CP_factor < 0 ){
+        //fixes for antineutrinos
+        SigRcoef[3]   = 0. ;
+        SigRcoef[-3]  = 2.*b ;
+        SigRcoef[4]   = 2.*a ;
+        SigRcoef[-4]  = 0. ;
+        SigRcoef[5]   = 0. ;
+        SigRcoef[-5]  = 2.*b ;
+    }
 
-  for( int p : partons ) {
-      k += SigRcoef[p]*xq_arr[p];
-      //std::cout << "p_pdf " << p << " " << xq_arr[p] << std::endl;
-  }
-  //std::cout << k << std::endl;
+    for( int p : partons ) {
+        k += SigRcoef[p]*xq_arr[p];
+        //std::cout << "p_pdf " << p << " " << xq_arr[p] << std::endl;
+    }
+    //std::cout << k << std::endl;
 
-  return k;
+    return k;
 }
 
 double LHAXS::EvaluateVar(double Q2, double x, double y, int var){
@@ -665,12 +666,12 @@ void LHAXS::Set_Is_HNL(bool is_hnl){
 }
 
 void LHAXS::Set_Neutrino_Energy(double enu){
-  ENU = enu;
-  ienu = true;
+    ENU = enu;
+    ienu = true;
 }
 
 void LHAXS::Set_Variant(int var){
-  ivar=var;
+    ivar=var;
 }
 
 //==================================================================================
@@ -706,27 +707,27 @@ double LHAXS::HGeneric(double xi, double q2){
 }
 
 double LHAXS::H1(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F1,1,2>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F1,1,2>(xi,q2);
 }
 
 double LHAXS::H2(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F2,2,1>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F2,2,1>(xi,q2);
 }
 
 double LHAXS::H3(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F3,1,1>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F3,1,1>(xi,q2);
 }
 
 double LHAXS::H4(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F4,1,4>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F4,1,4>(xi,q2);
 }
 
 double LHAXS::H5(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F5,1,2>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F5,1,2>(xi,q2);
 }
 
 double LHAXS::G2(double xi, double q2){
-   return HGeneric<LHAXS,&LHAXS::F2,1,1>(xi,q2) - xi*HGeneric<LHAXS,&LHAXS::F2,2,1>(xi,q2);
+    return HGeneric<LHAXS,&LHAXS::F2,1,1>(xi,q2) - xi*HGeneric<LHAXS,&LHAXS::F2,2,1>(xi,q2);
 }
 
 double LHAXS::F1_TMC(double x, double q2){
@@ -1041,4 +1042,6 @@ double LHAXS::total(){
   gsl_rng_free (r);
   //std::cout << "Result: " << res << std::endl;
   return res;
+}
+
 }

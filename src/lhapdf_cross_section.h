@@ -16,7 +16,7 @@
 #include <cmath>
 #include <map>
 
-namespace nuxssplmkr {
+namespace legacy_nuxssplmkr {
 
 enum QCDOrder {LO,NLO,NNLO};
 enum Current {CC,NC};
@@ -86,7 +86,7 @@ class LHAXS{
         double HGeneric(double, double);
     public:
         void ShutUp(bool quiet_){quiet = quiet_;}
-        PhysConst* pc;
+        nuxssplmkr::PhysConst* pc;
         // us been very bad people
         double Y,X,Q2;
     public:
