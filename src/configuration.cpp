@@ -42,9 +42,9 @@ void Configuration::Populate() {
     for (int i=1; i<7; i++){
         sf_info.pdf_quark_masses[i] = sf_info.pdf->quarkMass(i);
     }
-    sf_info.PDFxmin = pdf->xMin();
-    sf_info.PDFQ2min = pdf->q2Min();
-    sf_info.PDFQ2max = pdf->q2Max();
+    sf_info.PDFxmin = sf_info.pdf->xMin();
+    sf_info.PDFQ2min = sf_info.pdf->q2Min();
+    sf_info.PDFQ2max = sf_info.pdf->q2Max();
 }
 
 void Configuration::LoadPDFSet() {

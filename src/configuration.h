@@ -31,6 +31,7 @@ struct SFInfo {
     double Vcd, Vcs, Vcb;
     double Vtd, Vts, Vtb;
 
+    LHAPDF::PDF* pdf;
     std::map<int, double> pdf_quark_masses; 
     double PDFxmin;
     double PDFQ2min;
