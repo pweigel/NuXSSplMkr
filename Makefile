@@ -36,17 +36,21 @@ LD_FLAGS  += -L$(SROOT)/lib
 LD_FLAGS  += -L$(SROOT)/lib64
 LD_FLAGS 	+= -lLHAPDF
 LD_FLAGS 	+= -lgsl -lgslcblas
-LD_FLAGS	+= -lboost_system -lboost_iostreams -lboost_filesystem -lboost_regex
+LD_FLAGS	+= -lboost_system -lboost_iostreams -lboost_filesystem -lboost_regex -lboost_program_options
 # New features:
-# LDFLAGS+=-lAPFEL -lLHAPDF
+LDFLAGS+=-lAPFEL
 
 .PHONY: all clean
 
 CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
-all: bin/nu_cross.exe bin/nu_cross_classic.exe bin/nu_cross_var.exe bin/nu_total_cross_central.exe bin/nu_cross_full.exe bin/nu_cross_diff.exe
+# all: bin/nu_cross.exe bin/nu_cross_classic.exe bin/nu_cross_var.exe bin/nu_total_cross_central.exe bin/nu_cross_full.exe bin/nu_cross_diff.exe
+all: bin/new_test.exe
 test: bin/test.exe
-aaron: bin/nu_cross_full_a_la_aaron_muon.exe bin/nu_cross_full_a_la_aaron_tau.exe
+# aaron: bin/nu_cross_full_a_la_aaron_muon.exe bin/nu_cross_full_a_la_aaron_tau.exe
+
+bin/new_test.exe: src/configuration.o src/structure_function.o src/physconst.o mains/new_test.o
+	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/nu_cross.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -54,7 +58,7 @@ bin/nu_cross.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross.o
 bin/nu_cross_classic.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_classic.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/nu_cross_var.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_var.o
+bin/nu_cross_var.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_var.o src/configuration.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/nu_total_cross_central.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_total_cross_central.o
@@ -63,8 +67,8 @@ bin/nu_total_cross_central.exe: src/lhapdf_cross_section.o src/physconst.o mains
 bin/nu_cross_full.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_full.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/nu_cross_full_a_la_aaron_muon.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_full_a_la_aaron_muon.o
-	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
+# bin/nu_cross_full_a_la_aaron_muon.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_full_a_la_aaron_muon.o
+# 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/test.exe: src/lhapdf_cross_section.o src/physconst.o mains/test.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -72,11 +76,11 @@ bin/test.exe: src/lhapdf_cross_section.o src/physconst.o mains/test.o
 bin/nu_cross_diff.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_diff.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/nu_cross_full_a_la_aaron_tau.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_full_a_la_aaron_tau.o
-	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
+# bin/nu_cross_full_a_la_aaron_tau.exe: src/lhapdf_cross_section.o src/physconst.o mains/nu_cross_full_a_la_aaron_tau.o
+# 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 %.o:%.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@
 
 clean:
-	rm src/*.o bin/*.exe
+	rm src/*.o bin/*.exe mains/*.o

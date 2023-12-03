@@ -5,6 +5,8 @@
 #include <math.h>
 using namespace std;
 
+namespace nuxssplmkr{
+
 class PhysConst {
     public : 
         // class identifiers
@@ -78,4 +80,5 @@ class PhysConst {
         PhysConst(void);
 };
 
+}
 #endif

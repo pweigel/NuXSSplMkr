@@ -32,7 +32,7 @@ LHAXS::LHAXS(std::string PDFname){
     Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
     Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
     if(not quiet){
-      std::cout << "sin(th_w) " << s_w << std::endl;
+      std::cout << "sin2(th_w) " << s_w << std::endl;
       std::cout << "Lu2 " << Lu2 << " Ld2 " << Ld2 << std::endl;
       std::cout << "Ru2 " << Ru2 << " Rd2 " << Rd2 << std::endl;
     }
@@ -614,24 +614,24 @@ double LHAXS::Evaluate(double Q2, double x, double y, int a){
     } else 
         xerror = set->uncertainty(xg,error_band);
 
-	xpdf_arr.insert({gluon_index,xg});
-	xer_arr.insert({gluon_index,xerror});
-	parton_num[gluon_index] = xer_arr.size()-1;
+    xpdf_arr.insert({gluon_index,xg});
+    xer_arr.insert({gluon_index,xerror});
+    parton_num[gluon_index] = xer_arr.size()-1;
 
-  std::map<std::pair<int,int>,double> cor_mat;
-  for(int kk : partons){
-    for(int jj : partons){
-      if (jj == kk || is_var)
-        cor_mat.insert({{kk,jj},0.0});
-      else
-        cor_mat.insert({{kk,jj},set->correlation(xpdf_arr[kk],xpdf_arr[jj])});
+    std::map<std::pair<int,int>,double> cor_mat;
+    for(int kk : partons){
+        for(int jj : partons){
+            if (jj == kk || is_var)
+                cor_mat.insert({{kk,jj},0.0});
+            else
+                cor_mat.insert({{kk,jj},set->correlation(xpdf_arr[kk],xpdf_arr[jj])});
+        }
     }
-  }
 
-  if(INT_TYPE==CC)
-    return SigR_Nu_LO(x, y, xer_arr, cor_mat, a);
-  else
-    return SigR_Nu_LO_NC(x, y, xer_arr, cor_mat, a);
+    if(INT_TYPE==CC)
+        return SigR_Nu_LO(x, y, xer_arr, cor_mat, a);
+    else
+        return SigR_Nu_LO_NC(x, y, xer_arr, cor_mat, a);
 }
 
 //==================================================================================
@@ -639,7 +639,7 @@ double LHAXS::Evaluate(double Q2, double x, double y, int a){
 //==================================================================================
 
 void LHAXS::Set_QCDOrder(QCDOrder qcdorder_){
-  qcdorder = qcdorder_;
+    qcdorder = qcdorder_;
 }
 
 void LHAXS::Set_M_Lepton(double ml){
@@ -658,7 +658,7 @@ void LHAXS::Set_InteractionType(Current c){
         M_boson2 = Mz2;
 }
 
-void LHAXS::Set_IS_HNL(bool is_hnl){
+void LHAXS::Set_Is_HNL(bool is_hnl){
     IS_HNL = is_hnl;
     if(IS_HNL == true)
       std::cout << "Now using custom HNL cross section calculator (with modified NC xsec)!" << std::endl;
@@ -808,34 +808,34 @@ double LHAXS::KernelXS_TMC(double * k){
 //==================================================================================
 
 double LHAXS::KernelXS(double * k,int a){
-  if (!ienu)
-    throw std::runtime_error("energy not initialized");
-  double x = exp(k[0]);
-  double y = exp(k[1]);
-  double s = 2.*M_iso*ENU + SQ(M_iso);
-  double Q2 = ( s - SQ(M_iso) )*x*y;
+    if (!ienu)
+        throw std::runtime_error("energy not initialized");
+    double x = exp(k[0]);
+    double y = exp(k[1]);
+    double s = 2.*M_iso*ENU + SQ(M_iso);
+    double Q2 = ( s - SQ(M_iso) )*x*y;
 
-  // if(Q2/SQ(pc->GeV) < 0.6){
-  //     return 1.e-99;
-  // }
+    // if(Q2/SQ(pc->GeV) < 0.6){
+    //     return 1.e-99;
+    // }
 
-  // same for CC and NC
-  double denum    = SQ(1. + Q2/M_boson2);
-  double norm     = GF2*M_iso*ENU/(2.*M_PI*denum);
+    // same for CC and NC
+    double denum    = SQ(1. + Q2/M_boson2);
+    double norm     = GF2*M_iso*ENU/(2.*M_PI*denum);
 
-  d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
+    d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
 
-  if(INT_TYPE==CC || IS_HNL==true){  // only CC, but if it's HNL then also NC
-    //Following HEP PH 0407371 Eq. (7)
-    double h = x*y + d_lepton;
-    if((1. + x* d_nucleon) * h*h - (x+ d_lepton)*h + x * d_lepton > 0.){
-        return 0.;
+    if(INT_TYPE==CC || IS_HNL==true){  // only CC, but if it's HNL then also NC
+        //Following HEP PH 0407371 Eq. (7)
+        double h = x*y + d_lepton;
+        if((1. + x* d_nucleon) * h*h - (x+ d_lepton)*h + x * d_lepton > 0.){
+            return 0.;
+        }
     }
-  }
 
-  // std::cout << "Using function: LHAXS::KernelXS(double * k,int a)" << std::endl;
-  // std::cout << "a = " << a << std::endl;
-  return x*y*norm*Evaluate(Q2, x, y, a);
+    // std::cout << "Using function: LHAXS::KernelXS(double * k,int a)" << std::endl;
+    // std::cout << "a = " << a << std::endl;
+    return x*y*norm*Evaluate(Q2, x, y, a);
 }
 
 double LHAXS::KernelXSVar(double * k){

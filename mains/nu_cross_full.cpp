@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
   // std::cout << "HNL mass: " << mass_double << std::endl;
   // xs_obj.Set_M_Lepton(mass_double*xs_obj.pc->GeV);
   // // set bool to use custom cross section
-  // xs_obj.Set_IS_HNL(true);
+  // xs_obj.Set_Is_HNL(true);
 
 
   // automatic mass/hnl configuration
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
   xs_obj.Set_M_Lepton(mass_double*xs_obj.pc->GeV);
   // set bool to use custom cross section (or not)
   // std::cout << "Bool to use custom HNL cross section calculator: " << is_hnl << std::endl;
-  xs_obj.Set_IS_HNL(is_hnl);
+  xs_obj.Set_Is_HNL(is_hnl);
 
 
   double cm2 = SQ(pc->cm);

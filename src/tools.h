@@ -1,6 +1,6 @@
 #ifndef __TOOLS_H
 #define __TOOLS_H
-
+#define SQ(X)  ((X)*(X))
 
 #include <iostream>
 #include <fstream>

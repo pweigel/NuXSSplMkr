@@ -1,10 +1,9 @@
 #ifndef __LHAPDF_XS_
 #define __LHAPDF_XS_
 
-#define SQ(X)  ((X)*(X))
-#include "LHAPDF/LHAPDF.h"
-#include "LHAPDF/GridPDF.h"
-#include "LHAPDF/Extrapolator.h"
+#include <LHAPDF/LHAPDF.h>
+#include <LHAPDF/GridPDF.h>
+#include <LHAPDF/Extrapolator.h>
 #include "physconst.h"
 //#include <boost/random.hpp>
 #include "tools.h"
@@ -16,6 +15,8 @@
 #include <functional>
 #include <cmath>
 #include <map>
+
+namespace nuxssplmkr {
 
 enum QCDOrder {LO,NLO,NNLO};
 enum Current {CC,NC};
@@ -73,7 +74,7 @@ class LHAXS{
         bool ienu = false;
         bool INT_TYPE;
         bool IS_HNL = false;
-        double Mw2,Mz2, M_iso, GF2;
+        double Mw2, Mz2, M_iso, GF2;
         double M_boson2;
         double error_band;
         map<int,int> parton_num;
@@ -113,7 +114,7 @@ class LHAXS{
         void Set_M_Lepton(double);
         void Set_CP_factor(double);
         void Set_InteractionType(Current);
-        void Set_IS_HNL(bool);
+        void Set_Is_HNL(bool);
         void Set_Neutrino_Energy(double);
         void Set_QCDOrder(QCDOrder);
         void Set_Variant(int);
@@ -166,53 +167,54 @@ class LHAXS{
 
 template<double (LHAXS::*f)(double*)>
 double LHAXS::VegasIntegratorXS(){
-  if (M_lepton < 0.){
-      cerr << "Check lepton mass!" << std::endl;
-      exit(-1);
-  }
+    if (M_lepton < 0.){
+        cerr << "Check lepton mass!" << std::endl;
+        exit(-1);
+    }
 
-  if (!(CP_factor == 1. || CP_factor == -1)){
-      cerr << "Check CP factor!" << std::endl;
-      exit(-1);
-  }
-  if (ENU == -1){
-      cerr << "Neutrino energy not set!" << std::endl;
-      exit(-1);
-  }
-  double res,err;
-  const unsigned long dim = 2; int calls = 50000;
-  double xl[dim] = {  0.0 , 0.0 };
-  double xu[dim] = {  1.0 , 1.0 };
+    if (!(CP_factor == 1. || CP_factor == -1)){
+        cerr << "Check CP factor!" << std::endl;
+        exit(-1);
+    }
+    if (ENU == -1){
+        cerr << "Neutrino energy not set!" << std::endl;
+        exit(-1);
+    }
+    double res,err;
+    const unsigned long dim = 2; int calls = 50000;
+    double xl[dim] = {  0.0 , 0.0 };
+    double xu[dim] = {  1.0 , 1.0 };
 
-  d_nucleon = M_iso / (2. * ENU);
-  d_lepton  = SQ(M_lepton) / (2. * M_iso * ENU);
+    d_nucleon = M_iso / (2. * ENU);
+    d_lepton  = SQ(M_lepton) / (2. * M_iso * ENU);
 
-  gsl_rng_env_setup ();
-  const gsl_rng_type *T = gsl_rng_default;
-  gsl_rng *r = gsl_rng_alloc (T);
+    gsl_rng_env_setup ();
+    const gsl_rng_type *T = gsl_rng_default;
+    gsl_rng *r = gsl_rng_alloc (T);
 
-  gsl_monte_function F = { &KernelHelper<LHAXS,f>, dim, this};
-  gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
+    gsl_monte_function F = { &KernelHelper<LHAXS,f>, dim, this};
+    gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
 
-  // training
-  std::cout << "s_vegas: " << s_vegas << std::endl;
-  std::cout << &xl << " " << &xu << " "  << dim << " "  << calls << " "  << &r << std::endl;
-  gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas,
-                              &res, &err);
-  std::cout << "stop" << std::endl;
-  do
-  {
-  std::cout << "Here: "<<gsl_monte_vegas_chisq (s_vegas) << std::endl;
-  gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas,
-                              &res, &err);
-//  std::cout << "ChiSq: "<<gsl_monte_vegas_chisq (s_vegas) << std::endl;
-  }
-  while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
+    // training
+    std::cout << "s_vegas: " << s_vegas << std::endl;
+    std::cout << &xl << " " << &xu << " "  << dim << " "  << calls << " "  << &r << std::endl;
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas,
+                                &res, &err);
+    std::cout << "stop" << std::endl;
+    do
+    {
+    std::cout << "Here: "<<gsl_monte_vegas_chisq (s_vegas) << std::endl;
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas,
+                                &res, &err);
+  //  std::cout << "ChiSq: "<<gsl_monte_vegas_chisq (s_vegas) << std::endl;
+    }
+    while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
 
-  gsl_monte_vegas_free (s_vegas);
-  gsl_rng_free (r);
-  //std::cout << "Result: " << res << std::endl;
-  return res;
+    gsl_monte_vegas_free (s_vegas);
+    gsl_rng_free (r);
+    //std::cout << "Result: " << res << std::endl;
+    return res;
+}
 }
 
 #endif

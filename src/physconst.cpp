@@ -1,5 +1,7 @@
 #include "physconst.h"
 
+namespace nuxssplmkr{
+
 PhysConst::PhysConst(void){
     /* PHYSICS CONSTANTS
     #===========================================================================
@@ -103,3 +105,4 @@ PhysConst::PhysConst(void){
  
 };
 
+}
