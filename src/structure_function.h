@@ -4,6 +4,7 @@
 #include "physconst.h"
 #include "tools.h"
 #include "LHAPDF/LHAPDF.h"
+#include "LHAPDF/GridPDF.h"
 #include "APFEL/APFEL.h"
 
 namespace nuxssplmkr {
@@ -16,22 +17,25 @@ class StructureFunction {
         Configuration config;
 
     public:
-        // StructureFunction();
         StructureFunction(Configuration& _config);
         ~StructureFunction() {};
 
         PhysConst* pc; // Constants
         SFInfo sf_info;
-        std::vector<int> parton_ids {-5,-4,-3,-2,-1,1,2,3,4,5,21};
+        vector<int> partons {-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 21};
 
-        // ~ Apfel stuff ~
+        // ~ APFEL stuff ~
         void InitializeAPFEL();
 
         // ~ Structure Function Calculatons ~
         double F1(double x, double Q2);
         double F2(double x, double Q2);
+        double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
         double xF3(double x, double Q2);
+        double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
         double F3(double x, double Q2);
+
+        std::map<int,double> PDFExtract(double x, double Q2);
 };
 
 }

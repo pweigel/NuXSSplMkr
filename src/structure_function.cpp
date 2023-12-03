@@ -67,19 +67,85 @@ void StructureFunction::InitializeAPFEL() {
 }
 
 double StructureFunction::F1(double x, double Q2) {
-    return 0.;
+    // LO for now
+    return F2(x, Q2) / (2. * x);
 }
 
 double StructureFunction::F2(double x, double Q2) {
-    return 0.;
+    // LO for now
+    auto s = PDFExtract(x, Q2);
+    return F2_LO(s);
+}
+
+double StructureFunction::F2_LO(map<int, double>& xq_arr) {
+    double k = 0.;
+
+    map<int,double> F2coef;
+    F2coef[1]  = 1.;
+    F2coef[-1] = 1.;
+    F2coef[2]  = 1.;
+    F2coef[-2] = 1.;
+    F2coef[3]  = 2.;
+    F2coef[-3] = 0.;
+    F2coef[4]  = 0.;
+    F2coef[-4] = 2.;
+    F2coef[5]  = 2.;
+    F2coef[-5] = 0.;
+    F2coef[21] = 0.;
+
+    // mean value
+    for( int p : partons ) {
+        k += F2coef[p] * xq_arr[p];
+    }	
+    
+    return k;
 }
 
 double StructureFunction::xF3(double x, double Q2) {
-    return 0.;
+    // only true at LO
+    auto s = PDFExtract(x, Q2);
+    return xF3_LO(s);
+}
+
+double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
+    double k=0.;
+
+    // xF3 coeficients
+    map<int,double> F3coef;
+    F3coef[1]  = 1.;
+    F3coef[-1] = -1.;
+    F3coef[2]  = 1.;
+    F3coef[-2] = -1.;
+    F3coef[3]  = 2.;
+    F3coef[-3] = 0.;
+    F3coef[4]  = 0.;
+    F3coef[-4] = -2.;
+    F3coef[5]  = 2.;
+    F3coef[-5] = 0.;
+    F3coef[21] = 0.;
+
+    // mean value
+    for( int p : partons ) {
+        k += F3coef[p]*xq_arr[p];
+    }	
+
+    return k;
 }
 
 double StructureFunction::F3(double x, double Q2) {
-    return 0.;
+    return xF3(x, Q2) / x;
+}
+
+std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    string xt = "nearest";
+    grid_central -> setExtrapolator(xt);
+
+    std::map<int,double> xq_arr;
+    for ( int p : partons ){
+      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/SQ(pc->GeV));
+    }
+    return xq_arr;
 }
 
 }
