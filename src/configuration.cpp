@@ -15,8 +15,8 @@ void Configuration::Populate() {
     sf_info.mass_scheme = config.get<string>("mass_scheme");
     int pto = config.get<int>("perturbative_order"); // TODO: use existing enum
     sf_info.perturbative_order = static_cast<QCDOrder>(pto);
-    string current = config.get<string>("DIS_process");  // TODO: using existing enum
-    sf_info.DIS_process = CurrentMap.at(current);
+    sf_info.DIS_process = config.get<string>("DIS_process");  // TODO: using existing enum
+    sf_info.current = CurrentMap.at(sf_info.DIS_process);
 
     sf_info.projectile = config.get<string>("projectile");
     sf_info.neutrino_type = NeutrinoTypeMap.at(sf_info.projectile);

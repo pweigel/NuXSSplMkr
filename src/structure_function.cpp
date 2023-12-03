@@ -23,6 +23,12 @@ StructureFunction::StructureFunction(Configuration &_config)
 
     CP_factor = CPFactorMap.at(sf_info.neutrino_type);
 
+    if (sf_info.current == CC) {
+        M_boson2 = SQ(pc->Wboson_mass);
+    } else {
+        M_boson2 = SQ(pc->Zboson_mass);
+    }
+
 }
 
 void StructureFunction::InitializeAPFEL() {
@@ -210,6 +216,75 @@ double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr)
     }
 
     return k;
+}
+
+double StructureFunction::KernelXS(double * k){
+    double x = exp(k[0]);
+    double y = exp(k[1]);
+    double s = 2.*M_iso*ENU + SQ(M_iso);
+    double Q2 = ( s - SQ(M_iso) )*x*y;
+
+    // std::cout << "Q2 = " << Q2 << std::endl;
+    // std::cout << "Q2/SQ(pc->GeV) = " << Q2/SQ(pc->GeV) << std::endl;
+    // bool cond = Q2/SQ(pc->GeV) < 0.6;
+    // std::cout << "Q2/SQ(pc->GeV) < 5.0 = " << cond << std::endl;
+
+    // if(Q2/SQ(pc->GeV) < 0.6){
+    //     return 1.e-99;
+    // }
+
+    double denum    = SQ(1. + Q2/M_boson2);
+    double norm     = GF2*M_iso*ENU/(2.*M_PI*denum);
+
+    d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
+    d_nucleon = M_iso / (2. * ENU);
+    //   if(INT_TYPE==CC || IS_HNL==true){  // only CC, but if it's HNL then also NC
+    //     //Following HEP PH 0407371 Eq. (7)
+    //     double h = x*y + d_lepton;
+    //     if((1. + x* d_nucleon) * h*h - (x+ d_lepton)*h + x * d_lepton > 0.){
+    //         return 0.;
+    //     }
+    //   }
+    double h = x*y + d_lepton;
+    if((1. + x* d_nucleon) * h*h - (x+ d_lepton)*h + x * d_lepton > 0.){
+        return 0.;
+    }
+
+    // x*y is the jacobian
+    // std::cout << "x*y*norm*Evaluate(Q2, x, y) = " << x*y*norm*Evaluate(Q2, x, y) << std::endl;
+    // std::cout << "Using function: LHAXS::KernelXS(double * k)" << std::endl;
+    return x*y*norm*Evaluate(Q2, x, y);
+}
+
+double StructureFunction::TotalXS(){
+    double res,err;
+    const unsigned long dim = 2; int calls = 50000;
+
+    // integrating on the log of x and y
+    double xl[dim] = { log(1.e-7) , log(1.e-7) };
+    double xu[dim] = { log(1.) , log(1.)};
+
+    gsl_rng_env_setup ();
+    const gsl_rng_type *T = gsl_rng_default;
+    gsl_rng *r = gsl_rng_alloc (T);
+
+    gsl_monte_function F = { &KernelHelper<StructureFunction, &StructureFunction::KernelXS>, dim, this};
+    gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
+    std::cout << "Starting first integration... ";
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
+    // gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
+    std::cout << " Done!" << std::endl;
+    std::cout << "Starting second integration... ";
+    // do {
+    //     gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
+    // }
+    // while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
+    std::cout << "Done!" << std::endl;
+
+    gsl_monte_vegas_free (s_vegas);
+    gsl_rng_free (r);
+
+    return res;
 }
 
 void StructureFunction::Set_Lepton_Mass(double m) {

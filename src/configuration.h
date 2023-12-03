@@ -35,6 +35,7 @@ struct SFInfo {
     string mass_scheme;
     QCDOrder perturbative_order;
     string DIS_process;
+    Current current;
     string projectile;
     NeutrinoType neutrino_type;
     string target;
