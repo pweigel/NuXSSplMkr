@@ -1,4 +1,5 @@
 #include "configuration.h"
+#include "physconst.h"
 #include "structure_function.h"
 
 int main(int argc, char* argv[]){
@@ -11,6 +12,12 @@ int main(int argc, char* argv[]){
 
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     std::cout << sf.F2(0., 0.) << std::endl;
+
+    sf.InitializeAPFEL();
+    nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
+    double enu = 100.;
+    sf.Set_Neutrino_Energy(enu*pc->GeV);
+    sf.Set_Lepton_Mass(enu*pc->muon_mass);
 
     return 0;
 }

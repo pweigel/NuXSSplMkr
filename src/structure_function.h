@@ -14,6 +14,8 @@ class StructureFunction {
         double s_w, Lu2, Ld2, Ru2, Rd2;
         double Mw2, Mz2, M_iso, GF2;
         double M_boson2;
+        double M_lepton, d_lepton;
+        double ENU; // neutrino energy
         Configuration config;
 
     public:
@@ -31,11 +33,19 @@ class StructureFunction {
         double F1(double x, double Q2);
         double F2(double x, double Q2);
         double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
+        // double F2_NLO
         double xF3(double x, double Q2);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
         double F3(double x, double Q2);
 
         std::map<int,double> PDFExtract(double x, double Q2);
+        double CrossSection(double x, double Q2);
+        double Evaluate(double Q2, double x, double y);
+        double SigR_Nu_LO(double x, double y, map<int, double> dis);
+
+        // ~ Settings ~
+        void Set_Lepton_Mass(double m);
+        void Set_Neutrino_Energy(double E);
 };
 
 }

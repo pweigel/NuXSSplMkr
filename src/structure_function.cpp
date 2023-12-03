@@ -148,4 +148,75 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     return xq_arr;
 }
 
+double StructureFunction::CrossSection(double x, double Q2) {
+    // To be replaced with a different object
+
+    return 0.;
+}
+
+double StructureFunction::Evaluate(double Q2, double x, double y){
+    // only evaluates central values
+    double q = sqrt(Q2)/pc->GeV;
+
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    string xt = "nearest";
+    grid_central -> setExtrapolator(xt);
+
+    map<int,double> xq_arr;
+    for ( int p : partons ){
+      xq_arr[p] = grid_central -> xfxQ(p,x,q);
+    }
+    
+    return SigR_Nu_LO(x, y, xq_arr);
+}
+
+double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
+	double k = 0.;
+    d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
+    double CP_factor = 1.;
+	double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
+	double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
+	double a = y_p + CP_factor*y_m;
+	double b = y_p - CP_factor*y_m;
+
+    map<int,double> SigRcoef;
+
+    // Coefficients for CC
+	SigRcoef[1]  =    a ;
+	SigRcoef[-1] =    b ;
+	SigRcoef[2]  =    a ;
+	SigRcoef[-2] =    b ;
+	SigRcoef[3]  = 2.*a ;
+	SigRcoef[-3] =   0. ;
+	SigRcoef[4]  =   0. ;
+	SigRcoef[-4] = 2.*b ;
+	SigRcoef[5]  = 2.*a ;
+	SigRcoef[-5] =   0. ;
+	SigRcoef[21] =   0. ;
+
+    if (CP_factor < 0 ){
+        //fixes for antineutrinos
+        SigRcoef[3]   = 0. ;
+        SigRcoef[-3]  = 2.*b ;
+        SigRcoef[4]   = 2.*a ;
+        SigRcoef[-4]  = 0. ;
+        SigRcoef[5]   = 0. ;
+        SigRcoef[-5]  = 2.*b ;
+    }
+
+    for( int p : partons ) {
+        k += SigRcoef[p]*xq_arr[p];
+    }
+
+    return k;
+}
+
+void StructureFunction::Set_Lepton_Mass(double m) {
+    M_lepton = m;
+}
+
+void StructureFunction::Set_Neutrino_Energy(double E) {
+    ENU = E;
+}
+
 }
