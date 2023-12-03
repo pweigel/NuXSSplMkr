@@ -53,7 +53,7 @@ struct SFInfo {
     double PDFQ2min;
     double PDFQ2max;
 
-
+    bool Use_APFEL_LO; // Use APFEL for LO calculation
 };
 
 class Configuration {

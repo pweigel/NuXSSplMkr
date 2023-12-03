@@ -56,14 +56,14 @@ void StructureFunction::InitializeAPFEL() {
     //APFEL::SetTauMass(1e10);
     //APFEL::SetPDFEvolution("exactalpha");
     APFEL::SetNumberOfGrids(3);
-    APFEL::SetGridParameters(1, 30, 3, sf_info.xmin);
-    APFEL::SetGridParameters(2, 30, 5, 2e-1);
-    APFEL::SetGridParameters(3, 30, 5, 8e-1);
+    APFEL::SetGridParameters(1, 90, 3, sf_info.xmin);
+    APFEL::SetGridParameters(2, 50, 5, 2e-1);
+    APFEL::SetGridParameters(3, 40, 5, 8e-1);
     APFEL::SetPerturbativeOrder(sf_info.perturbative_order);
     APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(sf_info.MassZ), sf_info.MassZ);
     //APFEL::SetAlphaEvolution("expanded");
     //APFEL::SetPDFEvolution("expandalpha");
-    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[6]);
+    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[5]+0.1);
     APFEL::SetMaxFlavourPDFs(6);
     APFEL::SetMaxFlavourAlpha(6);
     APFEL::SetCKM(sf_info.Vud, sf_info.Vus, sf_info.Vub,
@@ -76,29 +76,61 @@ void StructureFunction::InitializeAPFEL() {
 
 double StructureFunction::F1(double x, double Q2) {
     // LO for now
-    return F2(x, Q2) / (2. * x);
+    if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
+        return F2(x, Q2) / (2. * x);
+    } else {
+        return FL(x, Q2) + 2 * x * F2(x, Q2);
+    }
 }
 
 double StructureFunction::F2(double x, double Q2) {
     // LO for now
-    auto s = PDFExtract(x, Q2);
-    return F2_LO(s);
+    if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
+        auto s = PDFExtract(x, Q2);
+        return F2_LO(s);
+    } else {
+        return APFEL::F2total(x);
+    }
+}
+
+double StructureFunction::FL(double x, double Q2) {
+    if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
+        return F1(x, Q2) - 2 * x * F2(x, Q2);
+    } else {
+        return APFEL::FLtotal(x);
+    }
 }
 
 double StructureFunction::F2_LO(map<int, double>& xq_arr) {
+    /* Example: Neutrino
+    F2 = 2x(d + s + b + ubar + cbar + tbar)
+    */
     double k = 0.;
 
     map<int,double> F2coef;
-    F2coef[1]  = 1.;
-    F2coef[-1] = 1.;
-    F2coef[2]  = 1.;
+    // F2coef[1]  = 1.;
+    // F2coef[-1] = 1.;
+    // F2coef[2]  = 1.;
+    // F2coef[-2] = 1.;
+    // F2coef[3]  = 2.;
+    // F2coef[-3] = 0.;
+    // F2coef[4]  = 0.;
+    // F2coef[-4] = 2.;
+    // F2coef[5]  = 2.;
+    // F2coef[-5] = 0.;
+    // F2coef[21] = 0.;
+    F2coef[1]  = 1.; // d
+    F2coef[-1] = 0.;
+    F2coef[2]  = 0.; // u
     F2coef[-2] = 1.;
-    F2coef[3]  = 2.;
+    F2coef[3]  = 1.; // s
     F2coef[-3] = 0.;
-    F2coef[4]  = 0.;
-    F2coef[-4] = 2.;
-    F2coef[5]  = 2.;
+    F2coef[4]  = 0.; // c
+    F2coef[-4] = 1.; 
+    F2coef[5]  = 1.; // b
     F2coef[-5] = 0.;
+    F2coef[6]  = 0.; // t
+    F2coef[-6] = 1.;
     F2coef[21] = 0.;
 
     // mean value
@@ -106,30 +138,51 @@ double StructureFunction::F2_LO(map<int, double>& xq_arr) {
         k += F2coef[p] * xq_arr[p];
     }	
     
-    return k;
+    return 2 * k;
 }
 
 double StructureFunction::xF3(double x, double Q2) {
     // only true at LO
-    auto s = PDFExtract(x, Q2);
-    return xF3_LO(s);
+
+    if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
+        auto s = PDFExtract(x, Q2);
+        return xF3_LO(s);
+    } else {
+        return APFEL::F3total(x);
+    }
 }
 
 double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
+    /* Example: Neutrino
+    xF3 = 2x(d + s + b - ubar - cbar - tbar)
+    */
     double k=0.;
 
     // xF3 coeficients
     map<int,double> F3coef;
+    // F3coef[1]  = 1.;
+    // F3coef[-1] = -1.;
+    // F3coef[2]  = 1.;
+    // F3coef[-2] = -1.;
+    // F3coef[3]  = 2.;
+    // F3coef[-3] = 0.;
+    // F3coef[4]  = 0.;
+    // F3coef[-4] = -2.;
+    // F3coef[5]  = 2.;
+    // F3coef[-5] = 0.;
+    // F3coef[21] = 0.;
     F3coef[1]  = 1.;
-    F3coef[-1] = -1.;
-    F3coef[2]  = 1.;
+    F3coef[-1] = 0.;
+    F3coef[2]  = 0.;
     F3coef[-2] = -1.;
-    F3coef[3]  = 2.;
+    F3coef[3]  = 1.;
     F3coef[-3] = 0.;
     F3coef[4]  = 0.;
-    F3coef[-4] = -2.;
-    F3coef[5]  = 2.;
+    F3coef[-4] = -1.;
+    F3coef[5]  = 1.;
     F3coef[-5] = 0.;
+    F3coef[6]  = 0.;
+    F3coef[-6] = -1.;
     F3coef[21] = 0.;
 
     // mean value
@@ -137,7 +190,7 @@ double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
         k += F3coef[p]*xq_arr[p];
     }	
 
-    return k;
+    return 2 * k;
 }
 
 double StructureFunction::F3(double x, double Q2) {
@@ -257,6 +310,10 @@ double StructureFunction::KernelXS(double * k){
 }
 
 double StructureFunction::TotalXS(){
+    // TODO:
+    // We used to do 10k warmup calls, 50k final calls
+    // for the integrator. I changed this because it took forever (another issue).
+
     double res,err;
     const unsigned long dim = 2; int calls = 50000;
 
@@ -270,16 +327,17 @@ double StructureFunction::TotalXS(){
 
     gsl_monte_function F = { &KernelHelper<StructureFunction, &StructureFunction::KernelXS>, dim, this};
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    std::cout << "Starting first integration... ";
+    // std::cout << "Starting first integration... ";
+    // TODO: Integration tests! -PW
     gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
     // gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
-    std::cout << " Done!" << std::endl;
-    std::cout << "Starting second integration... ";
+    // std::cout << " Done!" << std::endl;
+    // std::cout << "Starting second integration... ";
     // do {
     //     gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
     // }
     // while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
-    std::cout << "Done!" << std::endl;
+    // std::cout << "Done!" << std::endl;
 
     gsl_monte_vegas_free (s_vegas);
     gsl_rng_free (r);
@@ -293,6 +351,15 @@ void StructureFunction::Set_Lepton_Mass(double m) {
 
 void StructureFunction::Set_Neutrino_Energy(double E) {
     ENU = E;
+}
+
+void StructureFunction::Use_APFEL_LO(bool value) {
+    sf_info.Use_APFEL_LO = value;
+}
+
+void StructureFunction::Set_Q_APFEL(double Q) {
+    APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(Q), Q);
+    APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
 }
 
 }

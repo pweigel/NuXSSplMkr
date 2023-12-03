@@ -46,6 +46,8 @@ void Configuration::Populate() {
     sf_info.PDFxmin = sf_info.pdf->xMin();
     sf_info.PDFQ2min = sf_info.pdf->q2Min();
     sf_info.PDFQ2max = sf_info.pdf->q2Max();
+
+    sf_info.Use_APFEL_LO = true;  // TODO!
 }
 
 void Configuration::LoadPDFSet() {

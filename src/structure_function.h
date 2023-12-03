@@ -10,6 +10,7 @@
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_vegas.h>
 #include <gsl/gsl_integration.h>
+#include "photospline/splinetable.h"
 
 namespace nuxssplmkr {
 
@@ -43,6 +44,11 @@ class StructureFunction {
 
         Configuration config;
 
+        // Grids
+        // std::vector<std::vector<double>> grid_F1;
+        // std::vector<std::vector<double>> grid_F2;
+        // std::vector<std::vector<double>> grid_xF3;
+
     public:
         StructureFunction(Configuration& _config);
         ~StructureFunction() {};
@@ -57,11 +63,13 @@ class StructureFunction {
         // ~ Structure Function Calculatons ~
         double F1(double x, double Q2);
         double F2(double x, double Q2);
+        double FL(double x, double Q2);
+        double F3(double x, double Q2);
+        double xF3(double x, double Q2);
+
         double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
         // double F2_NLO(map<int, double>& xq_arr);
-        double xF3(double x, double Q2);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
-        double F3(double x, double Q2);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         double CrossSection(double x, double Q2);
@@ -73,6 +81,8 @@ class StructureFunction {
         // ~ Settings ~
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
+        void Use_APFEL_LO(bool value);
+        void Set_Q_APFEL(double Q);
 };
 
 }
