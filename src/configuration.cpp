@@ -21,6 +21,7 @@ void Configuration::Populate() {
     sf_info.projectile = config.get<string>("projectile");
     sf_info.neutrino_type = NeutrinoTypeMap.at(sf_info.projectile);
     sf_info.target = config.get<string>("target");
+    sf_info.target_type = TargetTypeMap.at(sf_info.target);
 
     sf_info.Nx = config.get<int>("Nx");
     sf_info.NQ2 = config.get<int>("NQ2");

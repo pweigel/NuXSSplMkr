@@ -25,8 +25,10 @@ StructureFunction::StructureFunction(Configuration &_config)
 
     if (sf_info.current == CC) {
         M_boson2 = SQ(pc->Wboson_mass);
-    } else {
+    } else if (sf_info.current == NC) {
         M_boson2 = SQ(pc->Zboson_mass);
+    } else {
+        throw std::runtime_error("Unidentified current specified!");
     }
 
 }
@@ -63,7 +65,7 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(sf_info.MassZ), sf_info.MassZ);
     //APFEL::SetAlphaEvolution("expanded");
     //APFEL::SetPDFEvolution("expandalpha");
-    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[5]+0.1);
+    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[6]);
     APFEL::SetMaxFlavourPDFs(6);
     APFEL::SetMaxFlavourAlpha(6);
     APFEL::SetCKM(sf_info.Vud, sf_info.Vus, sf_info.Vub,
@@ -74,19 +76,58 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::InitializeAPFEL_DIS();
 }
 
+void StructureFunction::GetCoefficients() {
+    int down_type[3] = {1, 3, 5};  // d s b
+    int up_type[3] = {2, 4, 6};  // u c t
+    // TODO: Maybe do isospin symmetry here?
+
+    if (sf_info.neutrino_type == neutrino) {
+        for (int i : down_type) {
+            F2coef[i] = 1.;
+            F3coef[i] = 1.;
+        }
+        for (int i: up_type) {
+            F2coef[-i] = 1.;
+            F2coef[-i] = -1.;
+        }
+    } else if (sf_info.neutrino_type == antineutrino) {
+        for (int i : up_type) {
+            F2coef[i] = 1.;
+            F3coef[i] = 1.;
+        }
+        for (int i: down_type) {
+            F2coef[-i] = 1.;
+            F2coef[-i] = -1.;
+        }
+    } else {
+        throw std::runtime_error("Unidentified neutrino type!");
+    }
+
+    // gluons
+    F2coef[21] = 0.;
+    F3coef[21] = 0.; 
+}
+
 double StructureFunction::F1(double x, double Q2) {
     // LO for now
     if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
         return F2(x, Q2) / (2. * x);
     } else {
-        return FL(x, Q2) + 2 * x * F2(x, Q2);
+        return (F2(x, Q2) - FL(x, Q2)) / (2. * x);
     }
 }
 
 double StructureFunction::F2(double x, double Q2) {
-    // LO for now
     if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
         auto s = PDFExtract(x, Q2);
+        
+        // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
+        if(sf_info.target_type == neutron) {
+            auto q1 = s[1];
+            auto q2 = s[2];
+            s[1] = q2;
+            s[2] = q1;
+        }
         return F2_LO(s);
     } else {
         return APFEL::F2total(x);
@@ -102,42 +143,14 @@ double StructureFunction::FL(double x, double Q2) {
 }
 
 double StructureFunction::F2_LO(map<int, double>& xq_arr) {
-    /* Example: Neutrino
+    /* 
+    Example: Neutrino
     F2 = 2x(d + s + b + ubar + cbar + tbar)
     */
     double k = 0.;
-
-    map<int,double> F2coef;
-    // F2coef[1]  = 1.;
-    // F2coef[-1] = 1.;
-    // F2coef[2]  = 1.;
-    // F2coef[-2] = 1.;
-    // F2coef[3]  = 2.;
-    // F2coef[-3] = 0.;
-    // F2coef[4]  = 0.;
-    // F2coef[-4] = 2.;
-    // F2coef[5]  = 2.;
-    // F2coef[-5] = 0.;
-    // F2coef[21] = 0.;
-    F2coef[1]  = 1.; // d
-    F2coef[-1] = 0.;
-    F2coef[2]  = 0.; // u
-    F2coef[-2] = 1.;
-    F2coef[3]  = 1.; // s
-    F2coef[-3] = 0.;
-    F2coef[4]  = 0.; // c
-    F2coef[-4] = 1.; 
-    F2coef[5]  = 1.; // b
-    F2coef[-5] = 0.;
-    F2coef[6]  = 0.; // t
-    F2coef[-6] = 1.;
-    F2coef[21] = 0.;
-
-    // mean value
     for( int p : partons ) {
         k += F2coef[p] * xq_arr[p];
     }	
-    
     return 2 * k;
 }
 
@@ -146,6 +159,14 @@ double StructureFunction::xF3(double x, double Q2) {
 
     if ( (sf_info.perturbative_order == LO) && (!sf_info.Use_APFEL_LO) ) {
         auto s = PDFExtract(x, Q2);
+
+        // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
+        if(sf_info.target_type == neutron) {
+            auto q1 = s[1];
+            auto q2 = s[2];
+            s[1] = q2;
+            s[2] = q1;
+        }
         return xF3_LO(s);
     } else {
         return APFEL::F3total(x);
@@ -157,39 +178,9 @@ double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
     xF3 = 2x(d + s + b - ubar - cbar - tbar)
     */
     double k=0.;
-
-    // xF3 coeficients
-    map<int,double> F3coef;
-    // F3coef[1]  = 1.;
-    // F3coef[-1] = -1.;
-    // F3coef[2]  = 1.;
-    // F3coef[-2] = -1.;
-    // F3coef[3]  = 2.;
-    // F3coef[-3] = 0.;
-    // F3coef[4]  = 0.;
-    // F3coef[-4] = -2.;
-    // F3coef[5]  = 2.;
-    // F3coef[-5] = 0.;
-    // F3coef[21] = 0.;
-    F3coef[1]  = 1.;
-    F3coef[-1] = 0.;
-    F3coef[2]  = 0.;
-    F3coef[-2] = -1.;
-    F3coef[3]  = 1.;
-    F3coef[-3] = 0.;
-    F3coef[4]  = 0.;
-    F3coef[-4] = -1.;
-    F3coef[5]  = 1.;
-    F3coef[-5] = 0.;
-    F3coef[6]  = 0.;
-    F3coef[-6] = -1.;
-    F3coef[21] = 0.;
-
-    // mean value
-    for( int p : partons ) {
+    for( int p : partons ) {        
         k += F3coef[p]*xq_arr[p];
     }	
-
     return 2 * k;
 }
 
@@ -209,10 +200,37 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     return xq_arr;
 }
 
-double StructureFunction::CrossSection(double x, double Q2) {
-    // To be replaced with a different object
+void StructureFunction::BuildGrids() {
+    photospline::ndsparse F1(sf_info.Nx*sf_info.NQ2, 2);
+}
 
-    return 0.;
+double StructureFunction::ds_dxdy(double x, double y, double Q2) {
+    double _FL = FL(x, Q2);
+    double _F2 = F2(x, Q2);
+    double _F3 = xF3(x, Q2) / x;
+    // calculate manually so we don't recomopute w/ APFEL
+    double _F1 = (_F2 - _FL) / (2. * x);
+
+    // TODO: is this defined somewhere else
+    double norm;
+    if (sf_info.current == CC) {
+        norm = 1;
+    } else if (sf_info.current == NC) {
+        norm = 1;  // TODO: Fix norm for apfel NC!
+    } else {
+
+    }
+
+    double cp_factor;  // TODO: Is this defined somewhere else?
+    if (sf_info.neutrino_type == neutrino) {
+        cp_factor = 1;
+    } else if (sf_info.neutrino_type == antineutrino) {
+        cp_factor = -1;
+    } else {
+
+    }
+
+    return x*y*y * _F1 + (1 - y) * _F2 + cp_factor * x * y * (1 - y/2) * _F3;
 }
 
 double StructureFunction::Evaluate(double Q2, double x, double y){
@@ -352,7 +370,7 @@ void StructureFunction::Set_Neutrino_Energy(double E) {
     ENU = E;
 }
 
-void StructureFunction::Use_APFEL_LO(bool value) {
+void StructureFunction::Set_Use_APFEL_LO(bool value) {
     sf_info.Use_APFEL_LO = value;
 }
 

@@ -19,12 +19,14 @@ namespace nuxssplmkr {
 enum QCDOrder {LO, NLO, NNLO};
 enum Current {CC, NC};
 enum NeutrinoType {neutrino, antineutrino};
+enum TargetType {proton, neutron};
 enum Flavor {electron, muon, tau};
 enum PDFVar {central, minus, plus};
 
 static unordered_map<string, QCDOrder> const QCDOrderMap = { {"LO",QCDOrder::LO}, {"NLO",QCDOrder::NLO}, {"NNLO",QCDOrder::NNLO} };
 static unordered_map<string, Current> const CurrentMap = { {"CC",Current::CC}, {"NC",Current::NC} };
 static unordered_map<string, NeutrinoType> const NeutrinoTypeMap = { {"neutrino",NeutrinoType::neutrino}, {"antineutrino",NeutrinoType::antineutrino} };
+static unordered_map<string, TargetType> const TargetTypeMap = { {"proton",TargetType::proton}, {"neutron",TargetType::neutron} };
 static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::electron},{"muon",Flavor::muon},{"tau",Flavor::tau} };
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1} };
 
@@ -39,6 +41,7 @@ struct SFInfo {
     string projectile;
     NeutrinoType neutrino_type;
     string target;
+    TargetType target_type;
 
     int Nx, NQ2;
     double xmin, xmax, Q2min, Q2max;
@@ -53,7 +56,7 @@ struct SFInfo {
     double PDFQ2min;
     double PDFQ2max;
 
-    bool Use_APFEL_LO; // Use APFEL for LO calculation
+    bool Use_APFEL_LO; // Use APFEL for LO calculation?
 };
 
 class Configuration {

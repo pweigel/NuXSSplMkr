@@ -44,6 +44,9 @@ class StructureFunction {
 
         Configuration config;
 
+        bool has_LO_coefficients = false;
+        std::map<int,double> F2coef;
+        std::map<int,double> F3coef;
         // Grids
         // std::vector<std::vector<double>> grid_F1;
         // std::vector<std::vector<double>> grid_F2;
@@ -61,6 +64,7 @@ class StructureFunction {
         void InitializeAPFEL();
 
         // ~ Structure Function Calculatons ~
+        void GetCoefficients();  // Get LO coefficients
         double F1(double x, double Q2);
         double F2(double x, double Q2);
         double FL(double x, double Q2);
@@ -71,8 +75,12 @@ class StructureFunction {
         // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
+        void BuildGrids();
+
         std::map<int,double> PDFExtract(double x, double Q2);
         double CrossSection(double x, double Q2);
+        double ds_dxdy(double x, double y, double Q2);
+        // double ds_dy(double x, double y, double Q2);
         double Evaluate(double Q2, double x, double y);
         double SigR_Nu_LO(double x, double y, map<int, double> dis);
         double KernelXS(double * k);
@@ -81,7 +89,7 @@ class StructureFunction {
         // ~ Settings ~
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
-        void Use_APFEL_LO(bool value);
+        void Set_Use_APFEL_LO(bool value);
         void Set_Q_APFEL(double Q);
 };
 
