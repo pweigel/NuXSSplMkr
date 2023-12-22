@@ -285,7 +285,7 @@ void StructureFunction::BuildGrids(string outpath) {
                 _F2 = 0.0;
             }
             if(!std::isfinite(_F3)) {
-                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F3 = 0.0;
             }
 
@@ -318,21 +318,21 @@ void StructureFunction::BuildGrids(string outpath) {
 
     // Fit splines
     photospline::splinetable<> F1_spline;
-    F1_spline.fit(F1_data, F1_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+    F1_spline.fit(F1_data, F1_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
                   {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
     if(std::isnan(*F1_spline.get_coefficients())){
 				std::cerr << "F1 spline fit has failed!" << std::endl;
     }
 
     photospline::splinetable<> F2_spline;
-    F2_spline.fit(F2_data, F2_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+    F2_spline.fit(F2_data, F2_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
                   {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
     if(std::isnan(*F2_spline.get_coefficients())){
 				std::cerr << "F2 spline fit has failed!" << std::endl;
     }
 
     photospline::splinetable<> F3_spline;
-    F3_spline.fit(F3_data, F3_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+    F3_spline.fit(F3_data, F3_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
                   {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
     if(std::isnan(*F3_spline.get_coefficients())){
 				std::cerr << "F3 spline fit has failed!" << std::endl;
