@@ -1,16 +1,19 @@
 #ifndef __STRUCTURE_FUNCTION_H
 #define __STRUCTURE_FUNCTION_H
+
 #include "configuration.h"
 #include "physconst.h"
 #include "tools.h"
 #include "LHAPDF/LHAPDF.h"
 #include "LHAPDF/GridPDF.h"
 #include "APFEL/APFEL.h"
+#include <deque>
+#include <math.h>
 #include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_vegas.h>
 #include <gsl/gsl_integration.h>
-#include "photospline/splinetable.h"
+#include <photospline/splinetable.h>
 
 namespace nuxssplmkr {
 

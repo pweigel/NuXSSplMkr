@@ -201,7 +201,104 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 }
 
 void StructureFunction::BuildGrids() {
-    photospline::ndsparse F1(sf_info.Nx*sf_info.NQ2, 2);
+    const unsigned int Nx = sf_info.Nx;
+    const unsigned int NQ2 = sf_info.NQ2;
+
+    std::vector<double> x_arr;
+    std::vector<double> Q2_arr;
+
+    // Step sizes in log space
+    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
+    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / Nx;
+
+    // Spline parameters
+    const uint32_t dim = 2;
+    std::vector<uint32_t> orders(dim, 2);
+
+    unsigned int Nknots_Q2 = 100;
+    unsigned int Nknots_x = 100;
+
+    std::vector<double> Q2_knots;
+    std::vector<double> x_knots;
+
+    // Step sizes for knots in log space
+    const double d_log_Q2_knot= std::abs(std::log10(sf_info.Q2max)- std::log10(sf_info.Q2min)) / (Nknots_Q2 - 1);
+    const double d_log_x_knot = std::abs(std::log10(sf_info.xmax) - std::log10(sf_info.xmin) ) / (Nknots_x - 1);
+
+    // photospline::ndsparse F1_data(Nx * NQ2, 2);
+    // photospline::ndsparse F3_data(Nx * NQ2, 2);
+
+    std::cout << "log_Q2min = " << std::log10(sf_info.Q2min) << ", log_Q2max = " << std::log10(sf_info.Q2max) << std::endl;
+    std::cout << "log_xmin = " << std::log10(sf_info.xmin) << ", log_xmax = " << std::log10(sf_info.xmax) << std::endl;
+    std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
+
+    size_t N_samples = Nx * NQ2;
+    for ( double log_Q2 = std::log10(sf_info.Q2min); log_Q2<std::log10(sf_info.Q2max); log_Q2 += d_log_Q2 ) {
+        double powQ2 = std::pow( 10, log_Q2 + 0.5 * d_log_Q2 );
+        double Q2 = log_Q2 + 0.5 * d_log_Q2;
+        if (powQ2 > sf_info.Q2max) continue;
+        Q2_arr.push_back(Q2);
+    }
+
+    for ( double log_x = std::log10(sf_info.xmin); log_x<std::log10(sf_info.xmax); log_x += d_log_x ) {
+        double powx = std::pow( 10, log_x + 0.5*d_log_x );
+        double x = log_x + 0.5*d_log_x;
+        if ( powx > sf_info.xmax ) continue;
+        x_arr.push_back(x);
+    }
+
+    for ( double log_Q2 = std::log10(sf_info.Q2min) - 2*d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max); log_Q2 += d_log_Q2_knot ) {
+        double knot = log_Q2 + 0.5 * d_log_Q2_knot;
+        Q2_knots.push_back(knot);
+    }
+
+    for ( double log_x = std::log10(sf_info.xmin) - 2*d_log_x_knot; log_x <= 1; log_x += d_log_x_knot ) {
+        double knot = log_x + 0.5 * d_log_x_knot;
+        x_knots.push_back(knot);
+    }
+
+    // std::deque<std::pair<double,std::array<unsigned int, 2>>> F1_spline_data;
+    std::deque<std::pair<double,std::array<unsigned int, 2>>> F2_spline_data;
+    // std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
+    for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
+        double log_Q2 = std::log10(sf_info.Q2min) + (0.5 + Q2i) * d_log_Q2;
+        double Q2 = std::pow(10.0, log_Q2);
+
+        Set_Q_APFEL(std::sqrt(Q2));
+
+        for (unsigned int xi = 0; xi < Nx; xi++) {
+            double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
+            double x = std::pow(10.0, log_x);
+
+            // double _FL = FL(x, Q2);
+            double _F2 = F2(x, Q2);
+            // double _F3 = F3(x, Q2);
+
+            if(!std::isfinite(_F2)) {
+                std::cerr << "Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F2 = 0.0;
+            }
+            F2_spline_data.push_back(std::make_pair(_F2, std::array<unsigned int, 2>{Q2i, xi}));
+        }
+    }
+
+    photospline::ndsparse F2_data(F2_spline_data.size(), 2);
+    for(auto& entry : F2_spline_data) {
+        F2_data.insertEntry(entry.first, &entry.second[0]);
+    }
+
+    std::vector<double> weights(F2_spline_data.size(),1.);
+
+    photospline::splinetable<> F2_spline;
+    double smooth = 1e-10;
+    F2_spline.fit(F2_data, weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+    if(std::isnan(*F2_spline.get_coefficients())){
+				std::cerr << "Spline fit has failed!" << std::endl;
+    }
+
+    F2_spline.write_fits("test.fits");
+    // photospline::splinetable<> F3_spline;
 }
 
 double StructureFunction::ds_dxdy(double x, double y, double Q2) {
