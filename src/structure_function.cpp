@@ -200,7 +200,7 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     return xq_arr;
 }
 
-void StructureFunction::BuildGrids() {
+void StructureFunction::BuildGrids(string outpath) {
     const unsigned int Nx = sf_info.Nx;
     const unsigned int NQ2 = sf_info.NQ2;
 
@@ -225,13 +225,11 @@ void StructureFunction::BuildGrids() {
     const double d_log_Q2_knot= std::abs(std::log10(sf_info.Q2max)- std::log10(sf_info.Q2min)) / (Nknots_Q2 - 1);
     const double d_log_x_knot = std::abs(std::log10(sf_info.xmax) - std::log10(sf_info.xmin) ) / (Nknots_x - 1);
 
-    // photospline::ndsparse F1_data(Nx * NQ2, 2);
-    // photospline::ndsparse F3_data(Nx * NQ2, 2);
-
     std::cout << "log_Q2min = " << std::log10(sf_info.Q2min) << ", log_Q2max = " << std::log10(sf_info.Q2max) << std::endl;
     std::cout << "log_xmin = " << std::log10(sf_info.xmin) << ", log_xmax = " << std::log10(sf_info.xmax) << std::endl;
     std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
 
+    // Get the Q2 and x values
     size_t N_samples = Nx * NQ2;
     for ( double log_Q2 = std::log10(sf_info.Q2min); log_Q2<std::log10(sf_info.Q2max); log_Q2 += d_log_Q2 ) {
         double powQ2 = std::pow( 10, log_Q2 + 0.5 * d_log_Q2 );
@@ -247,6 +245,7 @@ void StructureFunction::BuildGrids() {
         x_arr.push_back(x);
     }
 
+    // Get the knots for Q2 and x
     for ( double log_Q2 = std::log10(sf_info.Q2min) - 2*d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max); log_Q2 += d_log_Q2_knot ) {
         double knot = log_Q2 + 0.5 * d_log_Q2_knot;
         Q2_knots.push_back(knot);
@@ -257,9 +256,10 @@ void StructureFunction::BuildGrids() {
         x_knots.push_back(knot);
     }
 
-    // std::deque<std::pair<double,std::array<unsigned int, 2>>> F1_spline_data;
+    // Collect SF values
+    std::deque<std::pair<double,std::array<unsigned int, 2>>> F1_spline_data;
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F2_spline_data;
-    // std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
+    std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
     for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
         double log_Q2 = std::log10(sf_info.Q2min) + (0.5 + Q2i) * d_log_Q2;
         double Q2 = std::pow(10.0, log_Q2);
@@ -270,35 +270,78 @@ void StructureFunction::BuildGrids() {
             double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
             double x = std::pow(10.0, log_x);
 
-            // double _FL = FL(x, Q2);
+            double _FL = FL(x, Q2);
             double _F2 = F2(x, Q2);
-            // double _F3 = F3(x, Q2);
+            // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
+            double _F1 = (_F2 - _FL) / (2. * x);
+            double _F3 = F3(x, Q2);
 
+            if(!std::isfinite(_F1)) {
+                std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F1 = 0.0;
+            }
             if(!std::isfinite(_F2)) {
-                std::cerr << "Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F2 = 0.0;
             }
+            if(!std::isfinite(_F3)) {
+                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F3 = 0.0;
+            }
+
+            F1_spline_data.push_back(std::make_pair(_F1, std::array<unsigned int, 2>{Q2i, xi}));
             F2_spline_data.push_back(std::make_pair(_F2, std::array<unsigned int, 2>{Q2i, xi}));
+            F3_spline_data.push_back(std::make_pair(_F3, std::array<unsigned int, 2>{Q2i, xi}));
         }
     }
 
+    // Put data into ndsparses
+    photospline::ndsparse F1_data(F1_spline_data.size(), 2);
+    for(auto& entry : F1_spline_data) {
+        F1_data.insertEntry(entry.first, &entry.second[0]);
+    }
     photospline::ndsparse F2_data(F2_spline_data.size(), 2);
     for(auto& entry : F2_spline_data) {
         F2_data.insertEntry(entry.first, &entry.second[0]);
     }
-
-    std::vector<double> weights(F2_spline_data.size(),1.);
-
-    photospline::splinetable<> F2_spline;
-    double smooth = 1e-10;
-    F2_spline.fit(F2_data, weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
-                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
-    if(std::isnan(*F2_spline.get_coefficients())){
-				std::cerr << "Spline fit has failed!" << std::endl;
+    photospline::ndsparse F3_data(F3_spline_data.size(), 2);
+    for(auto& entry : F3_spline_data) {
+        F3_data.insertEntry(entry.first, &entry.second[0]);
     }
 
-    F2_spline.write_fits("test.fits");
-    // photospline::splinetable<> F3_spline;
+    // TODO: These should all be the same size
+    std::vector<double> F1_weights(F1_spline_data.size(),1.);
+    std::vector<double> F2_weights(F2_spline_data.size(),1.);
+    std::vector<double> F3_weights(F3_spline_data.size(),1.);
+
+    double smooth = 1e-10;
+
+    // Fit splines
+    photospline::splinetable<> F1_spline;
+    F1_spline.fit(F1_data, F1_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+    if(std::isnan(*F1_spline.get_coefficients())){
+				std::cerr << "F1 spline fit has failed!" << std::endl;
+    }
+
+    photospline::splinetable<> F2_spline;
+    F2_spline.fit(F2_data, F2_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+    if(std::isnan(*F2_spline.get_coefficients())){
+				std::cerr << "F2 spline fit has failed!" << std::endl;
+    }
+
+    photospline::splinetable<> F3_spline;
+    F3_spline.fit(F3_data, F3_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, std::vector<uint32_t>{2,2}, 
+                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+    if(std::isnan(*F3_spline.get_coefficients())){
+				std::cerr << "F3 spline fit has failed!" << std::endl;
+    }
+
+    // Write splines
+    F1_spline.write_fits(outpath + "/F1.fits");
+    F2_spline.write_fits(outpath + "/F2.fits");
+    F3_spline.write_fits(outpath + "/F3.fits");
 }
 
 double StructureFunction::ds_dxdy(double x, double y, double Q2) {

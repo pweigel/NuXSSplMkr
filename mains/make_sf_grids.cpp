@@ -1,6 +1,7 @@
 #include "configuration.h"
 #include "physconst.h"
 #include "structure_function.h"
+#include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
     if (argc < 2) {
@@ -18,50 +19,15 @@ int main(int argc, char* argv[]){
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
 
     sf.Set_Lepton_Mass(pc->muon_mass);
-
-    // std::string sf_grids_fname = "test_sf_grid.dat";
-    // x Q2 F1 F2 xF3
-    // ofstream outfile(sf_grids_fname.c_str());
-    // double cm2 = (pc->cm)*(pc->cm);
-
-    // for (double logx=-7; logx<0.; logx+=0.1) {
-    //     for (double logQ2=0; logQ2<3; logQ2+=0.1) {
-    //         double x = pow(10, logx);
-    //         double Q2 = pow(10, logQ2);
-    //         double F1 = sf.F1(x, Q2);
-    //         double F2 = sf.F2(x, Q2);
-    //         double xF3 = sf.xF3(x, Q2);
-    //         outfile << x << " " << Q2 << " " << F1 << " " << F2 << " " << xF3 << std::endl;
-    //     }
-    // }
+    
+    std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    boost::filesystem::path out_folder = _out_folder;
+    if (! boost::filesystem::exists(out_folder)) {
+        boost::filesystem::create_directories(out_folder);
+    }
     
     sf.InitializeAPFEL();
-    sf.BuildGrids();
-
-    // for (double logx=-4; logx<0.; logx+=0.01) {
-    //     double x = pow(10, logx);
-    //     double Q2 = 4.;
-        
-    //     sf.Set_Q_APFEL(std::sqrt(Q2));
-
-    //     double F1 = sf.F1(x, Q2);
-    //     double F2 = sf.F2(x, Q2);
-    //     double xF3 = sf.xF3(x, Q2);
-    //     outfile << x << " " << Q2 << " " << F1 << " " << F2 << " " << xF3 << std::endl;
-    // }
-
-    // for (double logenu=0; logenu<=7.; logenu+=0.05){
-    //     double enu = pow(10, logenu);
-    //     sf.Set_Neutrino_Energy(enu*pc->GeV);
-    //     double sigma = sf.TotalXS();
-    //     outfile << enu << "\t"<< sigma/cm2 << std::endl;
-
-    // }
-    // outfile.close();
-
-    std::cout << "Done!" << std::endl;
-
-
+    sf.BuildGrids(out_folder.string());
 
     return 0;
 }

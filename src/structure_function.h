@@ -78,7 +78,7 @@ class StructureFunction {
         // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
-        void BuildGrids();
+        void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         double CrossSection(double x, double Q2);
