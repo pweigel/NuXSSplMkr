@@ -9,10 +9,10 @@ StructureFunction::StructureFunction(Configuration &_config)
     sf_info = config.sf_info;
 
     // TODO: Get from config file
-    GF2 = SQ(pc->GF);
+    GF2   = SQ(pc->GF);
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
-    Mw2 = SQ(pc->Wboson_mass);
-    Mz2 = SQ(pc->Zboson_mass);
+    Mw2   = SQ(pc->Wboson_mass);
+    Mz2   = SQ(pc->Zboson_mass);
 
     // Calculate fundamental constants
     s_w = sf_info.Sin2ThW;
@@ -34,7 +34,6 @@ StructureFunction::StructureFunction(Configuration &_config)
 }
 
 void StructureFunction::InitializeAPFEL() {
-    //APFEL::SetMassScheme("ZM-VFNS");
     APFEL::SetPDFSet(sf_info.pdfset);
     APFEL::SetReplica(sf_info.replica);
     APFEL::SetMassScheme(sf_info.mass_scheme);
@@ -200,6 +199,7 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     return xq_arr;
 }
 
+// TODO: The order of x, Q2 in splines is not consistent with the function definitions here
 void StructureFunction::BuildGrids(string outpath) {
     const unsigned int Nx = sf_info.Nx;
     const unsigned int NQ2 = sf_info.NQ2;
@@ -270,7 +270,10 @@ void StructureFunction::BuildGrids(string outpath) {
             double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
             double x = std::pow(10.0, log_x);
 
-            double _FL = FL(x, Q2);
+            // Do checks here
+           // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
+            // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
+            double _FL = FL(x, Q2); 
             double _F2 = F2(x, Q2);
             // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
             double _F1 = (_F2 - _FL) / (2. * x);

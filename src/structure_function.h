@@ -17,23 +17,23 @@
 
 namespace nuxssplmkr {
 
-template<class T,double (T::*f)(double*)>
-double KernelHelper(double* x,size_t dim, void* param){
-  T* p = (T*) param;
-  return (p->*f)(x);
-}
+// template<class T,double (T::*f)(double*)>
+// double KernelHelper(double* x,size_t dim, void* param){
+//   T* p = (T*) param;
+//   return (p->*f)(x);
+// }
 
-template<class T,double (T::*f)(double)>
-double KernelHelper(double x, void* param){
-  T* p = (T*) param;
-  return (p->*f)(x);
-}
+// template<class T,double (T::*f)(double)>
+// double KernelHelper(double x, void* param){
+//   T* p = (T*) param;
+//   return (p->*f)(x);
+// }
 
-template<class T,double (T::*f)(double,double),int n,int m>
-double HK(double x, void* param){
-  T* p = (T*) param;
-  return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
-}
+// template<class T,double (T::*f)(double,double),int n,int m>
+// double HK(double x, void* param){
+//   T* p = (T*) param;
+//   return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
+// }
 
 class StructureFunction {
     private:
@@ -81,6 +81,8 @@ class StructureFunction {
         void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
+        
+        // TODO: Move to cross section class
         double CrossSection(double x, double Q2);
         double ds_dxdy(double x, double y, double Q2);
         // double ds_dy(double x, double y, double Q2);

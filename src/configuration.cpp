@@ -48,6 +48,12 @@ void Configuration::Populate() {
     sf_info.PDFQ2min = sf_info.pdf->q2Min();
     sf_info.PDFQ2max = sf_info.pdf->q2Max();
 
+    if (sf_info.current == CC) {
+        sf_info.M_boson2 = sf_info.MassW * sf_info.MassW;
+    } else if (sf_info.current == NC) {
+        sf_info.M_boson2 = sf_info.MassZ * sf_info.MassZ;
+    }
+
     sf_info.Use_APFEL_LO = true;  // TODO!
 }
 

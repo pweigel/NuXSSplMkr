@@ -25,6 +25,7 @@ class PhysConst {
         double sunradius;
         ///// physics constants/////
         double GF;
+        double GF2;
         double Na;
         double sw_sq;
         double G;
