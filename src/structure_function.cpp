@@ -15,11 +15,11 @@ StructureFunction::StructureFunction(Configuration &_config)
     Mz2   = SQ(pc->Zboson_mass);
 
     // Calculate fundamental constants
-    s_w = sf_info.Sin2ThW;
-    Lu2 = ( 1. - (4./3.)*s_w) * ( 1. - (4./3.)*s_w);
-    Ld2 = (-1. + (2./3.)*s_w) * (-1. + (2./3.)*s_w);
-    Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
-    Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
+    // s_w = sf_info.Sin2ThW;
+    // Lu2 = ( 1. - (4./3.)*s_w) * ( 1. - (4./3.)*s_w);
+    // Ld2 = (-1. + (2./3.)*s_w) * (-1. + (2./3.)*s_w);
+    // Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
+    // Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
 
     CP_factor = CPFactorMap.at(sf_info.neutrino_type);
 
@@ -37,13 +37,13 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetPDFSet(sf_info.pdfset);
     APFEL::SetReplica(sf_info.replica);
     APFEL::SetMassScheme(sf_info.mass_scheme);
-
-    APFEL::SetProcessDIS(sf_info.DIS_process);
+    // if (sf_info.scheme == "CSMS") { // TODO: a better way of doing this
+    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[5]+0.1);
+    // } else {
+    //     APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[6]);
+    // }
     APFEL::SetQLimits(std::sqrt(sf_info.Q2min), std::sqrt(sf_info.Q2max));
     //APFEL::SetPolarizationDIS(0);
-
-    APFEL::SetProjectileDIS(sf_info.projectile);
-    APFEL::SetTargetDIS(sf_info.target);
     //APFEL::EnableTargetMassCorrections(false);
     //APFEL::EnableDampingFONLL(true);
     //APFEL::SetFastEvolution(true);
@@ -64,12 +64,16 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(sf_info.MassZ), sf_info.MassZ);
     //APFEL::SetAlphaEvolution("expanded");
     //APFEL::SetPDFEvolution("expandalpha");
-    APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[6]);
+
     APFEL::SetMaxFlavourPDFs(6);
     APFEL::SetMaxFlavourAlpha(6);
     APFEL::SetCKM(sf_info.Vud, sf_info.Vus, sf_info.Vub,
                   sf_info.Vcd, sf_info.Vcs, sf_info.Vcb,
                   sf_info.Vtd, sf_info.Vts, sf_info.Vtb);
+
+    APFEL::SetProjectileDIS(sf_info.projectile);
+    APFEL::SetProcessDIS(sf_info.DIS_process);
+    APFEL::SetTargetDIS(sf_info.target);
 
     // Initializes integrals on the grids
     APFEL::InitializeAPFEL_DIS();
@@ -87,7 +91,7 @@ void StructureFunction::GetCoefficients() {
         }
         for (int i: up_type) {
             F2coef[-i] = 1.;
-            F2coef[-i] = -1.;
+            F3coef[-i] = -1.;
         }
     } else if (sf_info.neutrino_type == antineutrino) {
         for (int i : up_type) {
@@ -96,7 +100,7 @@ void StructureFunction::GetCoefficients() {
         }
         for (int i: down_type) {
             F2coef[-i] = 1.;
-            F2coef[-i] = -1.;
+            F3coef[-i] = -1.;
         }
     } else {
         throw std::runtime_error("Unidentified neutrino type!");
@@ -128,6 +132,8 @@ double StructureFunction::F2(double x, double Q2) {
             s[2] = q1;
         }
         return F2_LO(s);
+    } else if ( (sf_info.perturbative_order == LO) && (sf_info.Use_APFEL_LO) ) {
+        return APFEL::F2LO(x, std::sqrt(Q2)); // TODO: Check this!
     } else {
         return APFEL::F2total(x);
     }
@@ -149,6 +155,7 @@ double StructureFunction::F2_LO(map<int, double>& xq_arr) {
     double k = 0.;
     for( int p : partons ) {
         k += F2coef[p] * xq_arr[p];
+        // std::cout << p << ": " << F2coef[p] * xq_arr[p] << std::endl;
     }	
     return 2 * k;
 }
@@ -200,7 +207,7 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 }
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
-void StructureFunction::BuildGrids(string outpath) {
+void StructureFunction::BuildSplines(string outpath) {
     const unsigned int Nx = sf_info.Nx;
     const unsigned int NQ2 = sf_info.NQ2;
 
@@ -347,6 +354,110 @@ void StructureFunction::BuildGrids(string outpath) {
     F3_spline.write_fits(outpath + "/F3.fits");
 }
 
+void StructureFunction::BuildGrids(string outpath) {
+    const unsigned int Nx = sf_info.Nx;
+    const unsigned int NQ2 = sf_info.NQ2;
+
+    std::vector<double> x_arr;
+    std::vector<double> Q2_arr;
+
+    std::ofstream F1_file;
+    std::ofstream F2_file;
+    std::ofstream F3_file;
+    F1_file.open(outpath + "/F1_"+target+".grid");
+    F2_file.open(outpath + "/F1_"+target+".grid");
+    F3_file.open(outpath + "/F1_"+target+".grid");
+
+    // Step sizes in log space
+    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
+    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / Nx;
+
+    for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
+        double log_Q2 = std::log10(sf_info.Q2min) + (0.5 + Q2i) * d_log_Q2;
+        double Q2 = std::pow(10.0, log_Q2);
+
+        Set_Q_APFEL(std::sqrt(Q2));
+
+        for (unsigned int xi = 0; xi < Nx; xi++) {
+            double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
+            double x = std::pow(10.0, log_x);
+
+            // Do checks here
+           // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
+            // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
+            double _FL = FL(x, Q2); 
+            double _F2 = F2(x, Q2);
+            // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
+            double _F1 = (_F2 - _FL) / (2. * x);
+            double _F3 = F3(x, Q2);
+
+            if(!std::isfinite(_F1)) {
+                std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F1 = 0.0;
+            } else if (_F1 < 0) {
+                _F1 = 0.0;
+            }
+            if(!std::isfinite(_F2)) {
+                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F2 = 0.0;
+            } else if (_F2 < 0) {
+                _F2 = 0.0;
+            }
+            if(!std::isfinite(_F3)) {
+                std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F3 = 0.0;
+            } else if (_F3 < 0) {
+                _F3 = 0.0;
+            }
+
+            F1_file << log_Q2 << "," << log_x << "," << _F1 << "\n";
+            F2_file << log_Q2 << "," << log_x << "," << _F2 << "\n";
+            F3_file << log_Q2 << "," << log_x << "," << _F3 << "\n";
+        }
+    }
+}
+
+double StructureFunction::ds_dxdy_LO(double x, double y, double E) {
+    GetCoefficients();
+
+    double MW2 = sf_info.M_boson2 * SQ(pc->GeV);
+    double s = 2 * M_iso * E;
+    double Q2 = s * x * y;
+
+    double prefactor = SQ(pc->GF) * s * SQ(MW2) / (2 * M_PI * SQ(Q2 + MW2));
+
+    auto p = PDFExtract(x, Q2);
+
+    //
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    string xt = "nearest";
+    grid_central -> setExtrapolator(xt);
+
+    std::map<int,double> xq_arr;
+    for ( int p : partons ){
+      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
+    }
+    //
+    double rQ2 = Q2 / (pc->GeV2);
+
+    double _f2 = 2 * ( grid_central -> xfxQ2(1, x, rQ2)  + grid_central -> xfxQ2(3, x, rQ2)  + grid_central -> xfxQ2(5, x, rQ2) +
+                       grid_central -> xfxQ2(-2, x, rQ2) + grid_central -> xfxQ2(-4, x, rQ2) + grid_central -> xfxQ2(-6, x, rQ2) );
+    double _xf3 = 2 * ( grid_central -> xfxQ2(1, x, rQ2)  + grid_central -> xfxQ2(3, x, rQ2)  + grid_central -> xfxQ2(5, x, rQ2) -
+                        grid_central -> xfxQ2(-2, x, rQ2) - grid_central -> xfxQ2(-4, x, rQ2) - grid_central -> xfxQ2(-6, x, rQ2) );
+    
+    // double f2_lo_value = F2_LO(p);
+    double f2_lo_value = _f2;
+    // double f1_lo_value = 2 * x * f2_lo_value; // value of F1 at LO
+    // double f3_lo_value = xF3_LO(p);
+    double xf3_lo_value = _xf3;
+
+    // double term1 = x * y * y * f1_lo_value;
+    double term2 = (1 + SQ(1 - y) ) * f2_lo_value;
+    double term3 = (1 - SQ(1 - y) ) * xf3_lo_value;
+
+    return prefactor * (term2 + term3) / SQ(pc->cm);
+}
+
 double StructureFunction::ds_dxdy(double x, double y, double Q2) {
     double _FL = FL(x, Q2);
     double _F2 = F2(x, Q2);
@@ -392,27 +503,27 @@ double StructureFunction::Evaluate(double Q2, double x, double y){
 }
 
 double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
-	double k = 0.;
+    double k = 0.;
     d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
-	double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
-	double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
-	double a = y_p + CP_factor*y_m;
-	double b = y_p - CP_factor*y_m;
+    double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
+    double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
+    double a = y_p + CP_factor*y_m;
+    double b = y_p - CP_factor*y_m;
 
-    map<int,double> SigRcoef;
+      map<int,double> SigRcoef;
 
-    // Coefficients for CC
-	SigRcoef[1]  =    a ;
-	SigRcoef[-1] =    b ;
-	SigRcoef[2]  =    a ;
-	SigRcoef[-2] =    b ;
-	SigRcoef[3]  = 2.*a ;
-	SigRcoef[-3] =   0. ;
-	SigRcoef[4]  =   0. ;
-	SigRcoef[-4] = 2.*b ;
-	SigRcoef[5]  = 2.*a ;
-	SigRcoef[-5] =   0. ;
-	SigRcoef[21] =   0. ;
+      // Coefficients for CC
+    SigRcoef[1]  =    a ;
+    SigRcoef[-1] =    b ;
+    SigRcoef[2]  =    a ;
+    SigRcoef[-2] =    b ;
+    SigRcoef[3]  = 2.*a ;
+    SigRcoef[-3] =   0. ;
+    SigRcoef[4]  =   0. ;
+    SigRcoef[-4] = 2.*b ;
+    SigRcoef[5]  = 2.*a ;
+    SigRcoef[-5] =   0. ;
+    SigRcoef[21] =   0. ;
 
     if (CP_factor < 0 ){
         //fixes for antineutrinos
@@ -469,41 +580,41 @@ double StructureFunction::KernelXS(double * k){
     return x*y*norm*Evaluate(Q2, x, y);
 }
 
-double StructureFunction::TotalXS(){
-    // TODO:
-    // We used to do 10k warmup calls, 50k final calls
-    // for the integrator. I changed this because it took forever (another issue).
+// double StructureFunction::TotalXS(){
+//     // TODO:
+//     // We used to do 10k warmup calls, 50k final calls
+//     // for the integrator. I changed this because it took forever (another issue).
 
-    double res,err;
-    const unsigned long dim = 2; int calls = 50000;
+//     double res,err;
+//     const unsigned long dim = 2; int calls = 50000;
 
-    // integrating on the log of x and y
-    double xl[dim] = { log(1.e-7) , log(1.e-7) };
-    double xu[dim] = { log(1.) , log(1.)};
+//     // integrating on the log of x and y
+//     double xl[dim] = { log(1.e-7) , log(1.e-7) };
+//     double xu[dim] = { log(1.) , log(1.)};
 
-    gsl_rng_env_setup ();
-    const gsl_rng_type *T = gsl_rng_default;
-    gsl_rng *r = gsl_rng_alloc (T);
+//     gsl_rng_env_setup ();
+//     const gsl_rng_type *T = gsl_rng_default;
+//     gsl_rng *r = gsl_rng_alloc (T);
 
-    gsl_monte_function F = { &KernelHelper<StructureFunction, &StructureFunction::KernelXS>, dim, this};
-    gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    // std::cout << "Starting first integration... ";
-    // TODO: Integration tests! -PW
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
-    // gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
-    // std::cout << " Done!" << std::endl;
-    // std::cout << "Starting second integration... ";
-    // do {
-    //     gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
-    // }
-    // while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
-    // std::cout << "Done!" << std::endl;
+//     gsl_monte_function F = { &KernelHelper<StructureFunction, &StructureFunction::KernelXS>, dim, this};
+//     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
+//     // std::cout << "Starting first integration... ";
+//     // TODO: Integration tests! -PW
+//     gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
+//     // gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
+//     // std::cout << " Done!" << std::endl;
+//     // std::cout << "Starting second integration... ";
+//     // do {
+//     //     gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
+//     // }
+//     // while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
+//     // std::cout << "Done!" << std::endl;
 
-    gsl_monte_vegas_free (s_vegas);
-    gsl_rng_free (r);
+//     gsl_monte_vegas_free (s_vegas);
+//     gsl_rng_free (r);
 
-    return res;
-}
+//     return res;
+// }
 
 void StructureFunction::Set_Lepton_Mass(double m) {
     M_lepton = m;

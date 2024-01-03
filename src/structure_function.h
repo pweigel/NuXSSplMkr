@@ -78,6 +78,7 @@ class StructureFunction {
         // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
+        void BuildSplines(string outpath);
         void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
@@ -85,11 +86,12 @@ class StructureFunction {
         // TODO: Move to cross section class
         double CrossSection(double x, double Q2);
         double ds_dxdy(double x, double y, double Q2);
+        double ds_dxdy_LO(double x, double y, double E);
         // double ds_dy(double x, double y, double Q2);
         double Evaluate(double Q2, double x, double y);
         double SigR_Nu_LO(double x, double y, map<int, double> dis);
         double KernelXS(double * k);
-        double TotalXS();
+        // double TotalXS();
 
         // ~ Settings ~
         void Set_Lepton_Mass(double m);

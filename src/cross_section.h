@@ -4,12 +4,15 @@
 #include "structure_function.h"
 #include "physconst.h"
 #include "tools.h"
+#include "math.h"
 #include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_vegas.h>
 #include <gsl/gsl_integration.h>
 #include "photospline/splinetable.h"
 #include <boost/math/quadrature/trapezoidal.hpp>
+#include "LHAPDF/LHAPDF.h"
+#include "LHAPDF/GridPDF.h"
 
 namespace nuxssplmkr {
 
@@ -53,8 +56,10 @@ class CrossSection {
         PhysConst* pc; // Constants
 
         // ~ Calculations ~
+        double ds_dxdy_LO(double x, double y);
         double ds_dxdy(double* k); // For integrators
         double ds_dxdy(double x, double y, double E);
+        double ds_dxdy(double x, double y);
         double ds_dy();
         double ds_dxdy_TMC();
         double ds_dy_TMC();
@@ -71,7 +76,6 @@ class CrossSection {
         photospline::splinetable<> F3;
 
         // ~ Settings ~
-        void Set_Energy(double E);
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
 

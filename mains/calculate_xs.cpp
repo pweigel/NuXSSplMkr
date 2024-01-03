@@ -37,9 +37,7 @@ int main(int argc, char* argv[]){
     xs->Load_Structure_Functions(f1, f2, f3);
 
 
-    std::ofstream outfile;
-    outfile.open("test_dsdxdy.out");
-    int Nx = 100;
+    int Nx = 50;
     int Ny = 100;
     double logxmin = -4;
     double logxmax = 0;
@@ -47,19 +45,59 @@ int main(int argc, char* argv[]){
     double logymax = 0;
     double dx = (logxmax - logxmin) / Nx;
     double dy = (logymax - logymin) / Ny;
-    double E = 1000.0 * pc->GeV;
-    std::cout << xs->ds_dxdy(0.1, 0.1, 100.0 * pc->GeV) << std::endl;
-
-    std::cout << "Calculating total cross section!" << std::endl;
-    double total_xs = xs->TotalXS(E);
+    double total_xs;
+    std::cout << "E = 100 GeV..." << std::endl;
+    std::cout << xs->ds_dxdy(0.05, 0.1, 100.0 * pc->GeV) << std::endl;
+    std::cout << "E = 1e9 GeV..." << std::endl;
+    std::cout << xs->ds_dxdy(0.01, 0.1, 1e9 * pc->GeV) << std::endl;
+    
+    std::cout << "sigma (pb) at 100 GeV: " << std::endl;
+    total_xs = xs->TotalXS(100 * pc->GeV) * 1e35;
     std::cout << total_xs << std::endl;
+
+    std::cout << "sigma (pb) at 500 GeV: " << std::endl;
+    total_xs = xs->TotalXS(500 * pc->GeV) * 1e35;
+    std::cout << total_xs << std::endl;
+
+    std::cout << "sigma (pb) at 1000 GeV: " << std::endl;
+    total_xs = xs->TotalXS(1000 * pc->GeV) * 1e35;
+    std::cout << total_xs << std::endl;
+
+    std::cout << "sigma (pb) at 1e6 GeV: " << std::endl;
+    total_xs = xs->TotalXS(1e6 * pc->GeV) * 1e35;
+    std::cout << total_xs << std::endl;
+
+    std::cout << "sigma (pb) at 1e9 GeV: " << std::endl;
+    total_xs = xs->TotalXS(1e9 * pc->GeV) * 1e35;
+    std::cout << total_xs << std::endl;
+
+    double logemin = 2;
+    double logemax = 9;
+    int NE = 100;
+    double dE = (logemax - logemin) / (NE-1);
+
+    std::ofstream total_outfile;
+    total_outfile.open("test_total_xs.out");
+    std::cout << total_xs << std::endl;
+    for (int ei = 0; ei < NE; ei++) {
+        double E = pc->GeV * std::pow(10, logemin + ei * dE);
+        // std::cout << E << ": ";
+
+        double _xs = std::log10(xs->TotalXS(E));
+        total_outfile << E << "," << _xs << "\n";
+        // std::cout << _xs << std::endl;
+    }
+    total_outfile.close();
+
+    std::ofstream outfile;
+    outfile.open("test_dsdxdy.out");
 
     for (int xi = 0; xi < Nx; xi++) {
         double x = logxmin + xi * dx;
         for (int yi = 0; yi < Ny; yi++) {
             double y = logymin + yi * dy;
             // std::cout << std::pow(10, x) << " " << std::pow(10, y) << std::endl;
-            outfile << xs->ds_dxdy(std::pow(10, x), std::pow(10, y), E);
+            outfile << xs->ds_dxdy(std::pow(10, x), std::pow(10, y), 100 * pc->GeV);
             if (yi != Ny - 1) {
                 outfile << ",";
             }

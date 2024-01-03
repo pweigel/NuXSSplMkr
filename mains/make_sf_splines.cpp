@@ -27,7 +27,8 @@ int main(int argc, char* argv[]){
     }
     
     sf.InitializeAPFEL();
-    sf.BuildGrids(out_folder.string());
+    sf.BuildSplines(out_folder.string()); // Photospline
+    // sf.BuildGrids(out_folder.string()); // Grid file
 
     return 0;
 }
