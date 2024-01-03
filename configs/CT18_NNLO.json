@@ -6,15 +6,14 @@
   "perturbative_order": 2,
   "DIS_process": "CC",
 
+  "disable_top": false,
+
   "Nx": 400,
   "NQ2": 400,
   "xmin": 1e-9,
   "xmax": 1.0,
   "Q2min": 1.0,
   "Q2max": 1e10,
-
-  "projectile": "neutrino",
-  "target": "proton",
   
   "MassZ": 91.1876,
   "MassW": 80.385,

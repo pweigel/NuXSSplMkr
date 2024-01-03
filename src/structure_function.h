@@ -94,8 +94,11 @@ class StructureFunction {
         // double TotalXS();
 
         // ~ Settings ~
+        void Set_Target(string target_string);
+        void Set_Projectile(string projectile_string);
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
+        void Set_SF_Type(string sf_type_string);
         void Set_Use_APFEL_LO(bool value);
         void Set_Q_APFEL(double Q);
 };

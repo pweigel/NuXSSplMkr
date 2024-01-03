@@ -49,6 +49,13 @@ class CrossSection {
         double M_iso; // Isoscalar mass
         double ENU; // neutrino energy
 
+
+        double _kernel_y; // Used for integration
+
+        // ~ Kernel Functions ~
+        double _ds_dy(double k);
+        double _ds_dxdy(double* k);
+
     public:
         CrossSection(Configuration config);
         ~CrossSection() {};
@@ -56,11 +63,10 @@ class CrossSection {
         PhysConst* pc; // Constants
 
         // ~ Calculations ~
-        double ds_dxdy_LO(double x, double y);
-        double ds_dxdy(double* k); // For integrators
-        double ds_dxdy(double x, double y, double E);
+        double ds_dxdy_LO(double x, double y); // TODO: Remove or fix
+        double ds_dxdy(double E, double x, double y);
         double ds_dxdy(double x, double y);
-        double ds_dy();
+        double ds_dy(double E, double y);
         double ds_dxdy_TMC();
         double ds_dy_TMC();
 
@@ -78,6 +84,7 @@ class CrossSection {
         // ~ Settings ~
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
+
 
 };
 

@@ -17,11 +17,11 @@ void Configuration::Populate() {
     sf_info.perturbative_order = static_cast<QCDOrder>(pto);
     sf_info.DIS_process = config.get<string>("DIS_process");  // TODO: using existing enum
     sf_info.current = CurrentMap.at(sf_info.DIS_process);
-
-    sf_info.projectile = config.get<string>("projectile");
-    sf_info.neutrino_type = NeutrinoTypeMap.at(sf_info.projectile);
-    sf_info.target = config.get<string>("target");
-    sf_info.target_type = TargetTypeMap.at(sf_info.target);
+    
+    // sf_info.projectile = config.get<string>("projectile");
+    // sf_info.neutrino_type = NeutrinoTypeMap.at(sf_info.projectile);
+    // sf_info.target = config.get<string>("target");
+    // sf_info.target_type = TargetTypeMap.at(sf_info.target);
 
     sf_info.Nx = config.get<int>("Nx");
     sf_info.NQ2 = config.get<int>("NQ2");
@@ -54,7 +54,26 @@ void Configuration::Populate() {
         sf_info.M_boson2 = sf_info.MassZ * sf_info.MassZ;
     }
 
+    // sf_info.sf_type_string = "total"; // default is total
+    // sf_info.sf_type = SFType::total;
+    sf_info.disable_top = config.get<bool>("disable_top");
+    // sf_info.disable_top = false;
     sf_info.Use_APFEL_LO = true;  // TODO!
+}
+
+void Configuration::Set_Target(string target_string) {
+    sf_info.target = target_string;
+    sf_info.target_type = TargetTypeMap.at(target_string);
+}
+
+void Configuration::Set_Projectile(string projectile_string) {
+    sf_info.projectile = projectile_string;
+    sf_info.neutrino_type = NeutrinoTypeMap.at(projectile_string);
+}
+
+void Configuration::Set_SF_Type(string sf_type_string) {
+    sf_info.sf_type_string = sf_type_string;
+    sf_info.sf_type = SFTypeMap.at(sf_type_string);
 }
 
 void Configuration::LoadPDFSet() {

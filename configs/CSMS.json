@@ -1,0 +1,32 @@
+{
+  "pdfset": "HERAPDF15NLO_EIG",
+  "replica": 0,
+
+  "mass_scheme": "ZM-VFNS",
+  "perturbative_order": 1,
+  "DIS_process": "CC",
+
+  "disable_top": true,
+
+  "Nx": 400,
+  "NQ2": 400,
+  "xmin": 1e-9,
+  "xmax": 1.0,
+  "Q2min": 1.0,
+  "Q2max": 1e12,
+
+  "MassZ": 91.1876,
+  "MassW": 80.385,
+  "Rho": 0.00940161,
+  "Sin2ThW": 0.0,
+
+  "Vud": 0.97467,
+  "Vus": 0.22361,
+  "Vub": 0.00000,
+  "Vcd": 0.22361,
+  "Vcs": 0.97467,
+  "Vcb": 0.00000, 
+  "Vtd": 0.00000,
+  "Vts": 0.00000,
+  "Vtb": 1.00000
+}

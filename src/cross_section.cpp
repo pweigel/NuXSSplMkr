@@ -46,14 +46,14 @@ void CrossSection::Set_Neutrino_Energy(double E) {
     ENU = E;
 }
 
-double CrossSection::ds_dxdy(double* k) {
+double CrossSection::_ds_dxdy(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
     // Jacobian = x * y, needed because we're integrating over log space
     return x * y * ds_dxdy(x, y);
 }
 
-double CrossSection::ds_dxdy(double x, double y, double E) {
+double CrossSection::ds_dxdy(double E, double x, double y) {
     Set_Neutrino_Energy(E);
     return ds_dxdy(x, y);
 }
@@ -98,8 +98,9 @@ double CrossSection::ds_dxdy(double x, double y) {
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
-double CrossSection::ds_dy() {
-    return 0.;
+double CrossSection::_ds_dy(double k) {
+    double x = std::pow(10, k);
+    return x * ds_dxdy(x, _kernel_y);
 }
 
 double CrossSection::ds_dxdy_TMC() {
@@ -110,9 +111,22 @@ double CrossSection::ds_dy_TMC() {
     return 0.;
 }
 
-// double CrossSection::TrapezoidalTotalXS(double E) {
+double CrossSection::ds_dy(double E, double y) {
+    Set_Neutrino_Energy(E);
+    _kernel_y = y;
+
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+    double result, error;
+
+    gsl_function F;
+    F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
+    F.params = this;
     
-// }
+    gsl_integration_qag ( &F, log(1.e-8), log(1.), 0, 1.e-5, 5000, 6, w, &result, &error);
+    gsl_integration_workspace_free(w);
+
+    return result;
+}
 
 double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
@@ -128,7 +142,7 @@ double CrossSection::TotalXS(double E){
     const gsl_rng_type *T = gsl_rng_default;
     gsl_rng *r = gsl_rng_alloc (T);
 
-    gsl_monte_function F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdy>, dim, this};
+    gsl_monte_function F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy>, dim, this};
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
 
     gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
