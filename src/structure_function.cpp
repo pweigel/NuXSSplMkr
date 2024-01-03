@@ -349,9 +349,9 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Write splines
-    F1_spline.write_fits(outpath + "/F1.fits");
-    F2_spline.write_fits(outpath + "/F2.fits");
-    F3_spline.write_fits(outpath + "/F3.fits");
+    F1_spline.write_fits(outpath + "/F1_"+sf_info.target+".fits");
+    F2_spline.write_fits(outpath + "/F2_"+sf_info.target+".fits");
+    F3_spline.write_fits(outpath + "/F3_"+sf_info.target+".fits");
 }
 
 void StructureFunction::BuildGrids(string outpath) {
@@ -364,9 +364,9 @@ void StructureFunction::BuildGrids(string outpath) {
     std::ofstream F1_file;
     std::ofstream F2_file;
     std::ofstream F3_file;
-    F1_file.open(outpath + "/F1_"+target+".grid");
-    F2_file.open(outpath + "/F1_"+target+".grid");
-    F3_file.open(outpath + "/F1_"+target+".grid");
+    F1_file.open(outpath + "/F1_"+sf_info.target+".grid");
+    F2_file.open(outpath + "/F2_"+sf_info.target+".grid");
+    F3_file.open(outpath + "/F3_"+sf_info.target+".grid");
 
     // Step sizes in log space
     double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;

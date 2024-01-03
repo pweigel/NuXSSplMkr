@@ -15,6 +15,9 @@ void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, st
 }
 
 void CrossSection::Load_F1(string path) {
+    if (F1_loaded) { // If we already loaded a spline, delete the old one
+        F1 = photospline::splinetable<>();
+    }
     F1.read_fits(path);
     std::cout << "Loaded F1!" << std::endl;
     // TODO: some sort of check that this worked
@@ -22,12 +25,18 @@ void CrossSection::Load_F1(string path) {
 }
 
 void CrossSection::Load_F2(string path) {
+    if (F2_loaded) { // If we already loaded a spline, delete the old one
+        F2 = photospline::splinetable<>();
+    }
     F2.read_fits(path);
     std::cout << "Loaded F2!" << std::endl;
     F2_loaded = true;
 }
 
 void CrossSection::Load_F3(string path) {
+    if (F3_loaded) { // If we already loaded a spline, delete the old one
+        F3 = photospline::splinetable<>();
+    }
     F3.read_fits(path);
     std::cout << "Loaded F3!" << std::endl;
     F3_loaded = true;
@@ -40,6 +49,7 @@ void CrossSection::Set_Neutrino_Energy(double E) {
 double CrossSection::ds_dxdy(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
+    // Jacobian = x * y, needed because we're integrating over log space
     return x * y * ds_dxdy(x, y);
 }
 
@@ -49,10 +59,9 @@ double CrossSection::ds_dxdy(double x, double y, double E) {
 }
 
 double CrossSection::ds_dxdy(double x, double y) {
-    double MW2 = sf_info.M_boson2 * SQ(pc->GeV);
+    double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    // new
-    double s = 2 * ENU * M_iso;
+    double s = 2 * M_iso * ENU;
     double Q2 = s * x * y;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
@@ -86,7 +95,7 @@ double CrossSection::ds_dxdy(double x, double y) {
     double term3 = ( x*y*(1-y/2) ) * F3_val;
     
     double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
-    return xs / SQ(pc->cm);
+    return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
 double CrossSection::ds_dy() {
