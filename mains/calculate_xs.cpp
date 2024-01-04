@@ -45,7 +45,11 @@ int main(int argc, char* argv[]){
 
     std::ofstream outfile;
     outfile.open(data_folder + "/cross_sections/" + target + "_" + xs_type + ".out");
-    xs->Load_Structure_Functions(f1, f2, f3);
+    
+    if (config.sf_info.mass_scheme != "parton") {
+        xs->Load_Structure_Functions(f1, f2, f3);
+    }
+
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         double _xs = std::log10(xs->TotalXS(E));

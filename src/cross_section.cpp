@@ -98,9 +98,99 @@ double CrossSection::ds_dxdy(double x, double y) {
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
+double CrossSection::_ds_dxdy_partonic(double* k) {
+    double x = std::exp(k[0]);
+    double y = std::exp(k[1]);
+    return x * y * ds_dxdy_partonic(x, y);
+}
+
+double CrossSection::ds_dxdy_partonic(double E, double x, double y) {
+    Set_Neutrino_Energy(E);
+    return ds_dxdy_partonic(x, y);
+}
+
+double CrossSection::ds_dxdy_partonic(double x, double y) {
+    double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+
+    double s_energy = 2 * M_iso * ENU; // using s for strange parton later
+    double Q2 = s_energy * x * y;
+
+    double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
+    double propagator = SQ( MW2 / (Q2 + MW2) );
+    double jacobian = s_energy * x; // from d2s/dxdQ2 --> d2s/dxdy
+
+    // Constraints
+    if (Q2 / SQ(pc->GeV) < 1) {
+        return 0.0;
+    } 
+    else if (Q2 / SQ(pc->GeV) > sf_info.Q2max) {
+        Q2 = sf_info.Q2max * SQ(pc->GeV); // freeze
+    }
+
+    // LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    // string xt = "nearest";
+    // grid_central->setExtrapolator(xt);
+
+    // const LHAPDF::PDF* grid_central = LHAPDF::mkPDF(sf_info.pdf, sf_info.replica);
+
+    // grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
+
+    // TODO: Generalize p/n and nu/nubar
+    double d;
+    double dbar;
+    double u;
+    double ubar;
+    if (sf_info.target == "proton") {
+        d    = sf_info.pdf -> xfxQ2(1, x, Q2/(pc->GeV2));
+        dbar = sf_info.pdf -> xfxQ2(-1, x, Q2/(pc->GeV2));
+        u    = sf_info.pdf -> xfxQ2(2, x, Q2/(pc->GeV2));
+        ubar = sf_info.pdf -> xfxQ2(-2, x, Q2/(pc->GeV2));
+    } else {
+        d    = sf_info.pdf -> xfxQ2(2, x, Q2/(pc->GeV2));
+        dbar = sf_info.pdf -> xfxQ2(-2, x, Q2/(pc->GeV2));
+        u    = sf_info.pdf -> xfxQ2(1, x, Q2/(pc->GeV2));
+        ubar = sf_info.pdf -> xfxQ2(-1, x, Q2/(pc->GeV2));
+    }
+
+    double s    = sf_info.pdf -> xfxQ2(3, x, Q2/(pc->GeV2));
+    double sbar = sf_info.pdf -> xfxQ2(-3, x, Q2/(pc->GeV2));
+    double b    = sf_info.pdf -> xfxQ2(5, x, Q2/(pc->GeV2));
+    double bbar = sf_info.pdf -> xfxQ2(-5, x, Q2/(pc->GeV2));
+
+    double c    = sf_info.pdf -> xfxQ2(4, x, Q2/(pc->GeV2));
+    double cbar = sf_info.pdf -> xfxQ2(-4, x, Q2/(pc->GeV2));
+    double t    = sf_info.pdf -> xfxQ2(6, x, Q2/(pc->GeV2));
+    double tbar = sf_info.pdf -> xfxQ2(-6, x, Q2/(pc->GeV2));
+
+    double F2_val;
+    double xF3_val;
+    if (sf_info.sf_type == SFType::charm) {
+        F2_val =  2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
+        xF3_val = 2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
+    } else {
+        F2_val =  2 * (d + s + b + ubar + cbar + tbar);
+        xF3_val = 2 * (d + s + b - ubar - cbar - tbar);
+    }
+
+    double F1_val = F2_val / (2.0 * x);
+
+    double term1 = y * ( y * x ) * F1_val;
+    double term2 = ( 1 - y ) * F2_val;
+    // double term3 = ( x*y*(1-y/2) ) * F3_val;
+    double term3 = ( y*(1-y/2) ) * xF3_val; // note: removed x here because we are computing xF3
+    
+    double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
+    return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
+}
+
 double CrossSection::_ds_dy(double k) {
     double x = std::pow(10, k);
     return x * ds_dxdy(x, _kernel_y);
+}
+
+double CrossSection::_ds_dy_partonic(double k) {
+    double x = std::pow(10, k);
+    return x * ds_dxdy_partonic(x, _kernel_y);
 }
 
 double CrossSection::ds_dxdy_TMC() {
@@ -119,7 +209,11 @@ double CrossSection::ds_dy(double E, double y) {
     double result, error;
 
     gsl_function F;
-    F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
+    if (sf_info.mass_scheme == "parton") { 
+        F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy_partonic>;
+    } else {
+        F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
+    }
     F.params = this;
     
     gsl_integration_qag ( &F, log(1.e-8), log(1.), 0, 1.e-5, 5000, 6, w, &result, &error);
@@ -142,7 +236,12 @@ double CrossSection::TotalXS(double E){
     const gsl_rng_type *T = gsl_rng_default;
     gsl_rng *r = gsl_rng_alloc (T);
 
-    gsl_monte_function F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy>, dim, this};
+    gsl_monte_function F;
+    if (sf_info.mass_scheme == "parton") {
+        F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy_partonic>, dim, this};
+    } else {
+        F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy>, dim, this};
+    }
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
 
     gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);

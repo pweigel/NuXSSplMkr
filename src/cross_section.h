@@ -55,6 +55,8 @@ class CrossSection {
         // ~ Kernel Functions ~
         double _ds_dy(double k);
         double _ds_dxdy(double* k);
+        double _ds_dy_partonic(double k);
+        double _ds_dxdy_partonic(double* k);
 
     public:
         CrossSection(Configuration config);
@@ -64,11 +66,17 @@ class CrossSection {
 
         // ~ Calculations ~
         double ds_dxdy_LO(double x, double y); // TODO: Remove or fix
+
         double ds_dxdy(double E, double x, double y);
         double ds_dxdy(double x, double y);
+        double ds_dxdy_partonic(double E, double x, double y);
+        double ds_dxdy_partonic(double x, double y);
+
         double ds_dy(double E, double y);
-        double ds_dxdy_TMC();
-        double ds_dy_TMC();
+        double ds_dy_partonic(double E, double y);
+
+        double ds_dxdy_TMC(); // TODO
+        double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
 
@@ -84,8 +92,6 @@ class CrossSection {
         // ~ Settings ~
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
-
-
 };
 
 }

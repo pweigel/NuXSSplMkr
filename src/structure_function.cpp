@@ -38,14 +38,14 @@ StructureFunction::StructureFunction(Configuration &_config)
 void StructureFunction::InitializeAPFEL() {
 
     if (sf_info.mass_scheme == "parton") {
-        std::out << "Mass scheme set to 'parton'. Not initializing APFEL!"
+        std::cout << "Mass scheme set to 'parton'. Not initializing APFEL!" << std::endl;
         return;
     }
 
     APFEL::SetPDFSet(sf_info.pdfset);
     APFEL::SetReplica(sf_info.replica);
     APFEL::SetMassScheme(sf_info.mass_scheme);
-    if (sf_info.disable_top == true) { // TODO: a better way of doing this
+    if (sf_info.disable_top == true) { // TODO: a better way of doing this. This should only be used for CSMS I think.
         std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
         APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[5]+0.1);
     } else {
@@ -95,22 +95,22 @@ void StructureFunction::GetCoefficients() {
     // TODO: Maybe do isospin symmetry here?
 
     if (sf_info.neutrino_type == neutrino) {
-        for (int i : down_type) {
-            F2coef[i] = 1.;
-            F3coef[i] = 1.;
+        for (int dt : down_type) {
+            F2coef[dt] = 1.;
+            F3coef[dt] = 1.;
         }
-        for (int i: up_type) {
-            F2coef[-i] = 1.;
-            F3coef[-i] = -1.;
+        for (int ut: up_type) {
+            F2coef[-ut] = 1.;
+            F3coef[-ut] = -1.;
         }
     } else if (sf_info.neutrino_type == antineutrino) {
-        for (int i : up_type) {
-            F2coef[i] = 1.;
-            F3coef[i] = 1.;
+        for (int ut : up_type) {
+            F2coef[ut] = 1.;
+            F3coef[ut] = 1.;
         }
-        for (int i: down_type) {
-            F2coef[-i] = 1.;
-            F3coef[-i] = -1.;
+        for (int dt: down_type) {
+            F2coef[-dt] = 1.;
+            F3coef[-dt] = -1.;
         }
     } else {
         throw std::runtime_error("Unidentified neutrino type!");
@@ -122,7 +122,6 @@ void StructureFunction::GetCoefficients() {
 }
 
 double StructureFunction::F1(double x, double Q2) {
-    // LO for now
     if ( (sf_info.perturbative_order == LO) && (sf_info.mass_scheme == "parton") ) {
         return F2(x, Q2) / (2. * x);
     } else {
@@ -131,7 +130,7 @@ double StructureFunction::F1(double x, double Q2) {
 }
 
 double StructureFunction::F2(double x, double Q2) {
-    if ( (sf_info.perturbative_order == LO) && (sf_info.mass_scheme == "parton") ) {
+    if ( (sf_info.mass_scheme == "parton") ) {
         auto s = PDFExtract(x, Q2);
         
         // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
@@ -155,8 +154,8 @@ double StructureFunction::F2(double x, double Q2) {
 }
 
 double StructureFunction::FL(double x, double Q2) {
-    if ( (sf_info.perturbative_order == LO) && (sf_info.mass_scheme == "parton") ) {
-        return F1(x, Q2) - 2 * x * F2(x, Q2);
+    if ( (sf_info.mass_scheme == "parton") ) {
+        return 0.0;
     } else {
         switch(sf_info.sf_type) {
             case SFType::total:  return APFEL::FLtotal(x);
@@ -170,9 +169,7 @@ double StructureFunction::FL(double x, double Q2) {
 }
 
 double StructureFunction::xF3(double x, double Q2) {
-    // only true at LO
-
-    if ( (sf_info.perturbative_order == LO) && (sf_info.mass_scheme == "parton") ) {
+    if ( (sf_info.mass_scheme == "parton") ) {
         auto s = PDFExtract(x, Q2);
 
         // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
@@ -196,10 +193,8 @@ double StructureFunction::xF3(double x, double Q2) {
 }
 
 double StructureFunction::F2_LO(map<int, double>& xq_arr) {
-    /* 
-    Example: Neutrino
-    F2 = 2x(d + s + b + ubar + cbar + tbar)
-    */
+    /* Example: Neutrino
+       F2 = 2x(d + s + b + ubar + cbar + tbar) */
     double k = 0.;
     for( int p : partons ) {
         k += F2coef[p] * xq_arr[p];
@@ -210,12 +205,13 @@ double StructureFunction::F2_LO(map<int, double>& xq_arr) {
 
 double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
     /* Example: Neutrino
-    xF3 = 2x(d + s + b - ubar - cbar - tbar)
-    */
+       xF3 = 2x(d + s + b - ubar - cbar - tbar) */
     double k=0.;
     for( int p : partons ) {        
         k += F3coef[p]*xq_arr[p];
-    }	
+        // std::cout << k << std::endl;
+    }
+    
     return 2 * k;
 }
 
@@ -226,7 +222,7 @@ double StructureFunction::F3(double x, double Q2) {
 std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
     string xt = "nearest";
-    grid_central -> setExtrapolator(xt);
+    grid_central->setExtrapolator(xt);
 
     std::map<int,double> xq_arr;
     for ( int p : partons ){
@@ -242,6 +238,11 @@ void StructureFunction::BuildSplines(string outpath) {
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
+
+    // Get the coefficients for parton calculation
+    if (sf_info.mass_scheme == "parton") {
+        GetCoefficients();
+    }
 
     // Step sizes in log space
     double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
@@ -392,6 +393,9 @@ void StructureFunction::BuildGrids(string outpath) {
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
 
+    // Get the coefficients for parton calculation
+    GetCoefficients();
+
     std::ofstream F1_file;
     std::ofstream F2_file;
     std::ofstream F3_file;
@@ -448,75 +452,6 @@ void StructureFunction::BuildGrids(string outpath) {
     }
 }
 
-double StructureFunction::ds_dxdy_LO(double x, double y, double E) {
-    GetCoefficients();
-
-    double MW2 = sf_info.M_boson2 * SQ(pc->GeV);
-    double s = 2 * M_iso * E;
-    double Q2 = s * x * y;
-
-    double prefactor = SQ(pc->GF) * s * SQ(MW2) / (2 * M_PI * SQ(Q2 + MW2));
-
-    auto p = PDFExtract(x, Q2);
-
-    //
-    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
-    string xt = "nearest";
-    grid_central -> setExtrapolator(xt);
-
-    std::map<int,double> xq_arr;
-    for ( int p : partons ){
-      xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
-    }
-    //
-    double rQ2 = Q2 / (pc->GeV2);
-
-    double _f2 = 2 * ( grid_central -> xfxQ2(1, x, rQ2)  + grid_central -> xfxQ2(3, x, rQ2)  + grid_central -> xfxQ2(5, x, rQ2) +
-                       grid_central -> xfxQ2(-2, x, rQ2) + grid_central -> xfxQ2(-4, x, rQ2) + grid_central -> xfxQ2(-6, x, rQ2) );
-    double _xf3 = 2 * ( grid_central -> xfxQ2(1, x, rQ2)  + grid_central -> xfxQ2(3, x, rQ2)  + grid_central -> xfxQ2(5, x, rQ2) -
-                        grid_central -> xfxQ2(-2, x, rQ2) - grid_central -> xfxQ2(-4, x, rQ2) - grid_central -> xfxQ2(-6, x, rQ2) );
-    
-    // double f2_lo_value = F2_LO(p);
-    double f2_lo_value = _f2;
-    // double f1_lo_value = 2 * x * f2_lo_value; // value of F1 at LO
-    // double f3_lo_value = xF3_LO(p);
-    double xf3_lo_value = _xf3;
-
-    // double term1 = x * y * y * f1_lo_value;
-    double term2 = (1 + SQ(1 - y) ) * f2_lo_value;
-    double term3 = (1 - SQ(1 - y) ) * xf3_lo_value;
-
-    return prefactor * (term2 + term3) / SQ(pc->cm);
-}
-
-double StructureFunction::ds_dxdy(double x, double y, double Q2) {
-    double _FL = FL(x, Q2);
-    double _F2 = F2(x, Q2);
-    double _F3 = xF3(x, Q2) / x;
-    // calculate manually so we don't recomopute w/ APFEL
-    double _F1 = (_F2 - _FL) / (2. * x);
-
-    // TODO: is this defined somewhere else
-    double norm;
-    if (sf_info.current == CC) {
-        norm = 1;
-    } else if (sf_info.current == NC) {
-        norm = 1;  // TODO: Fix norm for apfel NC!
-    } else {
-
-    }
-
-    double cp_factor;  // TODO: Is this defined somewhere else?
-    if (sf_info.neutrino_type == neutrino) {
-        cp_factor = 1;
-    } else if (sf_info.neutrino_type == antineutrino) {
-        cp_factor = -1;
-    } else {
-
-    }
-
-    return x*y*y * _F1 + (1 - y) * _F2 + cp_factor * x * y * (1 - y/2) * _F3;
-}
 
 double StructureFunction::Evaluate(double Q2, double x, double y){
     // only evaluates central values

@@ -54,6 +54,7 @@ class StructureFunction {
         // std::vector<std::vector<double>> grid_F1;
         // std::vector<std::vector<double>> grid_F2;
         // std::vector<std::vector<double>> grid_xF3;
+        // LHAPDF::GridPDF* grid_central;
 
     public:
         StructureFunction(Configuration& _config);
