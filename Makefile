@@ -53,7 +53,7 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 # all: bin/nu_cross.exe bin/nu_cross_classic.exe bin/nu_cross_var.exe bin/nu_total_cross_central.exe bin/nu_cross_full.exe bin/nu_cross_diff.exe
-all: bin/make_sf_splines bin/calculate_xs bin/calculate_dsdy
+all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_dsdy
 test: bin/test
 # aaron: bin/nu_cross_full_a_la_aaron_muon.exe bin/nu_cross_full_a_la_aaron_tau.exe
 
@@ -65,6 +65,9 @@ bin/calculate_dsdy: src/configuration.o src/structure_function.o src/cross_secti
 
 bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
+bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_all_sf_splines.o
+	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/make_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@

@@ -64,7 +64,7 @@ struct SFInfo {
     double PDFQ2max;
 
     double M_boson2;  // squared mass of the boson (W or Z)
-
+    double cp_factor;
     bool disable_top; // Set the top mass to ~bottom mass+0.1, used for CSMS calculation 
     bool Use_APFEL_LO; // Use APFEL for LO calculation?
 };

@@ -316,7 +316,7 @@ void StructureFunction::BuildSplines(string outpath) {
             double _F2 = F2(x, Q2);
             // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
             double _F1 = (_F2 - _FL) / (2. * x);
-            double _F3 = F3(x, Q2);
+            double _F3 = sf_info.cp_factor * F3(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
@@ -381,9 +381,9 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Write splines
-    F1_spline.write_fits(outpath + "/F1_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
-    F2_spline.write_fits(outpath + "/F2_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
-    F3_spline.write_fits(outpath + "/F3_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
+    F1_spline.write_fits(outpath + "/F1_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
+    F2_spline.write_fits(outpath + "/F2_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
+    F3_spline.write_fits(outpath + "/F3_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
 }
 
 void StructureFunction::BuildGrids(string outpath) {
@@ -399,9 +399,9 @@ void StructureFunction::BuildGrids(string outpath) {
     std::ofstream F1_file;
     std::ofstream F2_file;
     std::ofstream F3_file;
-    F1_file.open(outpath + "/F1_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
-    F2_file.open(outpath + "/F2_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
-    F3_file.open(outpath + "/F3_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
+    F1_file.open(outpath + "/F1_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
+    F2_file.open(outpath + "/F2_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
+    F3_file.open(outpath + "/F3_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
 
     // Step sizes in log space
     double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
@@ -424,7 +424,7 @@ void StructureFunction::BuildGrids(string outpath) {
             double _F2 = F2(x, Q2);
             // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
             double _F1 = (_F2 - _FL) / (2. * x);
-            double _F3 = F3(x, Q2);
+            double _F3 = sf_info.cp_factor * F3(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;

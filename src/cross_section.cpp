@@ -20,7 +20,6 @@ void CrossSection::Load_F1(string path) {
     }
     F1.read_fits(path);
     std::cout << "Loaded F1!" << std::endl;
-    // TODO: some sort of check that this worked
     F1_loaded = true;
 }
 
@@ -110,6 +109,8 @@ double CrossSection::ds_dxdy_partonic(double E, double x, double y) {
 }
 
 double CrossSection::ds_dxdy_partonic(double x, double y) {
+    // TODO: W threshold and slow rescaling
+    
     double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
     double s_energy = 2 * M_iso * ENU; // using s for strange parton later

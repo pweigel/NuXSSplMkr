@@ -5,8 +5,11 @@
 
 int main(int argc, char* argv[]){
     if (argc < 5) {
-        std::cout << "Not enough inputs." << std::endl;
-        return 0;
+        std::cout << "Not enough inputs!" << std::endl;
+        return 1;
+    } else if (argc > 5) {
+        std::cout << "Too many inputs!" << std::endl;
+        return 1;
     }
 
     const std::string config_path = argv[1];
@@ -37,7 +40,7 @@ int main(int argc, char* argv[]){
     
     std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
     boost::filesystem::path out_folder = _out_folder;
-    if (! boost::filesystem::exists(out_folder)) {
+    if (!boost::filesystem::exists(out_folder)) {
         boost::filesystem::create_directories(out_folder);
     }
     
