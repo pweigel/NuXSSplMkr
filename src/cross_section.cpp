@@ -6,6 +6,13 @@ CrossSection::CrossSection(Configuration& config) {
     sf_info = config.sf_info;
     pc = new nuxssplmkr::PhysConst();
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
+
+    // Set limits of integration
+    // Note: these will change based on neutrino energy and certain features
+    integral_min_Q2 = sf_info.Q2min;
+    integral_max_Q2 = sf_info.Q2max;
+    integral_min_x = sf_info.xmin;
+    integral_max_x = sf_info.xmax;
 }
 
 void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
@@ -43,11 +50,31 @@ void CrossSection::Load_F3(string path) {
 
 void CrossSection::Set_Neutrino_Energy(double E) {
     ENU = E;
+    integral_max_Q2 = sqrt(2.0 * M_iso * ENU); // TODO: M_ISO --> target mass
 }
 
 double CrossSection::_ds_dxdy(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
+
+    // Integration limits
+    double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+    double Q2 = 2.0 * M_iso * ENU * x * y;  // Q2 = s x y - m^2
+    // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
+    double W2 =  2.0 * M_iso * ENU * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+
+    // TODO: better implementation
+    if (W2 < W2min) {
+        return 1e-99;
+    }
+
+    if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
+        return 1e-99;
+    } 
+    else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
+        return 1e-99;
+    }
+
     // Jacobian = x * y, needed because we're integrating over log space
     return x * y * ds_dxdy(x, y);
 }
@@ -60,20 +87,12 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    double s = 2.*M_iso*ENU + SQ(M_iso);
-    double Q2 = (s - SQ(M_iso)) * x * y;
+    double s = 2.0 * M_iso * ENU + SQ(M_iso); // TODO: target mass
+    double Q2 = (s - SQ(M_iso)) * x * y; // TODO: target mass
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
-    double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy
-
-    // Constraints
-    if (Q2 / SQ(pc->GeV) < 1) {
-        return 0.0;
-    } 
-    else if (Q2 / SQ(pc->GeV) > sf_info.Q2max) {
-        Q2 = sf_info.Q2max * SQ(pc->GeV); // freeze
-    }
+    double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
     
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
@@ -109,7 +128,7 @@ double CrossSection::ds_dxdy_partonic(double E, double x, double y) {
 }
 
 double CrossSection::ds_dxdy_partonic(double x, double y) {
-    // TODO: W threshold and slow rescaling
+    // TODO: W threshold and slow rescaling, CP factor fix
     
     double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
@@ -185,12 +204,30 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
 }
 
 double CrossSection::_ds_dy(double k) {
-    double x = std::pow(10, k);
+    double x = std::exp(k);
+
+    // Integration limits
+    double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+    double Q2 = 2.0 * M_iso * ENU * x * _kernel_y;  // Q2 = s x y - m^2
+    // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
+    double W2 =  2.0 * M_iso * ENU * _kernel_y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+
+    // TODO: better implementation
+    if (W2 < W2min) {
+        return 1e-99;
+    }
+
+    if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
+        return 1e-99;
+    } 
+    else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
+        return 1e-99;
+    }
     return x * ds_dxdy(x, _kernel_y);
 }
 
 double CrossSection::_ds_dy_partonic(double k) {
-    double x = std::pow(10, k);
+    double x = std::exp(k);
     return x * ds_dxdy_partonic(x, _kernel_y);
 }
 
@@ -217,7 +254,7 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    gsl_integration_qag ( &F, log(1.e-8), log(1.), 0, 1.e-5, 5000, 6, w, &result, &error);
+    gsl_integration_qag ( &F, log(1.e-9), log(1.), 0, 1.e-5, 5000, 6, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;
@@ -230,7 +267,7 @@ double CrossSection::TotalXS(double E){
     const unsigned long dim = 2; int calls = 50000;
 
     // integrating on the log of x and y
-    double xl[dim] = { log(1.e-8), log(1.e-8) };
+    double xl[dim] = { log(1.e-9), log(1.e-9) };
     double xu[dim] = { log(1.)   , log(1.)    };
 
     gsl_rng_env_setup ();

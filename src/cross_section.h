@@ -51,6 +51,12 @@ class CrossSection {
 
         double _kernel_y; // Used for integration
 
+        // Limits of integration
+        double integral_min_Q2;
+        double integral_max_Q2;
+        double integral_min_x;
+        double integral_max_x;
+
         // ~ Kernel Functions ~
         double _ds_dy(double k);
         double _ds_dxdy(double* k);

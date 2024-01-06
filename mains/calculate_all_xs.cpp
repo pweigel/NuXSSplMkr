@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 
     int Ny = 100;
     double ymin = 1e-4;
-    double ymax = 0.75;
+    double ymax = 1.0;
     double dy = (ymax - ymin) / (Ny-1);
 
     PhysConst* pc = new PhysConst();
@@ -88,9 +88,10 @@ int main(int argc, char* argv[]){
                     for (int yi = 0; yi < Ny; yi++) { // loop over y
                         double y = ymin + yi * dy;
                         double _dxs = std::log10(xs->ds_dy(E, y));
-                        dsdy_outfile << y << "," << _dxs << std::endl;
+                        // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
+                        dsdy_outfile << _dxs << std::endl;
                     }
-                    dsdy_outfile << "\n";
+                    // dsdy_outfile << "\n";
                 }
                 dsdy_outfile.close();
             }
