@@ -2,7 +2,7 @@
 
 namespace nuxssplmkr {
 
-CrossSection::CrossSection(Configuration config) {
+CrossSection::CrossSection(Configuration& config) {
     sf_info = config.sf_info;
     pc = new nuxssplmkr::PhysConst();
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
@@ -91,8 +91,8 @@ double CrossSection::ds_dxdy(double x, double y) {
     
     double term1 = y * ( y * x ) * F1_val;
     double term2 = ( 1 - y ) * F2_val;
-    double term3 = ( x*y*(1-y/2) ) * F3_val;
-    
+    double term3 = sf_info.cp_factor * ( x*y*(1-y/2) ) * F3_val;
+
     double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
@@ -178,8 +178,7 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     double term1 = y * ( y * x ) * F1_val;
     double term2 = ( 1 - y ) * F2_val;
     // double term3 = ( x*y*(1-y/2) ) * F3_val;
-    double term3 = ( y*(1-y/2) ) * xF3_val; // note: removed x here because we are computing xF3
-    
+    double term3 = sf_info.cp_factor * ( y*(1-y/2) ) * xF3_val; // note: removed x here because we are computing xF3
     double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }

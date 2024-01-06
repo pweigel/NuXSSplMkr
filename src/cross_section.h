@@ -36,7 +36,6 @@ double HK(double x, void* param){
 
 class CrossSection {
     private:
-        SFInfo sf_info;
 
         double APFEL_NC_Factor;
         double Normalization;
@@ -59,9 +58,10 @@ class CrossSection {
         double _ds_dxdy_partonic(double* k);
 
     public:
-        CrossSection(Configuration config);
+        CrossSection(Configuration& config);
         ~CrossSection() {};
 
+        SFInfo sf_info;
         PhysConst* pc; // Constants
 
         // ~ Calculations ~

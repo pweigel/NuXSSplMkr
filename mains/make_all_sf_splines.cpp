@@ -16,8 +16,7 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"total", "charm"};
-
+    string sf_types[] = {"total"};//, "charm"};
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -30,15 +29,16 @@ int main(int argc, char* argv[]){
     config.Populate();  // Populate the SF info
 
     for (const string &sf_type : sf_types) {
+        config.Set_SF_Type(sf_type);
         std::cout << "SFType set to: " << sf_type << std::endl;
+
         for (const string &projectile : projectiles) {
+            config.Set_Projectile(projectile);
             std::cout << "Projectile set to: " << projectile << std::endl;
+
             for (const string &target : targets) {
-                std::cout << "Target set to: " << target << std::endl;
-                
                 config.Set_Target(target);
-                config.Set_Projectile(projectile);
-                config.Set_SF_Type(sf_type);
+                std::cout << "Target set to: " << target << std::endl;
 
                 nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
                 nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();

@@ -70,7 +70,7 @@ void Configuration::Set_Projectile(string projectile_string) {
     sf_info.projectile = projectile_string;
     sf_info.neutrino_type = NeutrinoTypeMap.at(projectile_string);
     switch (sf_info.neutrino_type) {
-        case NeutrinoType::neutrino: 
+        case NeutrinoType::neutrino:
             sf_info.cp_factor = 1.0;
             break;
         case NeutrinoType::antineutrino: 

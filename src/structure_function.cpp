@@ -316,7 +316,7 @@ void StructureFunction::BuildSplines(string outpath) {
             double _F2 = F2(x, Q2);
             // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
             double _F1 = (_F2 - _FL) / (2. * x);
-            double _F3 = sf_info.cp_factor * F3(x, Q2);
+            double _F3 = F3(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
@@ -424,7 +424,7 @@ void StructureFunction::BuildGrids(string outpath) {
             double _F2 = F2(x, Q2);
             // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
             double _F1 = (_F2 - _FL) / (2. * x);
-            double _F3 = sf_info.cp_factor * F3(x, Q2);
+            double _F3 = F3(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
