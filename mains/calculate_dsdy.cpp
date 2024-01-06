@@ -33,9 +33,9 @@ int main(int argc, char* argv[]){
     CrossSection* xs = new CrossSection(config);
 
     // load the three structure function fit files
-    string f1 = data_folder + "/F1_" + target + "_" + xs_type + ".fits";
-    string f2 = data_folder + "/F2_" + target + "_" + xs_type + ".fits";
-    string f3 = data_folder + "/F3_" + target + "_" + xs_type + ".fits";
+    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
     // TOTAL XS
     int NE = 100;

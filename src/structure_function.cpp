@@ -245,15 +245,15 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Step sizes in log space
-    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
-    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / Nx;
+    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / (NQ2 - 1);
+    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / (Nx - 1);
 
     // Spline parameters
     const uint32_t dim = 2;
     std::vector<uint32_t> orders(dim, 2);
 
-    unsigned int Nknots_Q2 = 100;
-    unsigned int Nknots_x = 100;
+    unsigned int Nknots_Q2 = sf_info.Nx;
+    unsigned int Nknots_x = sf_info.NQ2;
 
     std::vector<double> Q2_knots;
     std::vector<double> x_knots;
@@ -269,27 +269,27 @@ void StructureFunction::BuildSplines(string outpath) {
     // Get the Q2 and x values
     size_t N_samples = Nx * NQ2;
     for ( double log_Q2 = std::log10(sf_info.Q2min); log_Q2<std::log10(sf_info.Q2max); log_Q2 += d_log_Q2 ) {
-        double powQ2 = std::pow( 10, log_Q2 + 0.5 * d_log_Q2 );
-        double Q2 = log_Q2 + 0.5 * d_log_Q2;
+        double powQ2 = std::pow( 10, log_Q2);
+        double Q2 = log_Q2;
         if (powQ2 > sf_info.Q2max) continue;
         Q2_arr.push_back(Q2);
     }
 
     for ( double log_x = std::log10(sf_info.xmin); log_x<std::log10(sf_info.xmax); log_x += d_log_x ) {
-        double powx = std::pow( 10, log_x + 0.5*d_log_x );
-        double x = log_x + 0.5*d_log_x;
+        double powx = std::pow( 10, log_x);
+        double x = log_x ;
         if ( powx > sf_info.xmax ) continue;
         x_arr.push_back(x);
     }
 
     // Get the knots for Q2 and x
     for ( double log_Q2 = std::log10(sf_info.Q2min) - 2*d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max); log_Q2 += d_log_Q2_knot ) {
-        double knot = log_Q2 + 0.5 * d_log_Q2_knot;
+        double knot = log_Q2;
         Q2_knots.push_back(knot);
     }
 
     for ( double log_x = std::log10(sf_info.xmin) - 2*d_log_x_knot; log_x <= 1; log_x += d_log_x_knot ) {
-        double knot = log_x + 0.5 * d_log_x_knot;
+        double knot = log_x;
         x_knots.push_back(knot);
     }
 
@@ -298,7 +298,7 @@ void StructureFunction::BuildSplines(string outpath) {
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F2_spline_data;
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
     for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
-        double log_Q2 = std::log10(sf_info.Q2min) + (0.5 + Q2i) * d_log_Q2;
+        double log_Q2 = std::log10(sf_info.Q2min) + Q2i * d_log_Q2;
         double Q2 = std::pow(10.0, log_Q2);
 
         if (sf_info.mass_scheme != "parton") {
@@ -306,7 +306,7 @@ void StructureFunction::BuildSplines(string outpath) {
         }
 
         for (unsigned int xi = 0; xi < Nx; xi++) {
-            double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
+            double log_x = std::log10(sf_info.xmin) + xi * d_log_x;
             double x = std::pow(10.0, log_x);
 
             // Do checks here

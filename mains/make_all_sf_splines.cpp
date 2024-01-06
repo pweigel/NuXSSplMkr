@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"total"};//, "charm"};
+    string sf_types[] = {"total", "charm"};
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;

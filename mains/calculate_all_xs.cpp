@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"total"};//, "charm"};
+    string sf_types[] = {"total", "charm"};
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -32,6 +32,12 @@ int main(int argc, char* argv[]){
     double logemax = 9;
     int NE = 100;
     double dE = (logemax - logemin) / (NE-1);
+
+    int Ny = 100;
+    double ymin = 1e-4;
+    double ymax = 0.75;
+    double dy = (ymax - ymin) / (Ny-1);
+
     PhysConst* pc = new PhysConst();
 
     Configuration config = Configuration(config_path);
@@ -63,8 +69,9 @@ int main(int argc, char* argv[]){
                     xs->Load_Structure_Functions(f1, f2, f3);
                 }
 
+                // total
                 std::ofstream outfile;
-                outfile.open(data_folder + "/cross_sections/" + projectile + "_" + target + "_" + sf_type + ".out");
+                outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
 
                 for (int ei = 0; ei < NE; ei++) {
                     double E = pc->GeV * std::pow(10, logemin + ei * dE);
@@ -72,6 +79,20 @@ int main(int argc, char* argv[]){
                     outfile << E << "," << _xs << "\n";
                 }
                 outfile.close();
+
+                // ds/dy
+                std::ofstream dsdy_outfile;
+                dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
+                for (int ei = 0; ei < NE; ei++) {
+                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                    for (int yi = 0; yi < Ny; yi++) { // loop over y
+                        double y = ymin + yi * dy;
+                        double _dxs = std::log10(xs->ds_dy(E, y));
+                        dsdy_outfile << y << "," << _dxs << std::endl;
+                    }
+                    dsdy_outfile << "\n";
+                }
+                dsdy_outfile.close();
             }
         }
     }
