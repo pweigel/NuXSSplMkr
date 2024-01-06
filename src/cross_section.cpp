@@ -60,8 +60,8 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    double s = 2 * M_iso * ENU;
-    double Q2 = s * x * y;
+    double s = 2.*M_iso*ENU + SQ(M_iso);
+    double Q2 = (s - SQ(M_iso)) * x * y;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
@@ -113,8 +113,9 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     
     double MW2 = sf_info.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    double s_energy = 2 * M_iso * ENU; // using s for strange parton later
-    double Q2 = s_energy * x * y;
+    double s_energy = 2.*M_iso*ENU + SQ(M_iso); // using s for strange parton later
+    double Q2 = (s_energy - SQ(M_iso)) * x * y;
+
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
