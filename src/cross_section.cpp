@@ -9,7 +9,8 @@ CrossSection::CrossSection(Configuration& config) {
 
     // Set limits of integration
     // Note: these will change based on neutrino energy and certain features
-    integral_min_Q2 = sf_info.Q2min;
+    // integral_min_Q2 = sf_info.Q2min;
+    integral_min_Q2 = 2.0;
     integral_max_Q2 = sf_info.Q2max;
     integral_min_x = sf_info.xmin;
     integral_max_x = sf_info.xmax;
@@ -184,7 +185,7 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     double tbar = sf_info.pdf -> xfxQ2(-6, x, Q2/(pc->GeV2));
 
     double F2_val;
-    double xF3_val;
+    double xF3_val; // TODO:
     if (sf_info.sf_type == SFType::charm) {
         F2_val =  2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
         xF3_val = 2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
@@ -207,7 +208,12 @@ double CrossSection::_ds_dy(double k) {
     double x = std::exp(k);
 
     // Integration limits
-    double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+    double W2min;
+    if (sf_info.sf_type == charm) {
+        W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+    } else {
+        W2min = SQ( (0.938 + 1.869) * pc->GeV); // (m_N + m_D)^2
+    }
     double Q2 = 2.0 * M_iso * ENU * x * _kernel_y;  // Q2 = s x y - m^2
     // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
     double W2 =  2.0 * M_iso * ENU * _kernel_y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
@@ -243,7 +249,7 @@ double CrossSection::ds_dy(double E, double y) {
     Set_Neutrino_Energy(E);
     _kernel_y = y;
 
-    gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc(10000);
     double result, error;
 
     gsl_function F;
@@ -254,7 +260,7 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    gsl_integration_qag ( &F, log(1.e-9), log(1.), 0, 1.e-5, 5000, 6, w, &result, &error);
+    gsl_integration_qag ( &F, log(1.e-9), log(1.), 0, 1.e-5, 10000, 6, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;

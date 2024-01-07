@@ -233,8 +233,8 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
 void StructureFunction::BuildSplines(string outpath) {
-    const unsigned int Nx = sf_info.Nx;
-    const unsigned int NQ2 = sf_info.NQ2;
+    const unsigned int Nx = sf_info.Nx * 2;
+    const unsigned int NQ2 = sf_info.NQ2 * 2;
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
@@ -252,8 +252,8 @@ void StructureFunction::BuildSplines(string outpath) {
     const uint32_t dim = 2;
     std::vector<uint32_t> orders(dim, 2);
 
-    unsigned int Nknots_Q2 = sf_info.Nx;
-    unsigned int Nknots_x = sf_info.NQ2;
+    unsigned int Nknots_Q2 = sf_info.Nx * 2 + 2;
+    unsigned int Nknots_x = sf_info.NQ2 * 2 + 2;
 
     std::vector<double> Q2_knots;
     std::vector<double> x_knots;
@@ -283,12 +283,12 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Get the knots for Q2 and x
-    for ( double log_Q2 = std::log10(sf_info.Q2min) - 2*d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max); log_Q2 += d_log_Q2_knot ) {
+    for ( double log_Q2 = std::log10(sf_info.Q2min) - d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
         double knot = log_Q2;
         Q2_knots.push_back(knot);
     }
 
-    for ( double log_x = std::log10(sf_info.xmin) - 2*d_log_x_knot; log_x <= 1; log_x += d_log_x_knot ) {
+    for ( double log_x = std::log10(sf_info.xmin) - d_log_x_knot; log_x <= 1 + d_log_x_knot; log_x += d_log_x_knot ) {
         double knot = log_x;
         x_knots.push_back(knot);
     }
