@@ -214,6 +214,91 @@ plt.tight_layout()
 plt.savefig('plots/charm_fraction.pdf')
 plt.close()
 
+# Single differential cross sections
+
+
+Ei = 0
+scale = 1e35
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(111)
+ax.plot(dxs['y'], scale*dxs['nu']['i']['total'][Ei, :], linewidth=2, color='k', label=r'$\nu~\textrm{Total}$')
+ax.plot(dxs['y'], scale*dxs['nubar']['i']['total'][Ei, :], linewidth=2, color='k', linestyle='--', label=r'$\bar{\nu}~\textrm{Total}$')
+ax.plot(dxs['y'], scale*dxs_nocharm['nu']['i']['charm'][Ei, :], linewidth=2, color='m', label=r'$\nu~\textrm{Charm}$')
+ax.plot(dxs['y'], scale*dxs_nocharm['nubar']['i']['charm'][Ei, :], linewidth=2, color='m', linestyle='--', label=r'$\bar{\nu}~\textrm{Charm}$')
+ax.set_xscale('linear')
+ax.set_yscale('linear')
+ax.set_xlim([0, 1])
+ax.set_ylim([0, None])
+ax.set_xlabel(r'$y$')
+ax.set_ylabel(r'$\frac{d\sigma}{dy}~[10^{-35}~\textrm{cm}^2]$')
+ax.set_title(r'$\textrm{CT18A NNLO},~E = 500~\textrm{GeV}$')
+ax.legend()
+ax.grid(True, which='both')
+plt.tight_layout()
+plt.savefig('plots/dsdy_500GeV.pdf')
+plt.close()
+
+scale = 1e35
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(111)
+ax.plot(dxs['y'], dxs['nu']['i']['total'][Ei, :] / xs['nu']['i']['total'][Ei], linewidth=2, color='k', label=r'$\nu~\textrm{Total}$')
+ax.plot(dxs['y'], dxs['nubar']['i']['total'][Ei, :] / xs['nubar']['i']['total'][Ei], linewidth=2, color='k', linestyle='--', label=r'$\bar{\nu}~\textrm{Total}$')
+ax.plot(dxs['y'], dxs_nocharm['nu']['i']['charm'][Ei, :] / xs['nu']['i']['total'][Ei], linewidth=2, color='m', label=r'$\nu~\textrm{Charm}$')
+ax.plot(dxs['y'], dxs_nocharm['nubar']['i']['charm'][Ei, :] / xs['nubar']['i']['total'][Ei], linewidth=2, color='m', linestyle='--', label=r'$\bar{\nu}~\textrm{Charm}$')
+ax.set_xscale('linear')
+ax.set_yscale('linear')
+ax.set_xlim([0, 1])
+ax.set_ylim([0, None])
+ax.set_xlabel(r'$y$')
+ax.set_ylabel(r'$\frac{1}{\sigma}\frac{d\sigma}{dy}$')
+ax.set_title(r'$\textrm{CT18A NNLO},~E = 500~\textrm{GeV}$')
+ax.legend()
+ax.grid(True, which='both')
+plt.tight_layout()
+plt.savefig('plots/dsdy_500GeV_normalized.pdf')
+plt.close()
+
+Ei = 25
+scale = 1e35
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(111)
+ax.plot(dxs['y'], scale*dxs['nu']['i']['total'][Ei, :], linewidth=2, color='k', label=r'$\nu~\textrm{Total}$')
+ax.plot(dxs['y'], scale*dxs['nubar']['i']['total'][Ei, :], linewidth=2, color='k', linestyle='--', label=r'$\bar{\nu}~\textrm{Total}$')
+ax.plot(dxs['y'], scale*dxs_nocharm['nu']['i']['charm'][Ei, :], linewidth=2, color='m', label=r'$\nu~\textrm{Charm}$')
+ax.plot(dxs['y'], scale*dxs_nocharm['nubar']['i']['charm'][Ei, :], linewidth=2, color='m', linestyle='--', label=r'$\bar{\nu}~\textrm{Charm}$')
+ax.set_xscale('linear')
+ax.set_yscale('linear')
+ax.set_xlim([0, 1])
+ax.set_ylim([0, None])
+ax.set_xlabel(r'$y$')
+ax.set_ylabel(r'$\frac{d\sigma}{dy}~[10^{-35}~\textrm{cm}^2]$')
+ax.set_title(r'$\textrm{CT18A NNLO},~E = 5857~\textrm{GeV}$')
+ax.legend()
+ax.grid(True, which='both')
+plt.tight_layout()
+plt.savefig('plots/dsdy_5857GeV.pdf')
+plt.close()
+
+scale = 1e35
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(111)
+ax.plot(dxs['y'], dxs['nu']['i']['total'][Ei, :] / xs['nu']['i']['total'][Ei], linewidth=2, color='k', label=r'$\nu~\textrm{Total}$')
+ax.plot(dxs['y'], dxs['nubar']['i']['total'][Ei, :] / xs['nubar']['i']['total'][Ei], linewidth=2, color='k', linestyle='--', label=r'$\bar{\nu}~\textrm{Total}$')
+ax.plot(dxs['y'], dxs_nocharm['nu']['i']['charm'][Ei, :] / xs['nu']['i']['total'][Ei], linewidth=2, color='m', label=r'$\nu~\textrm{Charm}$')
+ax.plot(dxs['y'], dxs_nocharm['nubar']['i']['charm'][Ei, :] / xs['nubar']['i']['total'][Ei], linewidth=2, color='m', linestyle='--', label=r'$\bar{\nu}~\textrm{Charm}$')
+ax.set_xscale('linear')
+ax.set_yscale('linear')
+ax.set_xlim([0, 1])
+ax.set_ylim([0, None])
+ax.set_xlabel(r'$y$')
+ax.set_ylabel(r'$\frac{1}{\sigma}\frac{d\sigma}{dy}$')
+ax.set_title(r'$\textrm{CT18A NNLO},~E = 5857~\textrm{GeV}$')
+ax.legend()
+ax.grid(True, which='both')
+plt.tight_layout()
+plt.savefig('plots/dsdy_5857GeV_normalized.pdf')
+plt.close()
+
 exit()
 scale = 1e36
 _x, _y = np.meshgrid(E, y)
@@ -226,7 +311,7 @@ plt.colorbar(ax_img, ax=ax)
 plt.savefig('test_dsdy_nocharm.png')
 
 
-Ei = 25
+Ei = 0
 fig = plt.figure(figsize=(12, 9))
 ax = fig.add_subplot(111)
 ax.plot(y, scale * nu_i_total[Ei, :], color='r', label=r'$\nu$ Total')
@@ -236,13 +321,8 @@ ax.plot(y, scale * nu_i_charm[Ei, :], color='r', linestyle='--', label=r'$\nu$ C
 ax.plot(y, scale * nubar_i_charm[Ei, :], color='b', linestyle='--', label=r'$\bar{\nu}$ Charm')
 ax.plot(y, scale * (nu_i_charm[Ei, :] + nubar_i_charm[Ei, :]), color='k', linestyle='--', label=r'$\nu+\bar{\nu}$ Charm')
 
-# ax.set_xlim([0, 1])
-# ax.set_ylim([0, None])
-
-ax.set_xscale('log')
-ax.legend()
-ax.set_title(r'$E = 500~\textrm{GeV}$')
-plt.savefig('test_dsdy_1d_nocharm.pdf')
+ax.set_title(r'$E = 100~\textrm{GeV}$')
+plt.savefig('ok.pdf')
 print(E[Ei])
 
 # fig = plt.figure(figsize=(8, 6))

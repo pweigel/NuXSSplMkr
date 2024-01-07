@@ -10,7 +10,7 @@ CrossSection::CrossSection(Configuration& config) {
     // Set limits of integration
     // Note: these will change based on neutrino energy and certain features
     // integral_min_Q2 = sf_info.Q2min;
-    integral_min_Q2 = 2.0;
+    integral_min_Q2 = 1.6;
     integral_max_Q2 = sf_info.Q2max;
     integral_min_x = sf_info.xmin;
     integral_max_x = sf_info.xmax;
@@ -51,7 +51,7 @@ void CrossSection::Load_F3(string path) {
 
 void CrossSection::Set_Neutrino_Energy(double E) {
     ENU = E;
-    integral_max_Q2 = sqrt(2.0 * M_iso * ENU); // TODO: M_ISO --> target mass
+    integral_max_Q2 = 2.0 * M_iso * ENU; // TODO: M_ISO --> target mass
 }
 
 double CrossSection::_ds_dxdy(double* k) {
@@ -135,27 +135,11 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
 
     double s_energy = 2.*M_iso*ENU + SQ(M_iso); // using s for strange parton later
     double Q2 = (s_energy - SQ(M_iso)) * x * y;
-
+    double mQ2 = Q2/(pc->GeV2); // This is used a lot, so precompute it
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s_energy * x; // from d2s/dxdQ2 --> d2s/dxdy
-
-    // Constraints
-    if (Q2 / SQ(pc->GeV) < 1) {
-        return 0.0;
-    } 
-    else if (Q2 / SQ(pc->GeV) > sf_info.Q2max) {
-        Q2 = sf_info.Q2max * SQ(pc->GeV); // freeze
-    }
-
-    // LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
-    // string xt = "nearest";
-    // grid_central->setExtrapolator(xt);
-
-    // const LHAPDF::PDF* grid_central = LHAPDF::mkPDF(sf_info.pdf, sf_info.replica);
-
-    // grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
 
     // TODO: Generalize p/n and nu/nubar
     double d;
@@ -163,35 +147,51 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     double u;
     double ubar;
     if (sf_info.target == "proton") {
-        d    = sf_info.pdf -> xfxQ2(1, x, Q2/(pc->GeV2));
-        dbar = sf_info.pdf -> xfxQ2(-1, x, Q2/(pc->GeV2));
-        u    = sf_info.pdf -> xfxQ2(2, x, Q2/(pc->GeV2));
-        ubar = sf_info.pdf -> xfxQ2(-2, x, Q2/(pc->GeV2));
+        d    = sf_info.pdf -> xfxQ2(1, x, mQ2);
+        dbar = sf_info.pdf -> xfxQ2(-1, x, mQ2);
+        u    = sf_info.pdf -> xfxQ2(2, x, mQ2);
+        ubar = sf_info.pdf -> xfxQ2(-2, x, mQ2);
+    } else if (sf_info.target == "neutron") {
+        d    = sf_info.pdf -> xfxQ2(2, x, mQ2);
+        dbar = sf_info.pdf -> xfxQ2(-2, x, mQ2);
+        u    = sf_info.pdf -> xfxQ2(1, x, mQ2);
+        ubar = sf_info.pdf -> xfxQ2(-1, x, mQ2);
     } else {
-        d    = sf_info.pdf -> xfxQ2(2, x, Q2/(pc->GeV2));
-        dbar = sf_info.pdf -> xfxQ2(-2, x, Q2/(pc->GeV2));
-        u    = sf_info.pdf -> xfxQ2(1, x, Q2/(pc->GeV2));
-        ubar = sf_info.pdf -> xfxQ2(-1, x, Q2/(pc->GeV2));
+        throw std::runtime_error("Unrecognized target type!");
     }
 
-    double s    = sf_info.pdf -> xfxQ2(3, x, Q2/(pc->GeV2));
-    double sbar = sf_info.pdf -> xfxQ2(-3, x, Q2/(pc->GeV2));
-    double b    = sf_info.pdf -> xfxQ2(5, x, Q2/(pc->GeV2));
-    double bbar = sf_info.pdf -> xfxQ2(-5, x, Q2/(pc->GeV2));
+    double s    = sf_info.pdf -> xfxQ2(3, x, mQ2);
+    double sbar = sf_info.pdf -> xfxQ2(-3, x, mQ2);
+    double b    = sf_info.pdf -> xfxQ2(5, x, mQ2);
+    double bbar = sf_info.pdf -> xfxQ2(-5, x, mQ2);
 
-    double c    = sf_info.pdf -> xfxQ2(4, x, Q2/(pc->GeV2));
-    double cbar = sf_info.pdf -> xfxQ2(-4, x, Q2/(pc->GeV2));
-    double t    = sf_info.pdf -> xfxQ2(6, x, Q2/(pc->GeV2));
-    double tbar = sf_info.pdf -> xfxQ2(-6, x, Q2/(pc->GeV2));
+    double c    = sf_info.pdf -> xfxQ2(4, x, mQ2);
+    double cbar = sf_info.pdf -> xfxQ2(-4, x, mQ2);
+    double t    = sf_info.pdf -> xfxQ2(6, x, mQ2);
+    double tbar = sf_info.pdf -> xfxQ2(-6, x, mQ2);
 
     double F2_val;
     double xF3_val; // TODO:
     if (sf_info.sf_type == SFType::charm) {
-        F2_val =  2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
-        xF3_val = 2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
+        if (sf_info.neutrino_type == NeutrinoType::neutrino) {
+            F2_val =  2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
+            xF3_val = 2 * (SQ(sf_info.Vcd)*d + SQ(sf_info.Vcs)*s + SQ(sf_info.Vcb)*b);
+        } else if (sf_info.neutrino_type == NeutrinoType::antineutrino) {
+            F2_val =   2 * (SQ(sf_info.Vcd)*dbar + SQ(sf_info.Vcs)*sbar + SQ(sf_info.Vcb)*bbar);
+            xF3_val = -2 * (SQ(sf_info.Vcd)*dbar + SQ(sf_info.Vcs)*sbar + SQ(sf_info.Vcb)*bbar);
+        } else {
+            throw std::runtime_error("Unrecognized neutrino type!");
+        }
     } else {
-        F2_val =  2 * (d + s + b + ubar + cbar + tbar);
-        xF3_val = 2 * (d + s + b - ubar - cbar - tbar);
+        if (sf_info.neutrino_type == NeutrinoType::neutrino) {
+            F2_val =  2 * (d + s + b + ubar + cbar + tbar);
+            xF3_val = 2 * (d + s + b - ubar - cbar - tbar);
+        } else if (sf_info.neutrino_type == NeutrinoType::antineutrino) {
+            F2_val =  2 * (u + c + t + dbar + sbar + bbar);
+            xF3_val = 2 * (u + c + t - dbar - sbar - bbar);
+        } else {
+            throw std::runtime_error("Unrecognized neutrino type!");
+        }
     }
 
     double F1_val = F2_val / (2.0 * x);
@@ -210,9 +210,9 @@ double CrossSection::_ds_dy(double k) {
     // Integration limits
     double W2min;
     if (sf_info.sf_type == charm) {
-        W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
-    } else {
         W2min = SQ( (0.938 + 1.869) * pc->GeV); // (m_N + m_D)^2
+    } else {
+        W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
     }
     double Q2 = 2.0 * M_iso * ENU * x * _kernel_y;  // Q2 = s x y - m^2
     // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
