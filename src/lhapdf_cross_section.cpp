@@ -45,10 +45,10 @@ double LHAXS::SigR_Nu_LO_NC(double x, double y,
                             map<int,LHAPDF::PDFUncertainty> dis,
                             std::map<std::pair<int,int>,double> cov_m,
                             int c){
-  // using notation from https://arxiv.org/pdf/1102.0691.pdf
-  double k = 0;
-	double q0 = 0.;
-	double q0bar = 0.;
+    // using notation from https://arxiv.org/pdf/1102.0691.pdf
+    double k = 0;
+    double q0 = 0.;
+    double q0bar = 0.;
 
   map<int,double> SigRcoef;
   if (CP_factor > 0 ){
