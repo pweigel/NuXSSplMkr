@@ -57,6 +57,9 @@ void Configuration::Populate() {
     // sf_info.sf_type_string = "total"; // default is total
     // sf_info.sf_type = SFType::total;
     sf_info.disable_top = config.get<bool>("disable_top");
+    sf_info.enable_small_x = config.get<bool>("enable_small_x");
+    sf_info.small_x_order = config.get<string>("small_x_order");  // TODO: using existing enum
+    sf_info.evolve_pdf = config.get<bool>("evolve_pdf");
     // sf_info.disable_top = false;
     sf_info.Use_APFEL_LO = true;  // TODO!
 }

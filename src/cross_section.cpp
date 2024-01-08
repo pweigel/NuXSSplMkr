@@ -11,6 +11,9 @@ CrossSection::CrossSection(Configuration& config) {
     // Note: these will change based on neutrino energy and certain features
     // integral_min_Q2 = sf_info.Q2min;
     integral_min_Q2 = 1.6;
+    if (sf_info.enable_small_x) {
+        integral_min_Q2 = 10.0;
+    }
     integral_max_Q2 = sf_info.Q2max;
     integral_min_x = sf_info.xmin;
     integral_max_x = sf_info.xmax;

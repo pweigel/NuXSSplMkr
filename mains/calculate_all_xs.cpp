@@ -30,10 +30,12 @@ int main(int argc, char* argv[]){
     std::cout << "Making all cross sections!" << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
-    double logemin = 2;
-    double logemax = 9;
-    int NE = 100;
+    double logemin = 1;
+    double logemax = 11;
+    int NE = 200;
     double dE = (logemax - logemin) / (NE-1);
+    std::cout << "logemin " << logemin << std::endl;
+    return 0;
 
     int Ny = 100;
     // double ymin = 1e-6;
@@ -47,7 +49,13 @@ int main(int argc, char* argv[]){
 
     Configuration config = Configuration(config_path);
     config.Populate();
-    std::string data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    std::string data_folder;
+    if (config.sf_info.enable_small_x) {
+        data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
+    } else { 
+        data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    }
+    
     // Make the cross sections folder if it doesn't exist
     boost::filesystem::path out_folder = data_folder + "/cross_sections/";
     if (!boost::filesystem::exists(out_folder)) {
@@ -84,23 +92,23 @@ int main(int argc, char* argv[]){
                     outfile << E << "," << _xs << "\n";
                 }
                 outfile.close();
-                
+
                 // ds/dy
-                std::ofstream dsdy_outfile;
-                dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
-                for (int ei = 0; ei < NE; ei++) {
-                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                    for (int yi = 0; yi < Ny; yi++) { // loop over y
-                        double y = std::pow(10, logymin + yi * dy);
-                        // double y = ymin + yi * dy;
-                        // std::cout << E / 1e9 << " " << y << std::endl;
-                        double _dxs = std::log10(xs->ds_dy(E, y));
-                        // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
-                        dsdy_outfile << _dxs << std::endl;
-                    }
-                    // dsdy_outfile << "\n";
-                }
-                dsdy_outfile.close();
+                // std::ofstream dsdy_outfile;
+                // dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
+                // for (int ei = 0; ei < NE; ei++) {
+                //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                //     for (int yi = 0; yi < Ny; yi++) { // loop over y
+                //         double y = std::pow(10, logymin + yi * dy);
+                //         // double y = ymin + yi * dy;
+                //         // std::cout << E / 1e9 << " " << y << std::endl;
+                //         double _dxs = std::log10(xs->ds_dy(E, y));
+                //         // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
+                //         dsdy_outfile << _dxs << std::endl;
+                //     }
+                //     // dsdy_outfile << "\n";
+                // }
+                // dsdy_outfile.close();
             }
         }
     }

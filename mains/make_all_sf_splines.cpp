@@ -45,7 +45,8 @@ int main(int argc, char* argv[]){
 
                 sf.Set_Lepton_Mass(pc->muon_mass);
                 
-                std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+                // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+                std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
                 boost::filesystem::path out_folder = _out_folder;
                 if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
                     boost::filesystem::create_directories(out_folder);

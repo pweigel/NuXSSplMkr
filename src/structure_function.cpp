@@ -53,6 +53,7 @@ void StructureFunction::InitializeAPFEL() {
     }
 
     APFEL::SetQLimits(std::sqrt(sf_info.Q2min), std::sqrt(sf_info.Q2max));
+    // std::cout << "Evolution Q limits: [" << std::sqrt(sf_info.Q2min) << ", " << std::sqrt(sf_info.Q2max) << "] GeV." << std::endl;
     //APFEL::SetPolarizationDIS(0);
     //APFEL::EnableTargetMassCorrections(false);
     //APFEL::EnableDampingFONLL(true);
@@ -71,6 +72,7 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetGridParameters(2, 50, 5, 2e-1);
     APFEL::SetGridParameters(3, 40, 5, 8e-1);
     APFEL::SetPerturbativeOrder(sf_info.perturbative_order);
+    APFEL::SetSmallxResummation(sf_info.enable_small_x, sf_info.small_x_order);
     APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(sf_info.MassZ), sf_info.MassZ);
     //APFEL::SetAlphaEvolution("expanded");
     //APFEL::SetPDFEvolution("expandalpha");
@@ -233,8 +235,8 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
 void StructureFunction::BuildSplines(string outpath) {
-    const unsigned int Nx = sf_info.Nx * 2;
-    const unsigned int NQ2 = sf_info.NQ2 * 2;
+    const unsigned int Nx = sf_info.Nx;
+    const unsigned int NQ2 = sf_info.NQ2;
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
@@ -252,8 +254,8 @@ void StructureFunction::BuildSplines(string outpath) {
     const uint32_t dim = 2;
     std::vector<uint32_t> orders(dim, 2);
 
-    unsigned int Nknots_Q2 = sf_info.Nx * 2 + 2;
-    unsigned int Nknots_x = sf_info.NQ2 * 2 + 2;
+    unsigned int Nknots_Q2 = sf_info.Nx + 2;
+    unsigned int Nknots_x = sf_info.NQ2 + 2;
 
     std::vector<double> Q2_knots;
     std::vector<double> x_knots;
@@ -521,8 +523,12 @@ void StructureFunction::Set_Use_APFEL_LO(bool value) {
 }
 
 void StructureFunction::Set_Q_APFEL(double Q) {
-    APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(Q), Q);
-    APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
+    if (sf_info.evolve_pdf) {
+        APFEL::ComputeStructureFunctionsAPFEL(1.3, Q);
+    } else {
+        APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(Q), Q);
+        APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
+    }
 }
 
 }

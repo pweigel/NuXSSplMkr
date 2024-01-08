@@ -66,6 +66,9 @@ struct SFInfo {
     double M_boson2;  // squared mass of the boson (W or Z)
     double cp_factor;
     bool disable_top; // Set the top mass to ~bottom mass+0.1, used for CSMS calculation 
+    bool enable_small_x = false;
+    string small_x_order = "LL";
+    bool evolve_pdf = false; // Evolve pdf from Q0 (typically mc, or 1.3 GeV)
     bool Use_APFEL_LO; // Use APFEL for LO calculation?
 };
 
