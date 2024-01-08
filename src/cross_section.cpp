@@ -11,10 +11,12 @@ CrossSection::CrossSection(Configuration& _config)
     // Set limits of integration
     // Note: these will change based on neutrino energy and certain features
     // integral_min_Q2 = config.Q2min;
-    integral_min_Q2 = 1.6;
-    if (config.enable_small_x) {
-        integral_min_Q2 = 10.0;
-    }
+    // integral_min_Q2 = 1.6;
+    // integral_min_Q2 = 1.0;
+    // if (config.enable_small_x) {
+    //     integral_min_Q2 = 10.0;
+    // }
+    integral_min_Q2 = config.integral_min_Q2
     integral_max_Q2 = config.Q2max;
     integral_min_x = config.xmin;
     integral_max_x = config.xmax;

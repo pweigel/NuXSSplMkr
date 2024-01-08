@@ -29,6 +29,8 @@ void Configuration::Populate() {
     Q2min = j.at("Q2min");
     Q2max = j.at("Q2max");
 
+    integral_min_Q2 = j.at("integral_Q2min");
+
     MassZ   = j.at("MassZ");
     MassW   = j.at("MassW");
     Rho     = j.at("Rho");

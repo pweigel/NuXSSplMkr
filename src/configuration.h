@@ -35,6 +35,30 @@ static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::ele
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1.} };
 static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"light", SFType::light},{"charm",SFType::charm},{"bottom",SFType::bottom},{"top",SFType::top} };
 
+// struct APFEL_settings {
+//     string mass_scheme;
+//     bool disable_top; // Used for CSMS calculation
+//     bool pdf_evolution;
+//     bool small_x_resummation;
+//     string small_x_order;
+// }
+
+// struct sf_grid_settings {
+//   int Nx, NQ2;
+//   double xmin, xmax, Q2min, Q2max;
+// }
+
+// struct xs_integration_settings {
+//     double xmin, xmax, Q2min, Q2max;
+// }
+
+// struct fundamental_constants {
+//   double MassZ, MassW, Rho, Sin2ThW;
+//   double Vud, Vus, Vub;
+//   double Vcd, Vcs, Vcb;
+//   double Vtd, Vts, Vtb;
+// }
+
 class Configuration {
   private:
     nlohmann::json j;
@@ -71,6 +95,8 @@ class Configuration {
     double Vud, Vus, Vub;
     double Vcd, Vcs, Vcb;
     double Vtd, Vts, Vtb;
+
+    double integral_min_Q2;
 
     LHAPDF::PDF* pdf;
     std::map<int, double> pdf_quark_masses; 

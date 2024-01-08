@@ -1,25 +1,25 @@
 {
-  "unique_name": "CT18A_NNLO",
-  "pdfset": "CT18ANNLO",
+  "unique_name": "CT18A_NNLO_evolved_nocharm_sx",
+  "pdfset": "CT18ANNLO_nocharm",
   "replica": 0,
 
   "mass_scheme": "FONLL-C",
   "perturbative_order": 2,
   "DIS_process": "CC",
-  
+
   "disable_top": false,
-  "evolve_pdf": false,
-  "enable_small_x": false,
+  "evolve_pdf": true,
+  "enable_small_x": true,
   "small_x_order": "NLL",
 
   "Nx": 400,
-  "NQ2": 400,
+  "NQ2": 500,
   "xmin": 1e-9,
   "xmax": 1.0,
-  "Q2min": 1.3,
-  "Q2max": 1e10,
+  "Q2min": 3.0,
+  "Q2max": 1e12,
 
-  "integral_min_Q2": 1.3,
+  "integral_min_Q2": 3.0,
 
   "MassZ": 91.1876,
   "MassW": 80.385,
