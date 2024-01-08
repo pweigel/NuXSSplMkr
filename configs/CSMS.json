@@ -1,4 +1,5 @@
 {
+  "unique_name": "CSMS",
   "pdfset": "HERAPDF15NLO_EIG",
   "replica": 0,
 
@@ -7,9 +8,12 @@
   "DIS_process": "CC",
 
   "disable_top": true,
+  "evolve_pdf": false,
+  "enable_small_x": false,
+  "small_x_order": "NLL",
 
   "Nx": 400,
-  "NQ2": 400,
+  "NQ2": 500,
   "xmin": 1e-9,
   "xmax": 1.0,
   "Q2min": 1.0,
