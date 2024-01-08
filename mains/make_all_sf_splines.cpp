@@ -51,10 +51,7 @@ int main(int argc, char* argv[]){
                 nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
 
                 sf.Set_Lepton_Mass(pc->muon_mass);
-                
-                // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
-                // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
-                
+
                 sf.InitializeAPFEL();
                 sf.BuildSplines(out_folder.string()); // Photospline
             }

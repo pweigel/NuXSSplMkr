@@ -33,6 +33,27 @@ StructureFunction::StructureFunction(Configuration &_config)
     }
 }
 
+void StructureFunction::Set_Lepton_Mass(double m) {
+    M_lepton = m;
+}
+
+void StructureFunction::Set_Neutrino_Energy(double E) {
+    ENU = E;
+}
+
+void StructureFunction::Set_Use_APFEL_LO(bool value) {
+    config.Use_APFEL_LO = value;
+}
+
+void StructureFunction::Set_Q_APFEL(double Q) {
+    if (config.evolve_pdf) {
+        APFEL::ComputeStructureFunctionsAPFEL(max(1.3, sqrt(config.Q2min)), Q);
+    } else {
+        APFEL::SetAlphaQCDRef(config.pdf->alphasQ(Q), Q);
+        APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
+    }
+}
+
 void StructureFunction::InitializeAPFEL() {
 
     if (config.mass_scheme == "parton") {
@@ -506,27 +527,6 @@ double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr)
     }
 
     return k;
-}
-
-void StructureFunction::Set_Lepton_Mass(double m) {
-    M_lepton = m;
-}
-
-void StructureFunction::Set_Neutrino_Energy(double E) {
-    ENU = E;
-}
-
-void StructureFunction::Set_Use_APFEL_LO(bool value) {
-    config.Use_APFEL_LO = value;
-}
-
-void StructureFunction::Set_Q_APFEL(double Q) {
-    if (config.evolve_pdf) {
-        APFEL::ComputeStructureFunctionsAPFEL(max(1.3, sqrt(config.Q2max)), Q);
-    } else {
-        APFEL::SetAlphaQCDRef(config.pdf->alphasQ(Q), Q);
-        APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
-    }
 }
 
 }
