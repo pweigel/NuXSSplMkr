@@ -8,6 +8,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/filesystem.hpp>
+#include "json.hpp"
 #include "APFEL/APFEL.h"
 #include "LHAPDF/LHAPDF.h"
 #include <unordered_map>
@@ -34,7 +35,21 @@ static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::ele
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1.} };
 static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"light", SFType::light},{"charm",SFType::charm},{"bottom",SFType::bottom},{"top",SFType::top} };
 
-struct SFInfo {
+class Configuration {
+  private:
+    nlohmann::json j;
+
+  public:
+    // Configuration();
+    Configuration(string config_path);
+    ~Configuration() { };
+    void Populate();
+    void LoadPDFSet();
+    void Set_Projectile(string projectile_string);
+    void Set_Target(string target_string);
+    void Set_SF_Type(string sf_type_string);
+
+    string unique_name;
     string pdfset;
     int replica;
     
@@ -66,26 +81,10 @@ struct SFInfo {
     double M_boson2;  // squared mass of the boson (W or Z)
     double cp_factor;
     bool disable_top; // Set the top mass to ~bottom mass+0.1, used for CSMS calculation 
-    bool enable_small_x = false;
-    string small_x_order = "LL";
-    bool evolve_pdf = false; // Evolve pdf from Q0 (typically mc, or 1.3 GeV)
+    bool enable_small_x;
+    string small_x_order;
+    bool evolve_pdf; // Evolve pdf from Q0 (typically mc, or 1.3 GeV)
     bool Use_APFEL_LO; // Use APFEL for LO calculation?
-};
-
-class Configuration {
-  private:
-    boost::property_tree::ptree config;
-
-  public:
-    // Configuration();
-    Configuration(string config_path);
-    ~Configuration() { };
-    void Populate();
-    void LoadPDFSet();
-    void Set_Projectile(string projectile_string);
-    void Set_Target(string target_string);
-    void Set_SF_Type(string sf_type_string);
-    SFInfo sf_info;
 };
 
 }

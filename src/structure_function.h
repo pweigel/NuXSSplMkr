@@ -61,7 +61,6 @@ class StructureFunction {
         ~StructureFunction() {};
 
         PhysConst* pc; // Constants
-        SFInfo sf_info;
         vector<int> partons {-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 21};
 
         // ~ APFEL stuff ~

@@ -1,0 +1,36 @@
+{
+  "unique_name": "CT18A_NNLO_evolved",
+  "pdfset": "CT18ANNLO",
+  "replica": 0,
+
+  "mass_scheme": "FONLL-C",
+  "perturbative_order": 2,
+  "DIS_process": "CC",
+
+  "disable_top": false,
+  "evolve_pdf": true,
+  "enable_small_x": false,
+  "small_x_order": "NLL",
+
+  "Nx": 400,
+  "NQ2": 500,
+  "xmin": 1e-9,
+  "xmax": 1.0,
+  "Q2min": 1.0,
+  "Q2max": 1e12,
+
+  "MassZ": 91.1876,
+  "MassW": 80.385,
+  "Rho": 0.00940161,
+  "Sin2ThW": 0.0,
+
+  "Vud": 0.97427,
+  "Vus": 0.22536,
+  "Vub": 0.00355,
+  "Vcd": 0.22522,
+  "Vcs": 0.97343,
+  "Vcb": 0.04140, 
+  "Vtd": 0.00886,
+  "Vts": 0.04050,
+  "Vtb": 0.99914
+}

@@ -63,11 +63,12 @@ class CrossSection {
         double _ds_dy_partonic(double k);
         double _ds_dxdy_partonic(double* k);
 
+        Configuration config;
+
     public:
-        CrossSection(Configuration& config);
+        CrossSection(Configuration& _config);
         ~CrossSection() {};
 
-        SFInfo sf_info;
         PhysConst* pc; // Constants
 
         // ~ Calculations ~

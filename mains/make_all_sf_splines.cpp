@@ -28,6 +28,13 @@ int main(int argc, char* argv[]){
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
     config.Populate();  // Populate the SF info
 
+    boost::filesystem::path out_folder = "../data/" + config.unique_name;
+    if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
+        boost::filesystem::create_directories(out_folder);
+    }
+
+    std::cout << "Structure function file will be saved to: " << out_folder.string() << std::endl;
+
     for (const string &sf_type : sf_types) {
         config.Set_SF_Type(sf_type);
         std::cout << "SFType set to: " << sf_type << std::endl;
@@ -46,11 +53,7 @@ int main(int argc, char* argv[]){
                 sf.Set_Lepton_Mass(pc->muon_mass);
                 
                 // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
-                std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
-                boost::filesystem::path out_folder = _out_folder;
-                if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
-                    boost::filesystem::create_directories(out_folder);
-                }
+                // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
                 
                 sf.InitializeAPFEL();
                 sf.BuildSplines(out_folder.string()); // Photospline

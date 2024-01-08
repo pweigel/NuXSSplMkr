@@ -34,8 +34,6 @@ int main(int argc, char* argv[]){
     double logemax = 11;
     int NE = 200;
     double dE = (logemax - logemin) / (NE-1);
-    std::cout << "logemin " << logemin << std::endl;
-    return 0;
 
     int Ny = 100;
     // double ymin = 1e-6;
@@ -49,13 +47,9 @@ int main(int argc, char* argv[]){
 
     Configuration config = Configuration(config_path);
     config.Populate();
-    std::string data_folder;
-    if (config.sf_info.enable_small_x) {
-        data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order) + "_" + config.sf_info.small_x_order;
-    } else { 
-        data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
-    }
-    
+    std::string data_folder = "../data/" + config.unique_name;
+    std::cout << "Loading/saving data to: " << data_folder << std::endl;
+
     // Make the cross sections folder if it doesn't exist
     boost::filesystem::path out_folder = data_folder + "/cross_sections/";
     if (!boost::filesystem::exists(out_folder)) {
@@ -77,8 +71,8 @@ int main(int argc, char* argv[]){
                 string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + sf_type + ".fits";
 
                 CrossSection* xs = new CrossSection(config);
-
-                if (config.sf_info.mass_scheme != "parton") {
+                
+                if (config.mass_scheme != "parton") {
                     xs->Load_Structure_Functions(f1, f2, f3);
                 }
 

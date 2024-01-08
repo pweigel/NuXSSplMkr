@@ -3,10 +3,9 @@
 namespace nuxssplmkr {
 
 StructureFunction::StructureFunction(Configuration &_config)
-  : config(_config)
+    : config(_config)
 {
     pc = new PhysConst();
-    sf_info = config.sf_info;
 
     // TODO: Get from config file
     GF2   = SQ(pc->GF);
@@ -15,45 +14,44 @@ StructureFunction::StructureFunction(Configuration &_config)
     Mz2   = SQ(pc->Zboson_mass);
 
     // Calculate fundamental constants
-    // s_w = sf_info.Sin2ThW;
+    // s_w = config.Sin2ThW;
     // Lu2 = ( 1. - (4./3.)*s_w) * ( 1. - (4./3.)*s_w);
     // Ld2 = (-1. + (2./3.)*s_w) * (-1. + (2./3.)*s_w);
     // Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
     // Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
 
     // TODO: Move this!
-    // CP_factor = CPFactorMap.at(sf_info.neutrino_type);
+    // CP_factor = CPFactorMap.at(config.neutrino_type);
 
     // TODO: This should happen somewhere else as it can change after initialization
-    if (sf_info.current == CC) {
+    if (config.current == CC) {
         M_boson2 = SQ(pc->Wboson_mass);
-    } else if (sf_info.current == NC) {
+    } else if (config.current == NC) {
         M_boson2 = SQ(pc->Zboson_mass);
     } else {
         throw std::runtime_error("Unidentified current specified!");
     }
-
 }
 
 void StructureFunction::InitializeAPFEL() {
 
-    if (sf_info.mass_scheme == "parton") {
+    if (config.mass_scheme == "parton") {
         std::cout << "Mass scheme set to 'parton'. Not initializing APFEL!" << std::endl;
         return;
     }
 
-    APFEL::SetPDFSet(sf_info.pdfset);
-    APFEL::SetReplica(sf_info.replica);
-    APFEL::SetMassScheme(sf_info.mass_scheme);
-    if (sf_info.disable_top == true) { // TODO: a better way of doing this. This should only be used for CSMS I think.
+    APFEL::SetPDFSet(config.pdfset);
+    APFEL::SetReplica(config.replica);
+    APFEL::SetMassScheme(config.mass_scheme);
+    if (config.disable_top == true) { // TODO: a better way of doing this. This should only be used for CSMS I think.
         std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
-        APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[5]+0.1);
+        APFEL::SetPoleMasses(config.pdf_quark_masses[4], config.pdf_quark_masses[5], config.pdf_quark_masses[5]+0.1);
     } else {
-        APFEL::SetPoleMasses(sf_info.pdf_quark_masses[4], sf_info.pdf_quark_masses[5], sf_info.pdf_quark_masses[6]);
+        APFEL::SetPoleMasses(config.pdf_quark_masses[4], config.pdf_quark_masses[5], config.pdf_quark_masses[6]);
     }
 
-    APFEL::SetQLimits(std::sqrt(sf_info.Q2min), std::sqrt(sf_info.Q2max));
-    // std::cout << "Evolution Q limits: [" << std::sqrt(sf_info.Q2min) << ", " << std::sqrt(sf_info.Q2max) << "] GeV." << std::endl;
+    APFEL::SetQLimits(std::sqrt(config.Q2min), std::sqrt(config.Q2max));
+    // std::cout << "Evolution Q limits: [" << std::sqrt(config.Q2min) << ", " << std::sqrt(config.Q2max) << "] GeV." << std::endl;
     //APFEL::SetPolarizationDIS(0);
     //APFEL::EnableTargetMassCorrections(false);
     //APFEL::EnableDampingFONLL(true);
@@ -68,24 +66,24 @@ void StructureFunction::InitializeAPFEL() {
     //APFEL::SetTauMass(1e10);
     //APFEL::SetPDFEvolution("exactalpha");
     APFEL::SetNumberOfGrids(3);
-    APFEL::SetGridParameters(1, 90, 3, sf_info.xmin);
+    APFEL::SetGridParameters(1, 90, 3, config.xmin);
     APFEL::SetGridParameters(2, 50, 5, 2e-1);
     APFEL::SetGridParameters(3, 40, 5, 8e-1);
-    APFEL::SetPerturbativeOrder(sf_info.perturbative_order);
-    APFEL::SetSmallxResummation(sf_info.enable_small_x, sf_info.small_x_order);
-    APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(sf_info.MassZ), sf_info.MassZ);
+    APFEL::SetPerturbativeOrder(config.perturbative_order);
+    APFEL::SetSmallxResummation(config.enable_small_x, config.small_x_order);
+    APFEL::SetAlphaQCDRef(config.pdf->alphasQ(config.MassZ), config.MassZ);
     //APFEL::SetAlphaEvolution("expanded");
     //APFEL::SetPDFEvolution("expandalpha");
 
     APFEL::SetMaxFlavourPDFs(6);
     APFEL::SetMaxFlavourAlpha(6);
-    APFEL::SetCKM(sf_info.Vud, sf_info.Vus, sf_info.Vub,
-                  sf_info.Vcd, sf_info.Vcs, sf_info.Vcb,
-                  sf_info.Vtd, sf_info.Vts, sf_info.Vtb);
+    APFEL::SetCKM(config.Vud, config.Vus, config.Vub,
+                  config.Vcd, config.Vcs, config.Vcb,
+                  config.Vtd, config.Vts, config.Vtb);
 
-    APFEL::SetProjectileDIS(sf_info.projectile);
-    APFEL::SetProcessDIS(sf_info.DIS_process);
-    APFEL::SetTargetDIS(sf_info.target);
+    APFEL::SetProjectileDIS(config.projectile);
+    APFEL::SetProcessDIS(config.DIS_process);
+    APFEL::SetTargetDIS(config.target);
 
     // Initializes integrals on the grids
     APFEL::InitializeAPFEL_DIS();
@@ -96,7 +94,7 @@ void StructureFunction::GetCoefficients() {
     int up_type[3] = {2, 4, 6};  // u c t
     // TODO: Maybe do isospin symmetry here?
 
-    if (sf_info.neutrino_type == neutrino) {
+    if (config.neutrino_type == neutrino) {
         for (int dt : down_type) {
             F2coef[dt] = 1.;
             F3coef[dt] = 1.;
@@ -105,7 +103,7 @@ void StructureFunction::GetCoefficients() {
             F2coef[-ut] = 1.;
             F3coef[-ut] = -1.;
         }
-    } else if (sf_info.neutrino_type == antineutrino) {
+    } else if (config.neutrino_type == antineutrino) {
         for (int ut : up_type) {
             F2coef[ut] = 1.;
             F3coef[ut] = 1.;
@@ -124,7 +122,7 @@ void StructureFunction::GetCoefficients() {
 }
 
 double StructureFunction::F1(double x, double Q2) {
-    if ( (sf_info.perturbative_order == LO) && (sf_info.mass_scheme == "parton") ) {
+    if ( (config.perturbative_order == LO) && (config.mass_scheme == "parton") ) {
         return F2(x, Q2) / (2. * x);
     } else {
         return (F2(x, Q2) - FL(x, Q2)) / (2. * x);
@@ -132,11 +130,11 @@ double StructureFunction::F1(double x, double Q2) {
 }
 
 double StructureFunction::F2(double x, double Q2) {
-    if ( (sf_info.mass_scheme == "parton") ) {
+    if ( (config.mass_scheme == "parton") ) {
         auto s = PDFExtract(x, Q2);
         
         // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
-        if(sf_info.target_type == neutron) {
+        if(config.target_type == neutron) {
             auto q1 = s[1];
             auto q2 = s[2];
             s[1] = q2;
@@ -144,7 +142,7 @@ double StructureFunction::F2(double x, double Q2) {
         }
         return F2_LO(s);
     } else {
-        switch(sf_info.sf_type) {
+        switch(config.sf_type) {
             case SFType::total:  return APFEL::F2total(x);
             case SFType::light:  return APFEL::F2light(x);
             case SFType::charm:  return APFEL::F2charm(x);
@@ -156,10 +154,10 @@ double StructureFunction::F2(double x, double Q2) {
 }
 
 double StructureFunction::FL(double x, double Q2) {
-    if ( (sf_info.mass_scheme == "parton") ) {
+    if ( (config.mass_scheme == "parton") ) {
         return 0.0;
     } else {
-        switch(sf_info.sf_type) {
+        switch(config.sf_type) {
             case SFType::total:  return APFEL::FLtotal(x);
             case SFType::light:  return APFEL::FLlight(x);
             case SFType::charm:  return APFEL::FLcharm(x);
@@ -171,11 +169,11 @@ double StructureFunction::FL(double x, double Q2) {
 }
 
 double StructureFunction::xF3(double x, double Q2) {
-    if ( (sf_info.mass_scheme == "parton") ) {
+    if ( (config.mass_scheme == "parton") ) {
         auto s = PDFExtract(x, Q2);
 
         // TODO: Figure out a better way to do this (isospin symmetry for p<->n)
-        if(sf_info.target_type == neutron) {
+        if(config.target_type == neutron) {
             auto q1 = s[1];
             auto q2 = s[2];
             s[1] = q2;
@@ -183,7 +181,7 @@ double StructureFunction::xF3(double x, double Q2) {
         }
         return xF3_LO(s);
     } else {
-        switch(sf_info.sf_type) {
+        switch(config.sf_type) {
             case SFType::total:  return APFEL::F3total(x);
             case SFType::light:  return APFEL::F3light(x);
             case SFType::charm:  return APFEL::F3charm(x);
@@ -222,7 +220,7 @@ double StructureFunction::F3(double x, double Q2) {
 }
 
 std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
-    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf);
     string xt = "nearest";
     grid_central->setExtrapolator(xt);
 
@@ -235,62 +233,62 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
 void StructureFunction::BuildSplines(string outpath) {
-    const unsigned int Nx = sf_info.Nx;
-    const unsigned int NQ2 = sf_info.NQ2;
+    const unsigned int Nx = config.Nx;
+    const unsigned int NQ2 = config.NQ2;
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
 
     // Get the coefficients for parton calculation
-    if (sf_info.mass_scheme == "parton") {
+    if (config.mass_scheme == "parton") {
         GetCoefficients();
     }
 
     // Step sizes in log space
-    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / (NQ2 - 1);
-    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / (Nx - 1);
+    double d_log_Q2 = std::abs( std::log10(config.Q2min) - std::log10(config.Q2max) ) / (NQ2 - 1);
+    double d_log_x  = std::abs( std::log10(config.xmin)  - std::log10(config.xmax)  ) / (Nx - 1);
 
     // Spline parameters
     const uint32_t dim = 2;
     std::vector<uint32_t> orders(dim, 2);
 
-    unsigned int Nknots_Q2 = sf_info.Nx + 2;
-    unsigned int Nknots_x = sf_info.NQ2 + 2;
+    unsigned int Nknots_Q2 = config.Nx + 2;
+    unsigned int Nknots_x = config.NQ2 + 2;
 
     std::vector<double> Q2_knots;
     std::vector<double> x_knots;
 
     // Step sizes for knots in log space
-    const double d_log_Q2_knot= std::abs(std::log10(sf_info.Q2max)- std::log10(sf_info.Q2min)) / (Nknots_Q2 - 1);
-    const double d_log_x_knot = std::abs(std::log10(sf_info.xmax) - std::log10(sf_info.xmin) ) / (Nknots_x - 1);
+    const double d_log_Q2_knot= std::abs(std::log10(config.Q2max)- std::log10(config.Q2min)) / (Nknots_Q2 - 1);
+    const double d_log_x_knot = std::abs(std::log10(config.xmax) - std::log10(config.xmin) ) / (Nknots_x - 1);
 
-    std::cout << "log_Q2min = " << std::log10(sf_info.Q2min) << ", log_Q2max = " << std::log10(sf_info.Q2max) << std::endl;
-    std::cout << "log_xmin = " << std::log10(sf_info.xmin) << ", log_xmax = " << std::log10(sf_info.xmax) << std::endl;
+    std::cout << "log_Q2min = " << std::log10(config.Q2min) << ", log_Q2max = " << std::log10(config.Q2max) << std::endl;
+    std::cout << "log_xmin = " << std::log10(config.xmin) << ", log_xmax = " << std::log10(config.xmax) << std::endl;
     std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
 
     // Get the Q2 and x values
     size_t N_samples = Nx * NQ2;
-    for ( double log_Q2 = std::log10(sf_info.Q2min); log_Q2<std::log10(sf_info.Q2max); log_Q2 += d_log_Q2 ) {
+    for ( double log_Q2 = std::log10(config.Q2min); log_Q2<std::log10(config.Q2max); log_Q2 += d_log_Q2 ) {
         double powQ2 = std::pow( 10, log_Q2);
         double Q2 = log_Q2;
-        if (powQ2 > sf_info.Q2max) continue;
+        if (powQ2 > config.Q2max) continue;
         Q2_arr.push_back(Q2);
     }
 
-    for ( double log_x = std::log10(sf_info.xmin); log_x<std::log10(sf_info.xmax); log_x += d_log_x ) {
+    for ( double log_x = std::log10(config.xmin); log_x<std::log10(config.xmax); log_x += d_log_x ) {
         double powx = std::pow( 10, log_x);
         double x = log_x ;
-        if ( powx > sf_info.xmax ) continue;
+        if ( powx > config.xmax ) continue;
         x_arr.push_back(x);
     }
 
     // Get the knots for Q2 and x
-    for ( double log_Q2 = std::log10(sf_info.Q2min) - d_log_Q2_knot; log_Q2 <= std::log10(sf_info.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
+    for ( double log_Q2 = std::log10(config.Q2min) - d_log_Q2_knot; log_Q2 <= std::log10(config.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
         double knot = log_Q2;
         Q2_knots.push_back(knot);
     }
 
-    for ( double log_x = std::log10(sf_info.xmin) - d_log_x_knot; log_x <= 1 + d_log_x_knot; log_x += d_log_x_knot ) {
+    for ( double log_x = std::log10(config.xmin) - d_log_x_knot; log_x <= 1 + d_log_x_knot; log_x += d_log_x_knot ) {
         double knot = log_x;
         x_knots.push_back(knot);
     }
@@ -300,15 +298,15 @@ void StructureFunction::BuildSplines(string outpath) {
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F2_spline_data;
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
     for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
-        double log_Q2 = std::log10(sf_info.Q2min) + Q2i * d_log_Q2;
+        double log_Q2 = std::log10(config.Q2min) + Q2i * d_log_Q2;
         double Q2 = std::pow(10.0, log_Q2);
 
-        if (sf_info.mass_scheme != "parton") {
+        if (config.mass_scheme != "parton") {
             Set_Q_APFEL(std::sqrt(Q2));
         }
 
         for (unsigned int xi = 0; xi < Nx; xi++) {
-            double log_x = std::log10(sf_info.xmin) + xi * d_log_x;
+            double log_x = std::log10(config.xmin) + xi * d_log_x;
             double x = std::pow(10.0, log_x);
 
             // Do checks here
@@ -383,14 +381,14 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Write splines
-    F1_spline.write_fits(outpath + "/F1_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
-    F2_spline.write_fits(outpath + "/F2_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
-    F3_spline.write_fits(outpath + "/F3_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".fits");
+    F1_spline.write_fits(outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
+    F2_spline.write_fits(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
+    F3_spline.write_fits(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
 }
 
 void StructureFunction::BuildGrids(string outpath) {
-    const unsigned int Nx = sf_info.Nx;
-    const unsigned int NQ2 = sf_info.NQ2;
+    const unsigned int Nx = config.Nx;
+    const unsigned int NQ2 = config.NQ2;
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
@@ -401,22 +399,22 @@ void StructureFunction::BuildGrids(string outpath) {
     std::ofstream F1_file;
     std::ofstream F2_file;
     std::ofstream F3_file;
-    F1_file.open(outpath + "/F1_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
-    F2_file.open(outpath + "/F2_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
-    F3_file.open(outpath + "/F3_"+sf_info.projectile+"_"+sf_info.target+"_"+sf_info.sf_type_string+".grid");
+    F1_file.open(outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid");
+    F2_file.open(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid");
+    F3_file.open(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid");
 
     // Step sizes in log space
-    double d_log_Q2 = std::abs( std::log10(sf_info.Q2min) - std::log10(sf_info.Q2max) ) / NQ2;
-    double d_log_x  = std::abs( std::log10(sf_info.xmin)  - std::log10(sf_info.xmax)  ) / Nx;
+    double d_log_Q2 = std::abs( std::log10(config.Q2min) - std::log10(config.Q2max) ) / NQ2;
+    double d_log_x  = std::abs( std::log10(config.xmin)  - std::log10(config.xmax)  ) / Nx;
 
     for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
-        double log_Q2 = std::log10(sf_info.Q2min) + (0.5 + Q2i) * d_log_Q2;
+        double log_Q2 = std::log10(config.Q2min) + (0.5 + Q2i) * d_log_Q2;
         double Q2 = std::pow(10.0, log_Q2);
 
         Set_Q_APFEL(std::sqrt(Q2));
 
         for (unsigned int xi = 0; xi < Nx; xi++) {
-            double log_x = std::log10(sf_info.xmin) + (0.5 + xi) * d_log_x;
+            double log_x = std::log10(config.xmin) + (0.5 + xi) * d_log_x;
             double x = std::pow(10.0, log_x);
 
             // Do checks here
@@ -458,7 +456,7 @@ void StructureFunction::BuildGrids(string outpath) {
 double StructureFunction::Evaluate(double Q2, double x, double y){
     // only evaluates central values
 
-    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(sf_info.pdf);
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf);
     string xt = "nearest";
     grid_central -> setExtrapolator(xt);
 
@@ -519,14 +517,14 @@ void StructureFunction::Set_Neutrino_Energy(double E) {
 }
 
 void StructureFunction::Set_Use_APFEL_LO(bool value) {
-    sf_info.Use_APFEL_LO = value;
+    config.Use_APFEL_LO = value;
 }
 
 void StructureFunction::Set_Q_APFEL(double Q) {
-    if (sf_info.evolve_pdf) {
-        APFEL::ComputeStructureFunctionsAPFEL(1.3, Q);
+    if (config.evolve_pdf) {
+        APFEL::ComputeStructureFunctionsAPFEL(max(1.3, sqrt(config.Q2max)), Q);
     } else {
-        APFEL::SetAlphaQCDRef(sf_info.pdf->alphasQ(Q), Q);
+        APFEL::SetAlphaQCDRef(config.pdf->alphasQ(Q), Q);
         APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
     }
 }
