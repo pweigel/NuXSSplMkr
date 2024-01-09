@@ -77,32 +77,32 @@ int main(int argc, char* argv[]){
                 }
 
                 // total
-                std::ofstream outfile;
-                outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
+                // std::ofstream outfile;
+                // outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
 
-                for (int ei = 0; ei < NE; ei++) {
-                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                    double _xs = std::log10(xs->TotalXS(E));
-                    outfile << E << "," << _xs << "\n";
-                }
-                outfile.close();
-
-                // ds/dy
-                // std::ofstream dsdy_outfile;
-                // dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
                 // for (int ei = 0; ei < NE; ei++) {
                 //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                //     for (int yi = 0; yi < Ny; yi++) { // loop over y
-                //         double y = std::pow(10, logymin + yi * dy);
-                //         // double y = ymin + yi * dy;
-                //         // std::cout << E / 1e9 << " " << y << std::endl;
-                //         double _dxs = std::log10(xs->ds_dy(E, y));
-                //         // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
-                //         dsdy_outfile << _dxs << std::endl;
-                //     }
-                //     // dsdy_outfile << "\n";
+                //     double _xs = std::log10(xs->TotalXS(E));
+                //     outfile << E << "," << _xs << "\n";
                 // }
-                // dsdy_outfile.close();
+                // outfile.close();
+
+                // ds/dy
+                std::ofstream dsdy_outfile;
+                dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
+                for (int ei = 0; ei < NE; ei++) {
+                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                    for (int yi = 0; yi < Ny; yi++) { // loop over y
+                        double y = std::pow(10, logymin + yi * dy);
+                        // double y = ymin + yi * dy;
+                        // std::cout << E / 1e9 << " " << y << std::endl;
+                        double _dxs = std::log10(xs->ds_dy(E, y));
+                        // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
+                        dsdy_outfile << _dxs << std::endl;
+                    }
+                    // dsdy_outfile << "\n";
+                }
+                dsdy_outfile.close();
             }
         }
     }

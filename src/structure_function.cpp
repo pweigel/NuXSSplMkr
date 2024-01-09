@@ -41,10 +41,6 @@ void StructureFunction::Set_Neutrino_Energy(double E) {
     ENU = E;
 }
 
-void StructureFunction::Set_Use_APFEL_LO(bool value) {
-    config.Use_APFEL_LO = value;
-}
-
 void StructureFunction::Set_Q_APFEL(double Q) {
     if (config.evolve_pdf) {
         APFEL::ComputeStructureFunctionsAPFEL(max(1.3, sqrt(config.Q2min)), Q);
@@ -238,6 +234,42 @@ double StructureFunction::xF3_LO(map<int, double>& xq_arr) {
 
 double StructureFunction::F3(double x, double Q2) {
     return xF3(x, Q2) / x;
+}
+
+double StructureFunction::F1_TMC(double x, double Q2) {
+
+}
+
+double StructureFunction::F2_TMC(double x, double Q2) {
+  
+}
+
+double StructureFunction::F3_TMC(double x, double Q2) {
+  
+}
+
+double StructureFunction::F1_CKMT(double x, double Q2) {
+    return 0.0;
+}
+
+double StructureFunction::F2_CKMT(double x, double Q2) {
+    return 0.0;
+}
+
+double StructureFunction::F3_CKMT(double x, double Q2) {
+    return 0.0;
+}
+
+double StructureFunction::F1_PCAC(double x, double Q2) {
+    return 0.0;
+}
+
+double StructureFunction::F2_PCAC(double x, double Q2) {
+    return 0.0;
+}
+
+double StructureFunction::F3_PCAC(double x, double Q2) {
+    return 0.0;
 }
 
 std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){

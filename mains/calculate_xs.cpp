@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     Configuration config = Configuration(config_path);
     config.Populate();
     
-    std::string data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    std::string data_folder = "../data/" + config.pdfset + "_" + config.mass_scheme + "_pto" + to_string(config.perturbative_order);
 
     config.Set_Target(target);
     config.Set_Projectile(projectile);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
     std::ofstream outfile;
     outfile.open(data_folder + "/cross_sections/" + target + "_" + xs_type + ".out");
 
-    if (config.sf_info.mass_scheme != "parton") {
+    if (config.mass_scheme != "parton") {
         xs->Load_Structure_Functions(f1, f2, f3);
     }
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]){
     // std::cout << xs->ds_dxdy(0.1, 0.1, 100.0 * pc->GeV) << std::endl;
     // std::cout << xs->ds_dxdy(0.1, 0.1, 1000.0 * pc->GeV) << std::endl;
     // std::cout << xs->ds_dxdy(0.1, 0.1, 10000.0 * pc->GeV) << std::endl;
-    // std::string _out_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    // std::string _out_folder = "../data/" + config.pdfset + "_" + config.mass_scheme + "_pto" + to_string(config.perturbative_order);
     // boost::filesystem::path out_folder = _out_folder;
     // if (! boost::filesystem::exists(out_folder)) {
     //     boost::filesystem::create_directories(out_folder);

@@ -59,6 +59,7 @@ void Configuration::Populate() {
     enable_small_x = j.value("enable_small_x", false);
     small_x_order  = j.value("small_x_order", "NLL"); 
     evolve_pdf     = j.value("evolve_pdf", false);
+    enable_pcac    = j.value("enable_pcac", false);
 
 }
 

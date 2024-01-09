@@ -110,7 +110,7 @@ class Configuration {
     bool enable_small_x;
     string small_x_order;
     bool evolve_pdf; // Evolve pdf from Q0 (typically mc, or 1.3 GeV)
-    bool Use_APFEL_LO; // Use APFEL for LO calculation?
+    bool enable_pcac; // Use PCAC for low Q2
 };
 
 }

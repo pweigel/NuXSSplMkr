@@ -78,6 +78,18 @@ class StructureFunction {
         // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
+        double F1_TMC(double x, double Q2);
+        double F2_TMC(double x, double Q2);
+        double F3_TMC(double x, double Q2);
+
+        double F1_CKMT(double x, double Q2);
+        double F2_CKMT(double x, double Q2);
+        double F3_CKMT(double x, double Q2);
+
+        double F1_PCAC(double x, double Q2);
+        double F2_PCAC(double x, double Q2);
+        double F3_PCAC(double x, double Q2);
+
         void BuildSplines(string outpath);
         void BuildGrids(string outpath);
 
@@ -99,7 +111,6 @@ class StructureFunction {
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
         void Set_SF_Type(string sf_type_string);
-        void Set_Use_APFEL_LO(bool value);
         void Set_Q_APFEL(double Q);
 };
 
