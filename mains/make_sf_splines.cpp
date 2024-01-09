@@ -28,7 +28,6 @@ int main(int argc, char* argv[]){
     // Create a new config w/ the filename
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
     config.Populate();  // Populate the SF info
-
     boost::filesystem::path out_folder = "../data/" + config.unique_name;
     if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
         boost::filesystem::create_directories(out_folder);
@@ -42,7 +41,7 @@ int main(int argc, char* argv[]){
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
 
     sf.Set_Lepton_Mass(pc->muon_mass);
-    
+
     sf.InitializeAPFEL();
     sf.BuildSplines(out_folder.string()); // Photospline
     // sf.BuildGrids(out_folder.string()); // Grid file

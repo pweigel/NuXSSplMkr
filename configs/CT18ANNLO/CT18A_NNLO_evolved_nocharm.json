@@ -16,10 +16,10 @@
   "NQ2": 500,
   "xmin": 1e-9,
   "xmax": 1.0,
-  "Q2min": 1.3,
+  "Q2min": 1.69,
   "Q2max": 1e12,
 
-  "integral_min_Q2": 1.3,
+  "integral_min_Q2": 1.69,
 
   "MassZ": 91.1876,
   "MassW": 80.385,

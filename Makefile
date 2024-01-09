@@ -53,7 +53,7 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
-test: bin/test
+# test: bin/test
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@

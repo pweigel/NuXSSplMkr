@@ -1,21 +1,26 @@
 {
-  "pdfset": "CT18ANLO",
+  "unique_name": "CT18A_NLO_nocharm",
+  "pdfset": "CT18ANLO_nocharm",
   "replica": 0,
 
   "mass_scheme": "FONLL-B",
   "perturbative_order": 1,
   "DIS_process": "CC",
+  
+  "disable_top": false,
+  "evolve_pdf": false,
+  "enable_small_x": false,
+  "small_x_order": "NLL",
 
   "Nx": 400,
   "NQ2": 400,
   "xmin": 1e-9,
   "xmax": 1.0,
-  "Q2min": 1.0,
+  "Q2min": 1.69,
   "Q2max": 1e10,
 
-  "projectile": "neutrino",
-  "target": "proton",
-  
+  "integral_min_Q2": 1.69,
+
   "MassZ": 91.1876,
   "MassW": 80.385,
   "Rho": 0.00940161,

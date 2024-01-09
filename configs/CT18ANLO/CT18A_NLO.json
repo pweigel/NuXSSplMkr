@@ -1,10 +1,10 @@
 {
-  "unique_name": "CT18A_NNLO",
-  "pdfset": "CT18ANNLO",
+  "unique_name": "CT18A_NLO",
+  "pdfset": "CT18ANLO",
   "replica": 0,
 
-  "mass_scheme": "FONLL-C",
-  "perturbative_order": 2,
+  "mass_scheme": "FONLL-B",
+  "perturbative_order": 1,
   "DIS_process": "CC",
   
   "disable_top": false,

@@ -1,10 +1,10 @@
 {
-  "unique_name": "CT18A_NNLO",
-  "pdfset": "CT18ANNLO",
+  "unique_name": "EPPS21_NLO_O16_nocharm",
+  "pdfset": "EPPS21nlo_CT18Anlo_O16_nocharm",
   "replica": 0,
 
-  "mass_scheme": "FONLL-C",
-  "perturbative_order": 2,
+  "mass_scheme": "FONLL-B",
+  "perturbative_order": 1,
   "DIS_process": "CC",
   
   "disable_top": false,
@@ -14,7 +14,7 @@
 
   "Nx": 400,
   "NQ2": 400,
-  "xmin": 1e-9,
+  "xmin": 1e-7,
   "xmax": 1.0,
   "Q2min": 1.69,
   "Q2max": 1e10,

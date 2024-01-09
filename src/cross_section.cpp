@@ -16,7 +16,7 @@ CrossSection::CrossSection(Configuration& _config)
     // if (config.enable_small_x) {
     //     integral_min_Q2 = 10.0;
     // }
-    integral_min_Q2 = config.integral_min_Q2
+    integral_min_Q2 = config.integral_min_Q2;
     integral_max_Q2 = config.Q2max;
     integral_min_x = config.xmin;
     integral_max_x = config.xmax;
@@ -266,7 +266,7 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    gsl_integration_qag ( &F, log(1.e-9), log(1.), 0, 1.e-5, 10000, 6, w, &result, &error);
+    gsl_integration_qag ( &F, log(integral_min_x), log(integral_max_x), 0, 1.e-5, 10000, 6, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;
@@ -279,8 +279,8 @@ double CrossSection::TotalXS(double E){
     const unsigned long dim = 2; int calls = 50000;
 
     // integrating on the log of x and y
-    double xl[dim] = { log(1.e-9), log(1.e-9) };
-    double xu[dim] = { log(1.)   , log(1.)    };
+    double xl[dim] = { log(integral_min_x), log(1.e-9) };
+    double xu[dim] = { log(integral_max_x)   , log(1.)    };
 
     gsl_rng_env_setup ();
     const gsl_rng_type *T = gsl_rng_default;
