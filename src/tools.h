@@ -19,6 +19,11 @@
 
 using namespace std;
 
+class NotImplementedException : public std::logic_error {
+    public:
+        NotImplementedException () : std::logic_error{"Function not yet implemented."} {}
+};
+
 // file array
 typedef vector<double> Row;
 typedef vector<Row> Table;

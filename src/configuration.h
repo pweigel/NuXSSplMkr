@@ -35,29 +35,53 @@ static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::ele
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1.} };
 static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"light", SFType::light},{"charm",SFType::charm},{"bottom",SFType::bottom},{"top",SFType::top} };
 
-// struct APFEL_settings {
-//     string mass_scheme;
-//     bool disable_top; // Used for CSMS calculation
-//     bool pdf_evolution;
-//     bool small_x_resummation;
-//     string small_x_order;
-// }
+struct General_settings {
+    string unique_name;
+    bool debug;
+};
 
-// struct sf_grid_settings {
-//   int Nx, NQ2;
-//   double xmin, xmax, Q2min, Q2max;
-// }
+struct PDF_settings {
+    string pdfset;
+    int replica;
+    LHAPDF::PDF* pdf;
+    std::map<int, double> pdf_quark_masses;
+    double PDFxmin, PDFQ2min, PDFQ2max;
+};
 
-// struct xs_integration_settings {
-//     double xmin, xmax, Q2min, Q2max;
-// }
+struct SF_settings {
+    string mass_scheme;
 
-// struct fundamental_constants {
-//   double MassZ, MassW, Rho, Sin2ThW;
-//   double Vud, Vus, Vub;
-//   double Vcd, Vcs, Vcb;
-//   double Vtd, Vts, Vtb;
-// }
+    int pto;
+    QCDOrder perturbative_order;
+    string DIS_process;
+    Current current;
+
+    bool disable_top;
+    bool enable_small_x;
+    string small_x_order;
+    bool evolve_pdf;
+    bool enable_CKMT;
+    bool enable_PCAC;
+
+    int Nx, NQ2;
+    double xmin, xmax, Q2min, Q2max;
+};
+
+struct CKMT_settings {
+
+};
+
+struct xs_integration_settings {
+    double xmin, xmax, Q2min, Q2max;
+};
+
+struct fundamental_constants {
+  double MassZ, MassW, Rho, Sin2ThW;
+  double Vud, Vus, Vub;
+  double Vcd, Vcs, Vcb;
+  double Vtd, Vts, Vtb;
+  double Mboson2;
+};
 
 class Configuration {
   private:
@@ -76,41 +100,26 @@ class Configuration {
     string unique_name;
     string pdfset;
     int replica;
+
+    // settings structs
+    General_settings general;
+    PDF_settings pdf;
+    SF_settings SF;
+    CKMT_settings CKMT_F2_nu;
+    CKMT_settings CKMT_xF3_nu;
+    CKMT_settings CKMT_xF3_nubar;
+    xs_integration_settings xs_integration;
+    fundamental_constants constants;
+    //
     
-    string mass_scheme;
-    QCDOrder perturbative_order;
-    string DIS_process;
-    Current current;
-    string projectile;
-    NeutrinoType neutrino_type;
+    string sf_type_string;
+    SFType sf_type;
     string target;
     TargetType target_type;
+    string projectile;
+    NeutrinoType neutrino_type;
 
-    SFType sf_type;
-    string sf_type_string;
-
-    int Nx, NQ2;
-    double xmin, xmax, Q2min, Q2max;
-    double MassZ, MassW, Rho, Sin2ThW;
-    double Vud, Vus, Vub;
-    double Vcd, Vcs, Vcb;
-    double Vtd, Vts, Vtb;
-
-    double integral_min_Q2;
-
-    LHAPDF::PDF* pdf;
-    std::map<int, double> pdf_quark_masses; 
-    double PDFxmin;
-    double PDFQ2min;
-    double PDFQ2max;
-
-    double M_boson2;  // squared mass of the boson (W or Z)
     double cp_factor;
-    bool disable_top; // Set the top mass to ~bottom mass+0.1, used for CSMS calculation 
-    bool enable_small_x;
-    string small_x_order;
-    bool evolve_pdf; // Evolve pdf from Q0 (typically mc, or 1.3 GeV)
-    bool enable_pcac; // Use PCAC for low Q2
 };
 
 }

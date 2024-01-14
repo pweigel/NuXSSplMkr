@@ -11,55 +11,58 @@ Configuration::Configuration(string config_path) {
 }
 
 void Configuration::Populate() {
-    unique_name = j.at("unique_name");
-    pdfset = j.at("pdfset");
-    replica = j.at("replica");
+    general.unique_name = j["general"].at("unique_name");
+    general.debug = j["general"].value("debug", false);
 
-    mass_scheme = j.at("mass_scheme");
+    SF.mass_scheme = j["SF"].at("mass_scheme");
+    SF.pto = j["SF"].at("perturbative_order");
+    SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
+    SF.DIS_process = j["SF"].at("DIS_process");
+    SF.current = CurrentMap.at(SF.DIS_process);
+    
+    SF.disable_top = j["SF"].value("disable_top", false);
+    SF.enable_small_x = j["SF"].value("enable_small_x", false);
+    SF.small_x_order = j["SF"].value("small_x_order", "NLL");
+    SF.evolve_pdf = j["SF"].value("evolve_pdf", false);
+    SF.enable_CKMT = j["SF"].value("enable_CKMT", false);
+    SF.enable_PCAC = j["SF"].value("enable_PCAC", false);
 
-    int pto = j.at("perturbative_order"); // TODO: use existing enum
-    perturbative_order = static_cast<QCDOrder>(pto);
-    DIS_process = j.at("DIS_process");  // TODO: using existing enum
-    current = CurrentMap.at(DIS_process);
-
-    Nx    = j.at("Nx");
-    NQ2   = j.at("NQ2");
-    xmin  = j.at("xmin");
-    xmax  = j.at("xmax");
-    Q2min = j.at("Q2min");
-    Q2max = j.at("Q2max");
-
-    integral_min_Q2 = j.at("integral_min_Q2");
-
-    MassZ   = j.at("MassZ");
-    MassW   = j.at("MassW");
-    Rho     = j.at("Rho");
-    Sin2ThW = j.at("Sin2ThW");
-
-    Vud = j.at("Vud"); Vus = j.at("Vus"); Vub = j.at("Vub");
-    Vcd = j.at("Vcd"); Vcs = j.at("Vcs"); Vcb = j.at("Vcb");
-    Vtd = j.at("Vtd"); Vts = j.at("Vts"); Vtb = j.at("Vtb");
+    SF.Nx = j["SF"].at("Nx");
+    SF.NQ2 = j["SF"].at("NQ2");
+    SF.xmin = j["SF"].at("xmin");
+    SF.xmax = j["SF"].at("xmax");
+    SF.Q2min = j["SF"].at("Q2min");
+    SF.Q2max = j["SF"].at("Q2max");
+  
+    xs_integration.xmin = j["xs_integration"].at("xmin");
+    xs_integration.xmax = j["xs_integration"].at("xmax");
+    xs_integration.Q2min = j["xs_integration"].at("Q2min");
+    xs_integration.Q2max = j["xs_integration"].at("Q2max");
+   
+    constants.MassZ = j["constants"].at("MassZ");
+    constants.MassW = j["constants"].at("MassW");
+    constants.Rho = j["constants"].at("Rho");
+    constants.Sin2ThW = j["constants"].at("Sin2ThW");
+    constants.Vud = j["constants"].at("Vud"); constants.Vus = j["constants"].at("Vus"); constants.Vub = j["constants"].at("Vub");
+    constants.Vcd = j["constants"].at("Vcd"); constants.Vcs = j["constants"].at("Vcs"); constants.Vcb = j["constants"].at("Vcb");
+    constants.Vtd = j["constants"].at("Vtd"); constants.Vts = j["constants"].at("Vts"); constants.Vtb = j["constants"].at("Vtb");
 
     // Make the pdf with LHAPDF and get its properties
-    pdf = LHAPDF::mkPDF(pdfset, replica);
+    pdf.pdfset = j["PDF"].at("pdfset");
+    pdf.replica = j["PDF"].at("replica");
+    pdf.pdf = LHAPDF::mkPDF(pdf.pdfset, pdf.replica);
     for (int i=1; i<7; i++){
-        pdf_quark_masses[i] = pdf->quarkMass(i);
+        pdf.pdf_quark_masses[i] = pdf.pdf->quarkMass(i);
     }
-    PDFxmin  = pdf->xMin();
-    PDFQ2min = pdf->q2Min();
-    PDFQ2max = pdf->q2Max();
+    pdf.PDFxmin  = pdf.pdf->xMin();
+    pdf.PDFQ2min = pdf.pdf->q2Min();
+    pdf.PDFQ2max = pdf.pdf->q2Max();
 
-    if (current == CC) {
-        M_boson2 = MassW * MassW;
-    } else if (current == NC) {
-        M_boson2 = MassZ * MassZ;
+    if (SF.current == CC) {
+        constants.Mboson2 = constants.MassW * constants.MassW;
+    } else if (SF.current == NC) {
+        constants.Mboson2 = constants.MassZ * constants.MassZ;
     }
-
-    disable_top    = j.value("disable_top", false);
-    enable_small_x = j.value("enable_small_x", false);
-    small_x_order  = j.value("small_x_order", "NLL"); 
-    evolve_pdf     = j.value("evolve_pdf", false);
-    enable_pcac    = j.value("enable_pcac", false);
 
 }
 

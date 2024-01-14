@@ -71,8 +71,8 @@ int main(int argc, char* argv[]){
                 string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + sf_type + ".fits";
 
                 CrossSection* xs = new CrossSection(config);
-                
-                if (config.mass_scheme != "parton") {
+                std::cout << "test" << std::endl;
+                if (config.SF.mass_scheme != "parton") {
                     xs->Load_Structure_Functions(f1, f2, f3);
                 }
 

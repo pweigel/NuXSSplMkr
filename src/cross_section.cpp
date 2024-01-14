@@ -16,10 +16,11 @@ CrossSection::CrossSection(Configuration& _config)
     // if (config.enable_small_x) {
     //     integral_min_Q2 = 10.0;
     // }
-    integral_min_Q2 = config.integral_min_Q2;
-    integral_max_Q2 = config.Q2max;
-    integral_min_x = config.xmin;
-    integral_max_x = config.xmax;
+    integral_min_x = config.xs_integration.xmin;
+    integral_max_x = config.xs_integration.xmax;
+    integral_min_Q2 = config.xs_integration.Q2min;
+    integral_max_Q2 = config.xs_integration.Q2max;
+
 }
 
 void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
@@ -92,7 +93,7 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
 }
 
 double CrossSection::ds_dxdy(double x, double y) {
-    double MW2 = config.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
     double s = 2.0 * M_iso * ENU + SQ(M_iso); // TODO: target mass
     double Q2 = (s - SQ(M_iso)) * x * y; // TODO: target mass
@@ -137,7 +138,7 @@ double CrossSection::ds_dxdy_partonic(double E, double x, double y) {
 double CrossSection::ds_dxdy_partonic(double x, double y) {
     // TODO: W threshold and slow rescaling, CP factor fix
     
-    double MW2 = config.M_boson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
     double s_energy = 2.*M_iso*ENU + SQ(M_iso); // using s for strange parton later
     double Q2 = (s_energy - SQ(M_iso)) * x * y;
@@ -153,38 +154,38 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     double u;
     double ubar;
     if (config.target == "proton") {
-        d    = config.pdf -> xfxQ2(1, x, mQ2);
-        dbar = config.pdf -> xfxQ2(-1, x, mQ2);
-        u    = config.pdf -> xfxQ2(2, x, mQ2);
-        ubar = config.pdf -> xfxQ2(-2, x, mQ2);
+        d    = config.pdf.pdf -> xfxQ2(1, x, mQ2);
+        dbar = config.pdf.pdf -> xfxQ2(-1, x, mQ2);
+        u    = config.pdf.pdf -> xfxQ2(2, x, mQ2);
+        ubar = config.pdf.pdf -> xfxQ2(-2, x, mQ2);
     } else if (config.target == "neutron") {
-        d    = config.pdf -> xfxQ2(2, x, mQ2);
-        dbar = config.pdf -> xfxQ2(-2, x, mQ2);
-        u    = config.pdf -> xfxQ2(1, x, mQ2);
-        ubar = config.pdf -> xfxQ2(-1, x, mQ2);
+        d    = config.pdf.pdf -> xfxQ2(2, x, mQ2);
+        dbar = config.pdf.pdf -> xfxQ2(-2, x, mQ2);
+        u    = config.pdf.pdf -> xfxQ2(1, x, mQ2);
+        ubar = config.pdf.pdf -> xfxQ2(-1, x, mQ2);
     } else {
         throw std::runtime_error("Unrecognized target type!");
     }
 
-    double s    = config.pdf -> xfxQ2(3, x, mQ2);
-    double sbar = config.pdf -> xfxQ2(-3, x, mQ2);
-    double b    = config.pdf -> xfxQ2(5, x, mQ2);
-    double bbar = config.pdf -> xfxQ2(-5, x, mQ2);
+    double s    = config.pdf.pdf -> xfxQ2(3, x, mQ2);
+    double sbar = config.pdf.pdf -> xfxQ2(-3, x, mQ2);
+    double b    = config.pdf.pdf -> xfxQ2(5, x, mQ2);
+    double bbar = config.pdf.pdf -> xfxQ2(-5, x, mQ2);
 
-    double c    = config.pdf -> xfxQ2(4, x, mQ2);
-    double cbar = config.pdf -> xfxQ2(-4, x, mQ2);
-    double t    = config.pdf -> xfxQ2(6, x, mQ2);
-    double tbar = config.pdf -> xfxQ2(-6, x, mQ2);
+    double c    = config.pdf.pdf -> xfxQ2(4, x, mQ2);
+    double cbar = config.pdf.pdf -> xfxQ2(-4, x, mQ2);
+    double t    = config.pdf.pdf -> xfxQ2(6, x, mQ2);
+    double tbar = config.pdf.pdf -> xfxQ2(-6, x, mQ2);
 
     double F2_val;
     double xF3_val; // TODO:
     if (config.sf_type == SFType::charm) {
         if (config.neutrino_type == NeutrinoType::neutrino) {
-            F2_val =  2 * (SQ(config.Vcd)*d + SQ(config.Vcs)*s + SQ(config.Vcb)*b);
-            xF3_val = 2 * (SQ(config.Vcd)*d + SQ(config.Vcs)*s + SQ(config.Vcb)*b);
+            F2_val =  2 * (SQ(config.constants.Vcd)*d + SQ(config.constants.Vcs)*s + SQ(config.constants.Vcb)*b);
+            xF3_val = 2 * (SQ(config.constants.Vcd)*d + SQ(config.constants.Vcs)*s + SQ(config.constants.Vcb)*b);
         } else if (config.neutrino_type == NeutrinoType::antineutrino) {
-            F2_val =   2 * (SQ(config.Vcd)*dbar + SQ(config.Vcs)*sbar + SQ(config.Vcb)*bbar);
-            xF3_val = -2 * (SQ(config.Vcd)*dbar + SQ(config.Vcs)*sbar + SQ(config.Vcb)*bbar);
+            F2_val =   2 * (SQ(config.constants.Vcd)*dbar + SQ(config.constants.Vcs)*sbar + SQ(config.constants.Vcb)*bbar);
+            xF3_val = -2 * (SQ(config.constants.Vcd)*dbar + SQ(config.constants.Vcs)*sbar + SQ(config.constants.Vcb)*bbar);
         } else {
             throw std::runtime_error("Unrecognized neutrino type!");
         }
@@ -259,7 +260,7 @@ double CrossSection::ds_dy(double E, double y) {
     double result, error;
 
     gsl_function F;
-    if (config.mass_scheme == "parton") { 
+    if (config.SF.mass_scheme == "parton") { 
         F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy_partonic>;
     } else {
         F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
@@ -287,7 +288,7 @@ double CrossSection::TotalXS(double E){
     gsl_rng *r = gsl_rng_alloc (T);
 
     gsl_monte_function F;
-    if (config.mass_scheme == "parton") {
+    if (config.SF.mass_scheme == "parton") {
         F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy_partonic>, dim, this};
     } else {
         F = { &KernelHelper<CrossSection, &CrossSection::_ds_dxdy>, dim, this};

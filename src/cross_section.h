@@ -28,12 +28,6 @@ double KernelHelper(double x, void* param){
   return (p->*f)(x);
 }
 
-template<class T,double (T::*f)(double,double),int n,int m>
-double HK(double x, void* param){
-  T* p = (T*) param;
-  return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
-}
-
 class CrossSection {
     private:
 
