@@ -17,22 +17,22 @@ int main(int argc, char* argv[]){
         return 1;
     }
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
-    const std::string target = argv[2]; // proton or neutron
-    const std::string projectile = argv[3]; // neutrino or antineutrino
+    const std::string projectile = argv[2]; // neutrino or antineutrino
+    const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
-    std::cout << "Target: " << target << std::endl;
     std::cout << "Projectile: " << projectile << std::endl;
+    std::cout << "Target: " << target << std::endl;
     std::cout << "XS Type: " << xs_type << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     Configuration config = Configuration(config_path);
     config.Populate();
     
-    std::string data_folder = "../data/" + config.pdfset + "_" + config.mass_scheme + "_pto" + to_string(config.perturbative_order);
+    std::string data_folder = "../data/" + config.general.unique_name;
 
     config.Set_Target(target);
     config.Set_Projectile(projectile);
@@ -58,12 +58,12 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
 
-    std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/" + target + "_" + xs_type + ".out");
-
-    if (config.mass_scheme != "parton") {
+    if (config.SF.mass_scheme != "parton") {
         xs->Load_Structure_Functions(f1, f2, f3);
     }
+
+    std::ofstream outfile;
+    outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".out");
 
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);

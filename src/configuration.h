@@ -97,10 +97,6 @@ class Configuration {
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
 
-    string unique_name;
-    string pdfset;
-    int replica;
-
     // settings structs
     General_settings general;
     PDF_settings pdf;
@@ -111,7 +107,7 @@ class Configuration {
     xs_integration_settings xs_integration;
     fundamental_constants constants;
     //
-    
+
     string sf_type_string;
     SFType sf_type;
     string target;
