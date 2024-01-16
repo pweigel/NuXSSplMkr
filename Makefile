@@ -27,7 +27,7 @@ CXX 		= g++
 #Dynamic Library
 
 #Flags
-CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++11
+CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++14
 
 # LD 		= clang++
 LD 		= g++
@@ -54,7 +54,7 @@ CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 # all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
 all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs
-# test: bin/test
+test: bin/CKMT_test
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -73,6 +73,9 @@ bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physco
 
 bin/make_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
+
+bin/CKMT_test: src/configuration.o src/structure_function.o src/physconst.o mains/CKMT_test.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 %.o:%.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@

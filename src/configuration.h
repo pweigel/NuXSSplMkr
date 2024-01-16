@@ -60,15 +60,22 @@ struct SF_settings {
     bool enable_small_x;
     string small_x_order;
     bool evolve_pdf;
+    bool enable_TMC;
     bool enable_CKMT;
     bool enable_PCAC;
-
+    bool use_AlbrightJarlskog;
+    
     int Nx, NQ2;
     double xmin, xmax, Q2min, Q2max;
 };
 
 struct CKMT_settings {
-
+    double Q0;
+    double Delta0;
+    double AlphaR;
+    double a, b, c, d;
+    double F2A, F2B, F2f;
+    double xF3A, xF3B, xF3f; // Note: we will apply cp_factor on xF3B!!!
 };
 
 struct xs_integration_settings {
@@ -101,9 +108,7 @@ class Configuration {
     General_settings general;
     PDF_settings pdf;
     SF_settings SF;
-    CKMT_settings CKMT_F2_nu;
-    CKMT_settings CKMT_xF3_nu;
-    CKMT_settings CKMT_xF3_nubar;
+    CKMT_settings CKMT;
     xs_integration_settings xs_integration;
     fundamental_constants constants;
     //

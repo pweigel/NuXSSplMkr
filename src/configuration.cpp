@@ -24,8 +24,10 @@ void Configuration::Populate() {
     SF.enable_small_x = j["SF"].value("enable_small_x", false);
     SF.small_x_order = j["SF"].value("small_x_order", "NLL");
     SF.evolve_pdf = j["SF"].value("evolve_pdf", false);
+    SF.enable_TMC = j["SF"].value("enable_TMC". false);
     SF.enable_CKMT = j["SF"].value("enable_CKMT", false);
     SF.enable_PCAC = j["SF"].value("enable_PCAC", false);
+    SF.use_AlbrightJarlskog = j["SF"].value("use_AlbrightJarlskog", true);
 
     SF.Nx = j["SF"].at("Nx");
     SF.NQ2 = j["SF"].at("NQ2");
@@ -33,6 +35,18 @@ void Configuration::Populate() {
     SF.xmax = j["SF"].at("xmax");
     SF.Q2min = j["SF"].at("Q2min");
     SF.Q2max = j["SF"].at("Q2max");
+
+    if (SF.enable_CKMT) {
+        CKMT.Q0 = j["CKMT"].at("Q0"); // Matching scale
+        CKMT.Delta0 = j["CKMT"].at("Delta0");
+        CKMT.AlphaR = j["CKMT"].at("AlphaR");
+        CKMT.a = j["CKMT"].at("a");
+        CKMT.b = j["CKMT"].at("b");
+        CKMT.c = j["CKMT"].at("c");
+        CKMT.d = j["CKMT"].at("d");
+        CKMT.F2A = j["CKMT"]["F2"].at("A");   CKMT.F2B  = j["CKMT"]["F2"].at("B");   CKMT.F2f  = j["CKMT"]["F2"].at("f");
+        CKMT.xF3A = j["CKMT"]["xF3"].at("A"); CKMT.xF3B = j["CKMT"]["xF3"].at("B");  CKMT.xF3f = j["CKMT"]["xF3"].at("f");
+    }
   
     xs_integration.xmin = j["xs_integration"].at("xmin");
     xs_integration.xmax = j["xs_integration"].at("xmax");

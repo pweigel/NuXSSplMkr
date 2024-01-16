@@ -40,24 +40,6 @@ double HK(double x, void* param){
   return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
 }
 
-struct EM_SF_Parameters {
-    double Delta0;
-    double AlphaR;
-    double a;
-    double b;
-    double c;
-    double d;
-    double A;
-    double B;
-    double f;
-};
-
-struct CKMT_Parameters {
-    double A;
-    double B;
-    double C;
-    double f;
-};
 
 class StructureFunction {
     private:
@@ -80,20 +62,6 @@ class StructureFunction {
         // LHAPDF::GridPDF* grid_central;
         double _kernel_Q2;
         double _kernel_x;
-
-        // CKMT constants (cite reno paper)
-        // Some day this will be a config setting or something
-        double Delta0 = 0.07684;
-        double alphaR = 0.4150;
-        double CKMT_a = 0.2631;
-        double CKMT_b = 0.6452;
-        double CKMT_c = 3.5489;
-        double CKMT_d = 1.1170;
-
-        double CKMT_A;
-        double CKMT_B;
-        double CKMT_D;
-        double CKMT_f;
 
         // PCAC constants (cite reno paper)
         double PCAC_AL = 0.147;
@@ -133,13 +101,16 @@ class StructureFunction {
         template<class T,double (T::*f)(double,double),int n,int m>
         double HGeneric(double x, double Q2);
 
-        // double F1_TMC(double x, double Q2);
-        // double F2_TMC(double x, double Q2);
-        // double F3_TMC(double x, double Q2);
+        double F1_TMC(double x, double Q2);
+        double F2_TMC(double x, double Q2);
+        double F3_TMC(double x, double Q2);
 
         double CKMT_n(double Q2);
         double CKMT_Delta(double Q2);
-        double F_CKMT(double x, double Q2);
+        double F2_CKMT(double x, double Q2);
+        double xF3_CKMT(double x, double Q2);
+        double F3_CKMT(double x, double Q2);
+        double F_CKMT(double x, double Q2, double A, double B, double f);
 
         double F1_PCAC(double x, double Q2);
         double FL_PCAC(double x, double Q2);

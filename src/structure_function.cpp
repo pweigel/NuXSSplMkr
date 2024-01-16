@@ -55,7 +55,7 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetQLimits(std::sqrt(config.SF.Q2min), std::sqrt(config.SF.Q2max));
     // std::cout << "Evolution Q limits: [" << std::sqrt(config.Q2min) << ", " << std::sqrt(config.Q2max) << "] GeV." << std::endl;
     //APFEL::SetPolarizationDIS(0);
-    //APFEL::EnableTargetMassCorrections(false);
+    // APFEL::EnableTargetMassCorrections(false);
     //APFEL::EnableDampingFONLL(true);
     //APFEL::SetFastEvolution(true);
     //APFEL::LockGrids(true);
@@ -222,7 +222,7 @@ double StructureFunction::F3(double x, double Q2) {
 }
 
 double StructureFunction::F4(double x, double Q2) {
-    if (use_AlbrightJarlskog) {
+    if (config.SF.use_AlbrightJarlskog) {
         return 0.0;
     } else{
         throw NotImplementedException();
@@ -230,7 +230,7 @@ double StructureFunction::F4(double x, double Q2) {
 }
 
 double StructureFunction::F5(double x, double Q2) {
-    if (use_AlbrightJarlskog) {
+    if (config.SF.use_AlbrightJarlskog) {
         return F2(x, Q2) / (2.0 * x);
     } else{
         throw NotImplementedException();
@@ -246,14 +246,14 @@ double StructureFunction::NachtmannXi(double x, double Q2){
     return 2.*x / denominator;
 }
 
-template<class T,double (T::*f)(double,double),int n,int m>
+template<class T,double (T::*f)(double,double), int n, int m>
 double StructureFunction::HGeneric(double xi, double Q2){
     // Integrate T::f from xi to 1 at Q2
     gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
     double result, error;
     
     gsl_function F;
-    F.function = &HK<T,f,n,m>;
+    F.function = &HK<T, f, n, m>;
     F.params = this;
     // set q2
     _kernel_Q2 = Q2;
@@ -263,51 +263,76 @@ double StructureFunction::HGeneric(double xi, double Q2){
     return result;
 }
 
+double StructureFunction::H2(double xi, double Q2){
+    return HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+}
 
-// double StructureFunction::F1_TMC(double x, double Q2) {
-//     double xi = NachtmannXi(x, Q2);
-//     double r = NactmannR(x, Q2);
-//     double term1 = (x / (xi * r)) * F1(xi, Q2);
-//     double term2 = SQ(M_iso * x / r) / Q2 * H2(xi, Q2);
-//     double term3 = 2.0 * SQ(SQ(M_iso) * x / (Q2 * r)) * (x / r) * G2(xi, Q2);
-//     return (term1 + term2 + term3);
+double StructureFunction::H3(double xi, double Q2){
+    return HGeneric<StructureFunction,&StructureFunction::F3,1,1>(xi, Q2);
+}
 
-// double StructureFunction::F2_TMC(double x, double Q2) {
-//     double xi = NachtmannXi(x, Q2);
-//     double r = NactmannR(x, Q2);
-//     double term1 = SQ(x / (xi * r)) / r * F2(xi, Q2);
-//     double term2 = 6.0 * SQ(M_iso * x / SQ(r)) * (x / Q2) * H2(xi, Q2);
-//     double term3 = 12.0 * SQ(SQ(M_iso * x / r) / (Q2 * r)) * G2(xi, Q2);
-//     return (term1 + term2 + term3);
-// }
+double StructureFunction::G2(double xi, double Q2){
+    return HGeneric<StructureFunction,&StructureFunction::F2,1,1>(xi, Q2) - xi*HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+}
 
-// double StructureFunction::F3_TMC(double x, double Q2) {
-//     double xi = NachtmannXi(x, Q2);
-//     double r = NactmannR(x, Q2);
-//     double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
-//     double term2 = 2.0 * SQ(M_iso * x / r) / (Q2 * r) * H3(xi, Q2);
-//     return (term1 + term2);
-// }
+double StructureFunction::F1_TMC(double x, double Q2) { // slow rescale?
+    double xi = NachtmannXi(x, Q2);
+    double r = NactmannR(x, Q2);
+    double term1 = (x / (xi * r)) * F1(x, Q2);
+    double term2 = SQ(M_iso * x / r) / Q2 * H2(x, Q2);
+    double term3 = 2.0 * SQ(SQ(M_iso) * x / (Q2 * r)) * (x / r) * G2(x, Q2);
+    return (term1 + term2 + term3);
 
-// double StructureFunction::CKMT_n(double Q2) {
-//     return (3.0 / 2.0) * (1.0 + Q2 / (Q2 + CKMT_c));
-// }
+double StructureFunction::F2_TMC(double x, double Q2) {
+    double xi = NachtmannXi(x, Q2);
+    double r = NactmannR(x, Q2);
+    double term1 = SQ(x / (xi * r)) / r * F2(xi, Q2);
+    double term2 = 6.0 * SQ(M_iso * x / SQ(r)) * (x / Q2) * H2(xi, Q2);
+    double term3 = 12.0 * SQ(SQ(M_iso * x / r) / (Q2 * r)) * G2(xi, Q2);
+    return (term1 + term2 + term3);
+}
 
-// double StructureFunction::CKMT_Delta(double Q2) {
-//     return Delta0 * (1.0 + 2.0 * Q2 / (Q2 + CKMT_d));
-// }
+double StructureFunction::F3_TMC(double x, double Q2) {
+    double xi = NachtmannXi(x, Q2);
+    double r = NactmannR(x, Q2);
+    double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
+    double term2 = 2.0 * SQ(M_iso * x / r) / (Q2 * r) * H3(xi, Q2);
+    return (term1 + term2);
+}
 
+double StructureFunction::CKMT_n(double Q2) {
+    return (3.0 / 2.0) * (1.0 + Q2 / (Q2 + config.CKMT.c));
+}
 
-// double StructureFunction::F_CKMT(double x, double Q2) {
-//     // reno paper
-//     double delta = CKMT_Delta(Q2);
-//     double n = CKMT_n(Q2);
-//     double term1 = CKMT_A * pow(x, -1.0 * delta) *  pow((1 - x), n+4);
-//     double term2 = pow(Q2 / (Q2 + CKMT_a), 1 + delta);
-//     double term3 = CKMT_B * pow(x, 1.0 - alphaR) * pow(1.0 - x, n) * pow(Q2 / (Q2 + CKMT_b), alphaR);
-//     double term4 = (1.0 + CKMT_f * (1.0 - x));
-//     return (term1 * term2 + term3 * term4);
-// }
+double StructureFunction::CKMT_Delta(double Q2) {
+    return config.CKMT.Delta0 * (1.0 + 2.0 * Q2 / (Q2 + config.CKMT.d));
+}
+
+double StructureFunction::F_CKMT(double x, double Q2, double A, double B, double f) {
+    // reno paper
+    double delta = CKMT_Delta(Q2);
+    double n = CKMT_n(Q2);
+    // double term1 = A * pow(x, -1.0 * delta) *  pow((1.0 - x), n+4);
+    // double term2 = pow(Q2 / (Q2 + config.CKMT.a), 1 + delta);
+    // double term3 = B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0 - x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR);
+    // double term4 = (1.0 + f * (1.0 - x));
+    // return (term1 * term2 + term3 * term4);
+    double term1 = A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), 1.0 + delta);
+    double term2 = B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0-x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR) * (1.0 + f * (1.0 - x));
+    return (term1 + term2);
+}
+
+double StructureFunction::F2_CKMT(double x, double Q2) {
+    return F_CKMT(x, Q2, config.CKMT.F2A, config.CKMT.F2B, config.CKMT.F2f);
+}
+
+double StructureFunction::xF3_CKMT(double x, double Q2) {
+    return F_CKMT(x, Q2, config.CKMT.xF3A, config.cp_factor * config.CKMT.xF3B, config.CKMT.xF3f);
+}
+
+double StructureFunction::F3_CKMT(double x, double Q2) {
+    return xF3_CKMT(x, Q2) / x;
+}
 
 // double StructureFunction::FL_PCAC(double x, double Q2) {
 //     return 0.0;
@@ -410,11 +435,40 @@ void StructureFunction::BuildSplines(string outpath) {
             // Do checks here
            // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
             // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
-            double _FL = FL(x, Q2); 
-            double _F2 = F2(x, Q2);
-            // calculate F1 from FL, F2 instead of calling F1(x, Q2), which recomputes
-            double _F1 = (_F2 - _FL) / (2. * x);
-            double _F3 = F3(x, Q2);
+
+
+            double _FL, _F1, _F2, _F3;
+            _FL = FL(x, Q2);
+            _F2 = F2(x, Q2);
+            _F1 = (_F2 - _FL) / (2. * x);
+            _F3 = F3(x, Q2);
+            if (config.SF.enable_CKMT) {
+                double CKMT_Q20 = SQ(config.CKMT.Q0);
+                if (Q2 < CKMT_Q20) {
+                    double _F2_CKMT    = F2_CKMT(x, Q2);
+                    double _F3_CKMT    = F3_CKMT(x, Q2);
+                    double _F2_Q0      = F2(x, CKMT_Q20);
+                    double _F3_Q0      = F3(x, CKMT_Q20);
+                    double _F2_CKMT_Q0 = F2_CKMT(x, CKMT_Q20);
+                    double _F3_CKMT_Q0 = F3_CKMT(x, CKMT_Q20);
+
+                    // if (config.SF.enable_PCAC) {
+                        
+                    // }
+
+                    // R parameterization from Whitlow et al: Phys. Lett. B 250, 193 (1990)
+                    // R is used to calculate F1 from F2
+                    double big_theta = 1.0 + 12.0 * (Q2 / (Q2 + 1.0)) * (SQ(0.125) / (SQ(0.125) + SQ(x)));
+                    // double b1 = 0.635;
+                    // double b2 = 0.5747;
+                    // double b3 = -0.3534;
+                    double _R = 0.635 / log(Q2/SQ(0.2)) * big_theta + 0.5747 / Q2 - 0.3534 / (Q2 + SQ(0.3));
+                    
+                    _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
+                    _F1 = _F2 * (1.0 + 4.0 * SQ(M_iso * x)) / (2.0 * x * (_R + 1.0));
+                    _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
+                }
+            }
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;

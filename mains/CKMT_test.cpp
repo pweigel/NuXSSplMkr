@@ -28,10 +28,6 @@ int main(int argc, char* argv[]){
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
     
     config.Populate();  // Populate the SF info
-    boost::filesystem::path out_folder = "../data/" + config.general.unique_name;
-    if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
-        boost::filesystem::create_directories(out_folder);
-    }
 
     config.Set_Target(target);
     config.Set_Projectile(projectile);
@@ -42,8 +38,22 @@ int main(int argc, char* argv[]){
 
     sf.Set_Lepton_Mass(pc->muon_mass);
 
+    double Q2 = 2.0;
+
+    int Nx = 100;
+    double logxmin = -3;
+    double logxmax = 0;
+    double dx = (logxmax - logxmin) / (Nx-1);
     sf.InitializeAPFEL();
-    sf.BuildSplines(out_folder.string()); // Photospline
+    sf.Set_Q_APFEL(std::sqrt(Q2));
+    std::ofstream outfile;
+    outfile.open("test_CKMT.out");
+    for (int i = 0; i < Nx; i++) {
+        double x = pow(10, logxmin + i*dx);
+        outfile << x << "," << sf.F2(x, Q2) << "," << sf.xF3(x, Q2) << "," << sf.F2_CKMT(x, Q2) << "," << sf.xF3_CKMT(x, Q2) << "\n";
+    }
+
+    // sf.BuildSplines(out_folder.string()); // Photospline
     // sf.BuildGrids(out_folder.string()); // Grid file
 
     return 0;
