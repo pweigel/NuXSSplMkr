@@ -56,6 +56,9 @@ struct SF_settings {
     string DIS_process;
     Current current;
 
+    bool enable_FONLL_damping;
+    double FONLL_damping_factor;
+
     bool disable_top;
     bool enable_small_x;
     string small_x_order;

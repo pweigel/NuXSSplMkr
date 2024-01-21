@@ -61,6 +61,10 @@ void CrossSection::Set_Neutrino_Energy(double E) {
     integral_max_Q2 = 2.0 * M_iso * ENU; // TODO: M_ISO --> target mass
 }
 
+void CrossSection::Set_Lepton_Mass(double m) {
+    M_l = m;
+}
+
 double CrossSection::_ds_dxdy(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
@@ -70,6 +74,20 @@ double CrossSection::_ds_dxdy(double* k) {
     double Q2 = 2.0 * M_iso * ENU * x * y;  // Q2 = s x y - m^2
     // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
     double W2 =  2.0 * M_iso * ENU * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+
+    // integration limits from Reno, Kretzer
+    double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
+    if (x < _xmin) {
+        return 1e-99;
+    }
+    double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    double _b = sqrt( SQ(1.0 - SQ(M_l)/(2.0 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    double _ymin = _a - _b;
+    double _ymax = _a + _b;
+    // std::cout << "ymin: " << _ymin << "," << "ymax: " << _ymax << std::endl;
+    if ((y < _ymin) || (y > _ymax)){
+        return 1e-99;
+    }
 
     // TODO: better implementation
     if (W2 < W2min) {
@@ -101,7 +119,7 @@ double CrossSection::ds_dxdy(double x, double y) {
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-    
+    // std::cout << "log10(Q2, x): " << std::log10(Q2 / SQ(pc->GeV)) << "," << std::log10(x) << std::endl;
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
     std::array<int, 2> F1_splc;
@@ -113,8 +131,11 @@ double CrossSection::ds_dxdy(double x, double y) {
     F3.searchcenters(pt.data(), F3_splc.data());
 
     double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+    // std::cout << F1_val << ", ";
     double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+    // std::cout << F2_val << ", ";
     double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+    // std::cout << F3_val << std::endl;
     
     double term1 = y * ( y * x ) * F1_val;
     double term2 = ( 1 - y ) * F2_val;
@@ -214,17 +235,31 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
 double CrossSection::_ds_dy(double k) {
     double x = std::exp(k);
 
+    double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
+    if (x < _xmin) {
+        return 1e-99;
+    }
+    double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    double _b = sqrt( SQ(1.0 - SQ(M_l)/(2.0 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    double _ymin = _a - _b;
+    double _ymax = _a + _b;
+    // std::cout << "ymin: " << _ymin << "," << "ymax: " << _ymax << std::endl;
+    if ((_kernel_y < _ymin) || (_kernel_y > _ymax)){
+        return 1e-99;
+    }
+
     // Integration limits
     double W2min;
     if (config.sf_type == charm) {
         W2min = SQ( (0.938 + 1.869) * pc->GeV); // (m_N + m_D)^2
     } else {
-        W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+        // W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+        W2min = SQ(1.4 * pc->GeV); // TODO: This should be an input parameter
     }
     double Q2 = 2.0 * M_iso * ENU * x * _kernel_y;  // Q2 = s x y - m^2
     // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
     double W2 =  2.0 * M_iso * ENU * _kernel_y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
-
+    // std::cout << "W2/W2min: " << W2 / W2min << ", " << "Q2/Q2min: " << Q2/(integral_min_Q2*(pc->GeV)) << std::endl;
     // TODO: better implementation
     if (W2 < W2min) {
         return 1e-99;

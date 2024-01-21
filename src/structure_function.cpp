@@ -55,8 +55,10 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetQLimits(std::sqrt(config.SF.Q2min), std::sqrt(config.SF.Q2max));
     // std::cout << "Evolution Q limits: [" << std::sqrt(config.Q2min) << ", " << std::sqrt(config.Q2max) << "] GeV." << std::endl;
     //APFEL::SetPolarizationDIS(0);
-    // APFEL::EnableTargetMassCorrections(false);
-    //APFEL::EnableDampingFONLL(true);
+    // APFEL::EnableTargetMassCorrections(false); // Don't use this!
+    std::cout << "FONLL Damping: " << config.SF.enable_FONLL_damping << ", " << config.SF.FONLL_damping_factor << std::endl;
+    APFEL::EnableDampingFONLL(config.SF.enable_FONLL_damping);
+    APFEL::SetDampingPowerFONLL(config.SF.FONLL_damping_factor, config.SF.FONLL_damping_factor, config.SF.FONLL_damping_factor);
     //APFEL::SetFastEvolution(true);
     //APFEL::LockGrids(true);
     //APFEL::EnableEvolutionOperator(true);
@@ -238,7 +240,8 @@ double StructureFunction::F5(double x, double Q2) {
 }
 
 double StructureFunction::NachtmannR(double x, double Q2){
-    return sqrt(1. + 4.*x*x*SQ(M_iso)/ Q2);
+    double m = M_iso / (pc->GeV);
+    return sqrt(1. + 4.*x*x*SQ(m)/Q2);
 }
 
 double StructureFunction::NachtmannXi(double x, double Q2){
@@ -249,15 +252,16 @@ double StructureFunction::NachtmannXi(double x, double Q2){
 template<class T,double (T::*f)(double,double), int n, int m>
 double StructureFunction::HGeneric(double xi, double Q2){
     // Integrate T::f from xi to 1 at Q2
-    gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
     double result, error;
     
     gsl_function F;
+    Set_Q_APFEL(std::sqrt(Q2));
+    _kernel_Q2 = Q2;
     F.function = &HK<T, f, n, m>;
     F.params = this;
-    // set q2
-    _kernel_Q2 = Q2;
-    gsl_integration_qags ( &F, xi, 1, 0, 1.e-7, 1000, w, &result, &error);
+    // double _integrate_xmax = 1.0;
+    gsl_integration_qags ( &F, xi, 0.99, 0, 1.e-5, 5000, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;
@@ -276,28 +280,53 @@ double StructureFunction::G2(double xi, double Q2){
 }
 
 double StructureFunction::F1_TMC(double x, double Q2) { // slow rescale?
+    //todo: fix
     double xi = NachtmannXi(x, Q2);
-    double r = NactmannR(x, Q2);
-    double term1 = (x / (xi * r)) * F1(x, Q2);
-    double term2 = SQ(M_iso * x / r) / Q2 * H2(x, Q2);
-    double term3 = 2.0 * SQ(SQ(M_iso) * x / (Q2 * r)) * (x / r) * G2(x, Q2);
+    double r = NachtmannR(x, Q2);
+    double m = M_iso / (pc->GeV);
+    double term1 = (x / (xi * r)) * F1(xi, Q2);
+    double term2 = SQ(m * x / r) / Q2 * H2(xi, Q2);
+    double term3 = 2.0 * SQ(SQ(m) * x / (Q2 * r)) * (x / r) * G2(xi, Q2);
     return (term1 + term2 + term3);
+}
 
 double StructureFunction::F2_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
-    double r = NactmannR(x, Q2);
-    double term1 = SQ(x / (xi * r)) / r * F2(xi, Q2);
-    double term2 = 6.0 * SQ(M_iso * x / SQ(r)) * (x / Q2) * H2(xi, Q2);
-    double term3 = 12.0 * SQ(SQ(M_iso * x / r) / (Q2 * r)) * G2(xi, Q2);
+    double r = NachtmannR(x, Q2);
+    double m = M_iso / (pc->GeV);
+
+    double g2 = G2(xi, Q2);
+    double h2 = H2(xi, Q2);
+    
+    // double term1 = SQ(x / (xi * r)) / r * F2(xi, Q2);
+    // double term2 = 6.0 * SQ(m * x / SQ(r)) * (x / Q2) * H2(xi, Q2);
+    // double term3 = 12.0 * SQ(SQ(m * x / r) / (Q2 * r)) * G2(xi, Q2);
+
+    double term1 = x*x/(SQ(xi) * r*r*r) * F2(xi, Q2);
+    double term2 = 6.*m*m* x*x*x  * h2 / (Q2 * r*r*r*r);
+    double term3 = 12.*SQ(SQ(m*x)) * g2 / (SQ(Q2) * r*r*r*r*r );
+
     return (term1 + term2 + term3);
 }
 
 double StructureFunction::F3_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
-    double r = NactmannR(x, Q2);
-    double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
-    double term2 = 2.0 * SQ(M_iso * x / r) / (Q2 * r) * H3(xi, Q2);
+    double r = NachtmannR(x, Q2);
+    double m = M_iso / (pc->GeV);
+
+    // double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
+    // double term2 = 2.0 * SQ(m * x / r) / (Q2 * r) * H3(xi, Q2)
+    double g2 = G2(xi, Q2);
+    double h3 = H3(xi, Q2);
+
+    double term1 = x/(xi * r*r) * F3(xi, Q2);
+    double term2 = 2.*m*m* x*x  * h3 / (Q2 * r*r*r);
+    
     return (term1 + term2);
+}
+
+double StructureFunction::xF3_TMC(double x, double Q2) {
+    return x * F3_TMC(x, Q2);
 }
 
 double StructureFunction::CKMT_n(double Q2) {
@@ -435,7 +464,6 @@ void StructureFunction::BuildSplines(string outpath) {
             // Do checks here
            // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
             // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
-
 
             double _FL, _F1, _F2, _F3;
             _FL = FL(x, Q2);

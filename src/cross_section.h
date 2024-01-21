@@ -40,6 +40,7 @@ class CrossSection {
         bool F3_loaded = false;
 
         double M_iso; // Isoscalar mass
+        double M_l; // lepton mass
         double ENU; // neutrino energy
 
 

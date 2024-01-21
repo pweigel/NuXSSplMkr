@@ -19,12 +19,16 @@ void Configuration::Populate() {
     SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
     SF.DIS_process = j["SF"].at("DIS_process");
     SF.current = CurrentMap.at(SF.DIS_process);
-    
+
+    SF.enable_FONLL_damping = j["SF"].value("enable_FONLL_damping", true);
+    SF.FONLL_damping_factor = j["SF"].value("FONLL_damping_factor", 2.0); // APFEL default is 2
+
+
     SF.disable_top = j["SF"].value("disable_top", false);
     SF.enable_small_x = j["SF"].value("enable_small_x", false);
     SF.small_x_order = j["SF"].value("small_x_order", "NLL");
     SF.evolve_pdf = j["SF"].value("evolve_pdf", false);
-    SF.enable_TMC = j["SF"].value("enable_TMC". false);
+    SF.enable_TMC = j["SF"].value("enable_TMC", false);
     SF.enable_CKMT = j["SF"].value("enable_CKMT", false);
     SF.enable_PCAC = j["SF"].value("enable_PCAC", false);
     SF.use_AlbrightJarlskog = j["SF"].value("use_AlbrightJarlskog", true);

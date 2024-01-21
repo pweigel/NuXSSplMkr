@@ -37,7 +37,7 @@ namespace nuxssplmkr {
 template<class T,double (T::*f)(double,double),int n,int m>
 double HK(double x, void* param){
   T* p = (T*) param;
-  return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
+  return ((double)m)*((p->*f)(x,p->_kernel_Q2))/pow(x,(double)n);
 }
 
 
@@ -60,8 +60,7 @@ class StructureFunction {
         // std::vector<std::vector<double>> grid_F2;
         // std::vector<std::vector<double>> grid_xF3;
         // LHAPDF::GridPDF* grid_central;
-        double _kernel_Q2;
-        double _kernel_x;
+
 
         // PCAC constants (cite reno paper)
         double PCAC_AL = 0.147;
@@ -77,6 +76,9 @@ class StructureFunction {
 
         PhysConst* pc; // Constants
         vector<int> partons {-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 21};
+
+        double _kernel_Q2;
+        double _kernel_x;
 
         // ~ APFEL stuff ~
         void InitializeAPFEL();
@@ -101,9 +103,14 @@ class StructureFunction {
         template<class T,double (T::*f)(double,double),int n,int m>
         double HGeneric(double x, double Q2);
 
+        double H2(double xi, double Q2);
+        double H3(double xi, double Q2);
+        double G2(double xi, double Q2);
+
         double F1_TMC(double x, double Q2);
         double F2_TMC(double x, double Q2);
         double F3_TMC(double x, double Q2);
+        double xF3_TMC(double x, double Q2);
 
         double CKMT_n(double Q2);
         double CKMT_Delta(double Q2);

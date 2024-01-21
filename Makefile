@@ -27,7 +27,7 @@ CXX 		= g++
 #Dynamic Library
 
 #Flags
-CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++14
+CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++14 -g
 
 # LD 		= clang++
 LD 		= g++
@@ -53,14 +53,14 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 # all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
-all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs
-test: bin/CKMT_test
+all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
+test: bin/test_CKMT bin/test_TMC
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-# bin/calculate_dsdy: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
-# 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/calculate_dsdy: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -74,7 +74,9 @@ bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physco
 bin/make_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/CKMT_test: src/configuration.o src/structure_function.o src/physconst.o mains/CKMT_test.o
+bin/test_CKMT: src/configuration.o src/structure_function.o src/physconst.o tests/test_CKMT.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/test_TMC: src/configuration.o src/structure_function.o src/physconst.o tests/test_TMC.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 %.o:%.cpp

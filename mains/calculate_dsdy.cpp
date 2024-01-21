@@ -14,8 +14,8 @@ int main(int argc, char* argv[]){
         return 0;
     }
     const std::string config_path = argv[1];
-    const std::string target = argv[2]; // proton or neutron
-    const std::string projectile = argv[3]; // neutrino or antineutrino
+    const std::string projectile = argv[2]; // neutrino or antineutrino
+    const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
 
     // Create a new config w/ the filename
@@ -23,10 +23,10 @@ int main(int argc, char* argv[]){
     Configuration config = Configuration(config_path);
     config.Populate();  // Populate the SF info
     
-    std::string data_folder = "../data/" + config.sf_info.pdfset + "_" + config.sf_info.mass_scheme + "_pto" + to_string(config.sf_info.perturbative_order);
+    std::string data_folder = "../data/" + config.general.unique_name;
 
-    config.Set_Target(target);
     config.Set_Projectile(projectile);
+    config.Set_Target(target);
     config.Set_SF_Type(xs_type);
 
     PhysConst* pc = new PhysConst();
@@ -45,18 +45,23 @@ int main(int argc, char* argv[]){
     double logemax = 9;
     double dE = (logemax - logemin) / (NE-1);
 
-    double ymin = 1e-4;
-    double ymax = 1;
+    double ymin = -6;
+    double ymax = 0;
     double dy = (ymax - ymin) / Ny;
 
     std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/dsdy_" + target + "_" + xs_type + ".out");
+    outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out");
     xs->Load_Structure_Functions(f1, f2, f3);
-    double E = 1000.0 * pc->GeV;
+    // xs->Set_Lepton_Mass(0.1057 * pc->GeV);
+    xs->Set_Lepton_Mass(0.0 * pc->GeV);
+    double E = 500.0 * pc->GeV;
     for (int yi = 0; yi < Ny; yi++) { // loop over y
-        double y = ymin + yi * dy;
+        double y = pow(10, ymin + yi * dy);
+        double _dsdy = std::log10(xs->ds_dy(E, y));
+        std::cout << y << ", " << _dsdy << std::endl;
         outfile << y << "," << std::log10(xs->ds_dy(E, y)) << std::endl;
     }
+    outfile.close();
 
     // SINGLE DIFFERENTIAL XS, linear y
     // for (int ei = 0; ei < NE; ei++) { // loop over E
