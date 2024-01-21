@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
                 sf.Set_Lepton_Mass(pc->muon_mass);
 
                 sf.InitializeAPFEL();
-                sf.BuildSplines(out_folder.string()); // Photospline
+                sf.BuildSplines(out_folder.string());
             }
         }
 

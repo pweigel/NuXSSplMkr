@@ -51,12 +51,13 @@ void Configuration::Populate() {
         CKMT.F2A = j["CKMT"]["F2"].at("A");   CKMT.F2B  = j["CKMT"]["F2"].at("B");   CKMT.F2f  = j["CKMT"]["F2"].at("f");
         CKMT.xF3A = j["CKMT"]["xF3"].at("A"); CKMT.xF3B = j["CKMT"]["xF3"].at("B");  CKMT.xF3f = j["CKMT"]["xF3"].at("f");
     }
-  
-    xs_integration.xmin = j["xs_integration"].at("xmin");
-    xs_integration.xmax = j["xs_integration"].at("xmax");
-    xs_integration.Q2min = j["xs_integration"].at("Q2min");
-    xs_integration.Q2max = j["xs_integration"].at("Q2max");
-   
+
+    XS.enable_mass_terms = j["XS"].value("enable_mass_terms", false);
+    XS.xmin = j["XS"]["integration"].at("xmin");
+    XS.xmax = j["XS"]["integration"].at("xmax");
+    XS.Q2min = j["XS"]["integration"].at("Q2min");
+    XS.Q2max = j["XS"]["integration"].at("Q2max");
+
     constants.MassZ = j["constants"].at("MassZ");
     constants.MassW = j["constants"].at("MassW");
     constants.Rho = j["constants"].at("Rho");

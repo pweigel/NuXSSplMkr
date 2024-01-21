@@ -1,18 +1,18 @@
 {
   "general": {
-    "unique_name": "CT18A_NLO",
+    "unique_name": "CT18A_NNLO_nocharm",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANLO",
+    "pdfset": "CT18ANNLO_nocharm",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-B",
+    "mass_scheme": "FONLL-C",
     "disable_top": false,
-    "perturbative_order": 1,
+    "perturbative_order": 2,
     "DIS_process": "CC",
 
     "enable_FONLL_damping": false,

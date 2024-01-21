@@ -74,18 +74,18 @@ int main(int argc, char* argv[]){
                 if (config.SF.mass_scheme != "parton") {
                     xs->Load_Structure_Functions(f1, f2, f3);
                 }
-                xs->Set_Lepton_Mass(0.105);
+                xs->Set_Lepton_Mass(pc->muon_mass);
 
                 // total
-                // std::ofstream outfile;
-                // outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
+                std::ofstream outfile;
+                outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
 
-                // for (int ei = 0; ei < NE; ei++) {
-                //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                //     double _xs = std::log10(xs->TotalXS(E));
-                //     outfile << E << "," << _xs << "\n";
-                // }
-                // outfile.close();
+                for (int ei = 0; ei < NE; ei++) {
+                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                    double _xs = std::log10(xs->TotalXS(E));
+                    outfile << E << "," << _xs << "\n";
+                }
+                outfile.close();
 
                 // ds/dy
                 std::ofstream dsdy_outfile;

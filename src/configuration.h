@@ -81,8 +81,9 @@ struct CKMT_settings {
     double xF3A, xF3B, xF3f; // Note: we will apply cp_factor on xF3B!!!
 };
 
-struct xs_integration_settings {
-    double xmin, xmax, Q2min, Q2max;
+struct xs_settings {
+    bool enable_mass_terms;
+    double xmin, xmax, Q2min, Q2max; // integration limits
 };
 
 struct fundamental_constants {
@@ -112,7 +113,7 @@ class Configuration {
     PDF_settings pdf;
     SF_settings SF;
     CKMT_settings CKMT;
-    xs_integration_settings xs_integration;
+    xs_settings XS;
     fundamental_constants constants;
     //
 

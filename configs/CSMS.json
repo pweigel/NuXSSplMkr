@@ -59,11 +59,15 @@
 
   },
 
-  "xs_integration": {
-    "xmin": 1e-9,
-    "xmax": 1.0,
-    "Q2min": 1.0,
-    "Q2max": 1e12
+  "XS": {
+    "enable_mass_terms": false,
+
+    "integration": { 
+      "xmin": 1e-9,
+      "xmax": 1.0,
+      "Q2min": 1.0,
+      "Q2max": 1e12
+    }
   },
 
   "constants": {
