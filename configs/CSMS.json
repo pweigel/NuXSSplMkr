@@ -16,7 +16,7 @@
     "DIS_process": "CC",
 
     "enable_FONLL_damping": false,
-    "FONLL_damping": 1.0,
+    "FONLL_damping_factor": 1.0,
     "evolve_pdf": false,
 
     "small_x_resummation": false,

@@ -2,6 +2,7 @@
 #include "physconst.h"
 #include "structure_function.h"
 #include "cross_section.h"
+#include "tools.h"
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include <fstream>
@@ -37,31 +38,44 @@ int main(int argc, char* argv[]){
     string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
     string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
-    // TOTAL XS
-    int NE = 100;
-    int Ny = 1000;
+    std::vector<string> fns = {f1, f2, f3};
+    for (string fn : fns) {
+        if (!fexists(fn)) {
+            std::cout << "Could not find file: " << fn << std::endl;
+        } else {
+            std::cout << "Found file: " << fn << std::endl;
+        }
+    }
 
-    double logemin = 2;
-    double logemax = 9;
+    int NE = 200;
+    int Ny = 100;
+
+    double logemin = 1;
+    double logemax = 11;
     double dE = (logemax - logemin) / (NE-1);
 
-    double ymin = -6;
-    double ymax = 0;
-    double dy = (ymax - ymin) / Ny;
-
-    std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out");
-    xs->Load_Structure_Functions(f1, f2, f3);
-    // xs->Set_Lepton_Mass(0.1057 * pc->GeV);
-    xs->Set_Lepton_Mass(0.0 * pc->GeV);
-    double E = 500.0 * pc->GeV;
-    for (int yi = 0; yi < Ny; yi++) { // loop over y
-        double y = pow(10, ymin + yi * dy);
-        double _dsdy = std::log10(xs->ds_dy(E, y));
-        std::cout << y << ", " << _dsdy << std::endl;
-        outfile << y << "," << std::log10(xs->ds_dy(E, y)) << std::endl;
+    double logymin = -6;
+    double logymax = 0;
+    double dy = (logymax - logymin) / Ny;
+    xs->Set_Lepton_Mass(pc->muon_mass);
+    if (config.SF.mass_scheme != "parton") {
+        xs->Load_Structure_Functions(f1, f2, f3);
     }
-    outfile.close();
+
+    // ds/dy
+    std::ofstream dsdy_outfile;
+    dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+    for (int ei = 0; ei < NE; ei++) {
+        double E = pc->GeV * std::pow(10, logemin + ei * dE);
+        std::cout << "E = " << E / (pc->GeV) << " GeV" << std::endl;
+        for (int yi = 0; yi < Ny; yi++) { // loop over y
+            double y = std::pow(10, logymin + yi * dy);
+            double _dxs = std::log10(xs->ds_dy(E, y));
+            dsdy_outfile << _dxs << std::endl;
+        }
+        // dsdy_outfile << "\n";
+    }
+    dsdy_outfile.close();
 
     // SINGLE DIFFERENTIAL XS, linear y
     // for (int ei = 0; ei < NE; ei++) { // loop over E

@@ -71,7 +71,7 @@ void StructureFunction::InitializeAPFEL() {
     //APFEL::SetPDFEvolution("exactalpha");
     APFEL::SetNumberOfGrids(3);
     APFEL::SetGridParameters(1, 90, 3, config.SF.xmin);
-    APFEL::SetGridParameters(2, 50, 5, 2e-1);
+    APFEL::SetGridParameters(2, 80, 5, 1e-1);
     APFEL::SetGridParameters(3, 40, 5, 8e-1);
     APFEL::SetPerturbativeOrder(config.SF.perturbative_order);
     APFEL::SetSmallxResummation(config.SF.enable_small_x, config.SF.small_x_order);

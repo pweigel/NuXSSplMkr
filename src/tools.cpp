@@ -16,7 +16,7 @@ std::string toString(int value) {
 bool fexists(string filepath)
 {
   ifstream ifile(filepath.c_str());
-  return ifile;
+  return ifile.good();
 };
 
 Table quickread(string filepath){

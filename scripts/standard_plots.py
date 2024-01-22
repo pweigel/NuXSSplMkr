@@ -39,10 +39,29 @@ rcParams['legend.fontsize']       = 20
 ### STANDARD PARAMETERS ###
 NQ2 = 500
 Nx = 400
-Ny = 400
+Ny = 100
+NE = 200
 
+
+  
 data_folder = '../data'
 plot_path = 'tests'
+
+### Loaders ###
+def load_dsdy(fname):
+    E_values = np.logspace(1, 11, NE)
+    y_values = np.logspace(-6, 0, Ny)
+    
+    xs_values = np.zeros((NE, Ny))
+    with open(fname, 'r') as f:
+        n = 0
+        for line in f.readlines():
+            _xs = float(line.rstrip('\n'))
+            xs_values[n // Ny, n % Ny] = 10**_xs
+            n += 1
+    
+    return E_values, y_values, xs_values
+
 ## SF Plots ##
 def plot_2d_SF(name, projectile='neutrino', target='proton', sftype='total', 
                Q2min=1.69, Q2max=1e12, xmin=1e-9, xmax=1,
@@ -85,14 +104,16 @@ def plot_2d_SF(name, projectile='neutrino', target='proton', sftype='total',
     plt.colorbar(ax_img, ax=ax, label=r'$F_{2}(x, Q^2)$')
     
     ax = fig.add_subplot(313)
-    ax_img = ax.pcolormesh(_x, _y, f3.T, norm=mpl.colors.LogNorm(), rasterized=True)
+    ax_img = ax.pcolormesh(_x, _y, np.abs(f3.T), norm=mpl.colors.LogNorm(), rasterized=True)
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim([Q2_values[0], Q2_values[-1]])
     ax.set_ylim([x_values[0], x_values[-1]])
+    ax.set_xticks([1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12])
+    ax.set_yticks([1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9])
     ax.set_xlabel(r'$Q^{2}~[\textrm{GeV}^2]$')
     ax.set_ylabel(r'$x$')
-    plt.colorbar(ax_img, ax=ax, label=r'$xF_{3}(x, Q^2)$')
+    plt.colorbar(ax_img, ax=ax, label=r'$\vert xF_{3}(x, Q^2) \vert$')
     
     plt.tight_layout()
     plt.savefig(plot_path + '/structure_functions.pdf')
@@ -190,12 +211,36 @@ def compare_1d_SF(name1, name2, Q2=[2.0, 4.0, 10.0, 100.0],
     
     plt.savefig(plot_path + '/' + outfile)
     plt.close()
+
+def plot_dsdy_2d(name, projectile='neutrino', target='proton', sftype='total',
+                 outfile='2d_dsdy.pdf'):
+    dsdy_fn = data_folder + '/' + name + '/cross_sections/dsdy_' + projectile + '_' + target + '_' + sftype + '.out'
+    E, y, dsdy = load_dsdy(dsdy_fn)
+    print(E.shape, y.shape, dsdy.shape)
+    _x, _y = np.meshgrid(E, y)
     
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
+    
+    ax_img = ax.pcolormesh(_x, _y, dsdy.T, norm=mpl.colors.LogNorm(vmin=1e-42), rasterized=True)
+    
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim([E[0], E[-1]])
+    ax.set_ylim([y[0], y[-1]])
+    ax.set_xlabel(r'$E~[\textrm{GeV}]$')
+    ax.set_ylabel(r'$y$')
+    
+    plt.colorbar(ax_img, ax=ax, label=r'$\frac{d\sigma}{dy}$')
+    plt.tight_layout()
+    plt.savefig(plot_path + '/' + outfile)
+    plt.close()
+
 def plot_sigma(name, 
                projectile='neutrino', target='proton', sftype='total', 
                Q2min=1.69, Q2max=1e12, xmin=1e-9, xmax=1,
                outfile='1d_sf.pdf'):
-    
+
     log_Q2_values = np.log10(Q2)
     log_x_values = np.linspace(np.log10(xmin), np.log10(xmax), Nx)
     Q2_values = 10**log_Q2_values
@@ -233,5 +278,6 @@ def plot_sigma(name,
     plt.close()
     
 # plot_1d_SF('CSMS', sftype='charm'. outfile='1d_sf_charm.pdf')
-compare_1d_SF(name1='CT18A_NNLO', name2='CSMS', outfile='compare_1d_sf.pdf')
-# plot_2d_SF('CSMS', Q2min=1, outfile='2d_sf.pdf')
+# compare_1d_SF(name1='CT18A_NNLO', name2='CSMS', outfile='compare_1d_sf.pdf')
+plot_2d_SF('CT18A_NNLO', Q2min=1, outfile='2d_sf.pdf', projectile='antineutrino', target='proton', sftype='total')
+# plot_dsdy_2d('CSMS', projectile='neutrino', target='proton', sftype='total', outfile='2d_dsdy.pdf')

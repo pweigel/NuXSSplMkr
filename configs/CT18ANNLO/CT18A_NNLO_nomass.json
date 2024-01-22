@@ -1,11 +1,11 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_nocharm",
+    "unique_name": "CT18A_NNLO_nomass",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO_nocharm",
+    "pdfset": "CT18ANNLO",
     "replica": 0
   },
 
@@ -60,7 +60,7 @@
   },
 
   "XS": {
-    "enable_mass_terms": true,
+    "enable_mass_terms": false,
 
     "integration": { 
       "xmin": 1e-9,

@@ -92,6 +92,7 @@ int main(int argc, char* argv[]){
                 dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
                 for (int ei = 0; ei < NE; ei++) {
                     double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                    std::cout << "E = " << E << " GeV" << std::endl;
                     for (int yi = 0; yi < Ny; yi++) { // loop over y
                         double y = std::pow(10, logymin + yi * dy);
                         // double y = ymin + yi * dy;

@@ -59,7 +59,7 @@ test: bin/test_CKMT bin/test_TMC
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_dsdy: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
+bin/calculate_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_xs.o
