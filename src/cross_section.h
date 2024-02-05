@@ -69,11 +69,7 @@ class CrossSection {
         double integral_min_x;
         double integral_max_x;
 
-        // ~ Kernel Functions ~
-        double _ds_dy(double k);
-        double _ds_dxdy(double* k);
-        double _ds_dy_partonic(double k);
-        double _ds_dxdy_partonic(double* k);
+
 
         Configuration config;
 
@@ -98,6 +94,12 @@ class CrossSection {
         double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
+
+        // ~ Kernel Functions ~
+        double _ds_dy(double k);
+        double ds_dxdy_kernel(double* k);
+        double _ds_dy_partonic(double k);
+        double _ds_dxdy_partonic(double* k);
 
         Grid Load_Grid(string path);
 
