@@ -29,29 +29,101 @@ void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, st
     Load_F3(sf3_path);
 }
 
-void CrossSection::Load_F1(string path) {
-    if (F1_loaded) { // If we already loaded a spline, delete the old one
-        F1 = photospline::splinetable<>();
+Grid CrossSection::Load_Grid(string path) {
+    std::ifstream infile;
+    infile.open(path);
+    std::string line;
+
+    Grid grid;
+    std::vector<std::string> tokens;
+
+    // Get first two lines
+    std::getline(infile, line);
+    boost::split(tokens, line, boost::is_any_of(" "));
+    grid.NQ2 = stoi(tokens[0]);
+    grid.Nx = stoi(tokens[1]);
+
+    std::getline(infile, line);
+    boost::split(tokens, line, boost::is_any_of(" "));
+    grid.Q2min = stod(tokens[0]);
+    grid.Q2max = stod(tokens[1]);
+    grid.xmin = stod(tokens[2]);
+    grid.xmax = stod(tokens[3]);
+
+    int n = 0;
+    double value;
+    vector<double> data;
+    while(std::getline(infile, line)) {
+        std::stringstream linestream(line);
+        std::string val;
+
+        while(getline(linestream, val,',')) {
+            data.push_back(stod(val));
+        }
+        n++;
     }
-    F1.read_fits(path);
+    grid.data = data;
+    infile.close();
+
+    return grid;
+}
+
+void CrossSection::Load_F1(string path) {
+    bool is_grid = false;
+    if (is_grid) {
+        // Grid
+        Grid grid = Load_Grid(path);
+        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+        std::cout << "F1 Grid Limits: " << std::endl;
+        std::cout << "    logQ2 = [" << grid.Q2min << ", " << grid.Q2max << "]" << std::endl;
+        std::cout << "    logx = [" << grid.xmin << ", " << grid.xmax << "]" << std::endl;
+        F1_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+
+    } else {
+        if (F1_loaded) {
+            F1 = photospline::splinetable<>();
+        }
+        F1.read_fits(path);
+    }
     std::cout << "Loaded F1!" << std::endl;
     F1_loaded = true;
 }
 
 void CrossSection::Load_F2(string path) {
-    if (F2_loaded) { // If we already loaded a spline, delete the old one
-        F2 = photospline::splinetable<>();
+    bool is_grid = false;
+    if (is_grid) {
+        // Grid
+        Grid grid = Load_Grid(path);
+        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+        F2_interpolator = BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+
+    } else {
+        if (F2_loaded) {
+            F2 = photospline::splinetable<>();
+        }
+        F2.read_fits(path);
     }
-    F2.read_fits(path);
     std::cout << "Loaded F2!" << std::endl;
     F2_loaded = true;
 }
 
 void CrossSection::Load_F3(string path) {
-    if (F3_loaded) { // If we already loaded a spline, delete the old one
-        F3 = photospline::splinetable<>();
+    bool is_grid = false;
+    if (is_grid) {
+        // Grid
+        Grid grid = Load_Grid(path);
+        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+        F3_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+
+    } else {
+        if (F1_loaded) {
+            F3 = photospline::splinetable<>();
+        }
+        F3.read_fits(path);
     }
-    F3.read_fits(path);
     std::cout << "Loaded F3!" << std::endl;
     F3_loaded = true;
 }
@@ -110,6 +182,47 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
     return ds_dxdy(x, y);
 }
 
+// double CrossSection::ds_dxdy(double x, double y) {
+//     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+
+//     double s = 2.0 * M_iso * ENU + SQ(M_iso);
+//     double Q2 = (s - SQ(M_iso)) * x * y;
+
+//     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
+//     double propagator = SQ( MW2 / (Q2 + MW2) );
+//     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
+//     // std::cout  << "log10Q2, log10x = " << std::log10(Q2 / SQ(pc->GeV)) << ", " << std::log10(x) << std::endl;
+//     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+
+//     std::array<int, 2> F1_splc;
+//     std::array<int, 2> F2_splc;
+//     std::array<int, 2> F3_splc;
+
+//     F1.searchcenters(pt.data(), F1_splc.data());
+//     F2.searchcenters(pt.data(), F2_splc.data());
+//     F3.searchcenters(pt.data(), F3_splc.data());
+
+//     double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+//     // std::cout << F1_val << ", ";
+//     double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+//     // std::cout << F2_val << ", ";
+//     double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+//     // std::cout << F3_val << std::endl;
+    
+//     double term1, term2, term3;
+//     if (config.XS.enable_mass_terms) {
+//         term1 = y*y*x + SQ(M_l) * y / (2 * ENU * M_iso) * F1_val;
+//         term2 = ((1.0 - SQ(M_l/ENU)/4.0) - (1.0 + M_iso * x / (2.0 * ENU)*y)) * F2_val;
+//         term3 = config.cp_factor * ( x*y*(1-y/2) - SQ(M_l) * y / (4.0 * ENU * M_iso) ) * F3_val;
+//     } else {
+//         term1 = y*y*x * F1_val;
+//         term2 = ( 1 - y ) * F2_val;
+//         term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
+//     }
+//     double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
+//     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
+// }
+
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
@@ -119,24 +232,14 @@ double CrossSection::ds_dxdy(double x, double y) {
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-    // std::cout  << "log10Q2, log10x = " << std::log10(Q2 / SQ(pc->GeV)) << ", " << std::log10(x) << std::endl;
-    std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
-    std::array<int, 2> F1_splc;
-    std::array<int, 2> F2_splc;
-    std::array<int, 2> F3_splc;
-
-    F1.searchcenters(pt.data(), F1_splc.data());
-    F2.searchcenters(pt.data(), F2_splc.data());
-    F3.searchcenters(pt.data(), F3_splc.data());
-
-    double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
-    // std::cout << F1_val << ", ";
-    double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
-    // std::cout << F2_val << ", ";
-    double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
-    // std::cout << F3_val << std::endl;
+    double logQ2 = std::log10(Q2 / SQ(pc->GeV));
+    double logx = std::log10(x);
     
+    double F1_val = F1_interpolator.interpolate(logQ2, logx);
+    double F2_val = F2_interpolator.interpolate(logQ2, logx);
+    double F3_val = F3_interpolator.interpolate(logQ2, logx);
+
     double term1, term2, term3;
     if (config.XS.enable_mass_terms) {
         term1 = y*y*x + SQ(M_l) * y / (2 * ENU * M_iso) * F1_val;
@@ -310,7 +413,7 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    gsl_integration_qag ( &F, log(integral_min_x), log(integral_max_x), 0, 1.e-5, 10000, 6, w, &result, &error);
+    gsl_integration_qag ( &F, log(1e-6), log(integral_max_x), 0, 1.e-5, 10000, 3, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;
@@ -318,7 +421,7 @@ double CrossSection::ds_dy(double E, double y) {
 
 // double CrossSection::ds_dy(double E, double y) {
 //     Set_Neutrino_Energy(E);
-//     _kernel_y = y;
+//     _kernel_y = y
 
 //     double res,err;
 //     const unsigned long dim = 1; int calls = 50000;

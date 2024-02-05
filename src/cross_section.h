@@ -11,8 +11,14 @@
 #include <gsl/gsl_integration.h>
 #include "photospline/splinetable.h"
 #include <boost/math/quadrature/trapezoidal.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/foreach.hpp>
+// #include <boost/math/interpolators/bilinear_uniform.hpp>
+#include "interpolator.h"
 #include "LHAPDF/LHAPDF.h"
 #include "LHAPDF/GridPDF.h"
+// using boost::math::interpolators::bilinear_uniform;
 
 namespace nuxssplmkr {
 
@@ -28,6 +34,13 @@ double KernelHelper(double x, void* param){
   return (p->*f)(x);
 }
 
+struct Grid {
+    int NQ2;
+    int Nx;
+    double Q2min, Q2max, xmin, xmax;
+    std::vector<double> data;
+};
+
 class CrossSection {
     private:
 
@@ -38,6 +51,10 @@ class CrossSection {
         bool F1_loaded = false;
         bool F2_loaded = false;
         bool F3_loaded = false;
+
+        BilinearInterpolator F1_interpolator;
+        BilinearInterpolator F2_interpolator;
+        BilinearInterpolator F3_interpolator;
 
         double M_iso; // Isoscalar mass
         double M_l; // lepton mass
@@ -81,6 +98,8 @@ class CrossSection {
         double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
+
+        Grid Load_Grid(string path);
 
         void Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path);
         void Load_F1(string path);

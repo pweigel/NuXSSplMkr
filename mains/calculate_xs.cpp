@@ -42,9 +42,9 @@ int main(int argc, char* argv[]){
     CrossSection* xs = new CrossSection(config);
 
     // load the three structure function fit files
-    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".grid";
+    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".grid";
+    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".grid";
 
     // TOTAL XS
     double logemin = 1;
