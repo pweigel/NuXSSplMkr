@@ -50,7 +50,6 @@ void StructureFunction::InitializeAPFEL() {
         std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
         APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[5]+0.1);
     } else {
-        // APFEL::SetPoleMasses(1.3, 4., 4.1);
         APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[6]);
     }
 

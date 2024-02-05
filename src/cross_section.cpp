@@ -8,19 +8,10 @@ CrossSection::CrossSection(Configuration& _config)
     pc = new nuxssplmkr::PhysConst();
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
 
-    // Set limits of integration
-    // Note: these will change based on neutrino energy and certain features
-    // integral_min_Q2 = config.Q2min;
-    // integral_min_Q2 = 1.6;
-    // integral_min_Q2 = 1.0;
-    // if (config.enable_small_x) {
-    //     integral_min_Q2 = 10.0;
-    // }
     integral_min_x = config.XS.xmin;
     integral_max_x = config.XS.xmax;
     integral_min_Q2 = config.XS.Q2min;
     integral_max_Q2 = config.XS.Q2max;
-
 }
 
 void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
@@ -144,39 +135,6 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     if (!PhaseSpaceIsGood(x, y, ENU)) {
         return 1e-99;
     }
-    // Integration limits
-
-    // double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
-    // double Q2 = 2.0 * M_iso * ENU * x * y;  // Q2 = s x y - m^2
-
-    // if ((x < 1e-9) || (x > 1)) {
-    //     return 1e-99;
-    // }
-    // if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
-    //     return 1e-99;
-    // } 
-    // else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
-    //     return 1e-99;
-    // }
-    // // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
-    // double W2 =  2.0 * M_iso * ENU * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
-
-    // // integration limits from Reno, Kretzer
-    // double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
-
-    // double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    // double _b = sqrt( SQ(1.0 - SQ(M_l)/(2.0 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    // double _ymin = _a - _b;
-    // double _ymax = _a + _b;
-    // // std::cout << "ymin: " << _ymin << "," << "ymax: " << _ymax << std::endl;
-    // // if ((y < _ymin) || (y > _ymax)){
-    // //     return 1e-99;
-    // // }
-
-    // // TODO: better implementation
-    // if (W2 < W2min) {
-    //     return 1e-99;
-    // }
 
     // Jacobian = x * y, needed because we're integrating over log space
     return x * y * ds_dxdy(x, y);
@@ -196,7 +154,6 @@ double CrossSection::ds_dxdy(double x, double y) {
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-    // std::cout  << "log10Q2, log10x = " << std::log10(Q2 / SQ(pc->GeV)) << ", " << std::log10(x) << std::endl;
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
     std::array<int, 2> F1_splc;
@@ -208,11 +165,8 @@ double CrossSection::ds_dxdy(double x, double y) {
     F3.searchcenters(pt.data(), F3_splc.data());
 
     double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
-    // std::cout << F1_val << ", ";
     double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
-    // std::cout << F2_val << ", ";
     double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
-    // std::cout << F3_val << std::endl;
     
     double term1, term2, term3;
     if (config.XS.enable_mass_terms) {
@@ -446,20 +400,18 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
 
     // Check that the Q2 is within the bounds of the SF grids
     if ( (Q2 < (config.SF.Q2min * SQ(pc->GeV))) || (Q2 > (config.SF.Q2max * SQ(pc->GeV))) ) {
-        // std::cout << Q2 << std::endl;
         return false;
     }
     
     // Check that the Q2 is within the integration bounds
     if ( (Q2 < (integral_min_Q2 * SQ(pc->GeV))) || (Q2 > (integral_max_Q2 * SQ(pc->GeV))) ) {
-        // std::cout << Q2 << std::endl;
         return false;
     }
     
     // Calculate W^2
     double W2 =  2.0 * M_iso * E * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
     
-    // Get the correct threshold
+    // Get the correct threshold, TODO: need to figure out why W^2 < 4 doesnt integrate properly (related to SF?)
     double W2_threshold = 4.0 * SQ(pc->GeV);
     // switch(config.sf_type) {
     //     case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
