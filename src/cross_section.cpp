@@ -141,38 +141,42 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
 
+    if (!PhaseSpaceIsGood(x, y, ENU)) {
+        return 1e-99;
+    }
     // Integration limits
-    double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
-    double Q2 = 2.0 * M_iso * ENU * x * y;  // Q2 = s x y - m^2
 
-    if ((x < 1e-9) || (x > 1)) {
-        return 1e-99;
-    }
-    if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
-        return 1e-99;
-    } 
-    else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
-        return 1e-99;
-    }
-    // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
-    double W2 =  2.0 * M_iso * ENU * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+    // double W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
+    // double Q2 = 2.0 * M_iso * ENU * x * y;  // Q2 = s x y - m^2
 
-    // integration limits from Reno, Kretzer
-    double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
-
-    double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    double _b = sqrt( SQ(1.0 - SQ(M_l)/(2.0 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    double _ymin = _a - _b;
-    double _ymax = _a + _b;
-    // std::cout << "ymin: " << _ymin << "," << "ymax: " << _ymax << std::endl;
-    // if ((y < _ymin) || (y > _ymax)){
+    // if ((x < 1e-9) || (x > 1)) {
     //     return 1e-99;
     // }
+    // if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
+    //     return 1e-99;
+    // } 
+    // else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
+    //     return 1e-99;
+    // }
+    // // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
+    // double W2 =  2.0 * M_iso * ENU * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
 
-    // TODO: better implementation
-    if (W2 < W2min) {
-        return 1e-99;
-    }
+    // // integration limits from Reno, Kretzer
+    // double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
+
+    // double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    // double _b = sqrt( SQ(1.0 - SQ(M_l)/(2.0 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
+    // double _ymin = _a - _b;
+    // double _ymax = _a + _b;
+    // // std::cout << "ymin: " << _ymin << "," << "ymax: " << _ymax << std::endl;
+    // // if ((y < _ymin) || (y > _ymax)){
+    // //     return 1e-99;
+    // // }
+
+    // // TODO: better implementation
+    // if (W2 < W2min) {
+    //     return 1e-99;
+    // }
 
     // Jacobian = x * y, needed because we're integrating over log space
     return x * y * ds_dxdy(x, y);
@@ -188,7 +192,6 @@ double CrossSection::ds_dxdy(double x, double y) {
 
     double s = 2.0 * M_iso * ENU + SQ(M_iso);
     double Q2 = (s - SQ(M_iso)) * x * y;
-    // std::cout << s << " " << Q2 << " " << x << " " << y;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
@@ -343,64 +346,19 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
-double CrossSection::_ds_dy(double k) {
+double CrossSection::ds_dy_kernel(double k) {
     double x = std::exp(k);
-    double Q2 = 2.0 * M_iso * ENU * x * _kernel_y;  // Q2 = s x y - m^2
-    if ((x < config.SF.xmin) || (x > config.SF.xmax)) {
+    if (!PhaseSpaceIsGood(x, kernel_y, ENU)) {
         return 1e-99;
     }
-    if (Q2 / SQ(pc->GeV) < 1.5) {
-        return 1e-99;
-    }
-    // std::cout << x << ", " << Q2 / SQ(pc->GeV) << std::endl;
-    // if ((Q2 / SQ(pc->GeV) < config.SF.Q2min) || (Q2 / SQ(pc->GeV) > config.SF.Q2max)) {
-    //     return 1e-99;
-    // }
 
-    // double _xmin = SQ(M_l) / (2 * M_iso * (ENU - M_l));
-    // std::cout << "XMIN = " << _xmin << std::endl;
-
-    // Integration limits
-    // double _a = (1.0 - SQ(M_l) * (1.0 / (2 * M_iso * ENU * x) + 1.0 / (2 * SQ(ENU))) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    // double _b = sqrt( SQ(1.0 - SQ(M_l)/(2 * M_iso * ENU * x)) ) / (2.0 * (1.0 + M_iso * x / (2.0 * ENU)));
-    
-    // double _ymin = _a - _b;
-    // double _ymax = _a + _b;
-    // std::cout << "YMIN = " << _ymin << ", " << "YMAX = " << _ymax << std::endl;
-
-    double W2min;
-    if (config.sf_type == charm) {
-        W2min = SQ( (0.938 + 1.869) * pc->GeV); // (m_N + m_D)^2
-    } else {
-        W2min = SQ(2.0 * pc->GeV); // TODO: This should be an input parameter
-    }
-    // double W2 = Q2 * (1.0 / x - 1.0) + SQ(M_iso); // TODO: target mass
-    // double W2 =  2.0 * M_iso * ENU * _kernel_y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
-    // std::cout << x << " " << _kernel_y << std::endl;
-    // std::cout << "Q2: " << Q2 / SQ(pc->GeV) << " MINIMUM: " << integral_min_Q2 << std::endl;
-    // std::cout << "W2: " << W2 / SQ(pc->GeV) << " MINIMUM: " << W2min / SQ(pc->GeV) << std::endl;
-    // TODO: better implementation
-    // if ((_kernel_y < _ymin) || (_kernel_y > _ymax)){
-    //     return 1e-99;
-    // }
-    // if (W2 < W2min) {
-    //     return 1e-99;
-    // }
-    // if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
-    //     return 1e-99;
-    // } 
-    // else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
-    //     return 1e-99;
-    // }
-    
-    double result = x * ds_dxdy(x, _kernel_y);
-    // std::cout << x << ", " << Q2 << " " << result << std::endl;
+    double result = x * ds_dxdy(x, kernel_y);
     return result;
 }
 
 double CrossSection::_ds_dy_partonic(double k) {
     double x = std::exp(k);
-    return x * ds_dxdy_partonic(x, _kernel_y);
+    return x * ds_dxdy_partonic(x, kernel_y);
 }
 
 double CrossSection::ds_dxdy_TMC() {
@@ -413,10 +371,8 @@ double CrossSection::ds_dy_TMC() {
 
 double CrossSection::ds_dy(double E, double y) {
     Set_Neutrino_Energy(E);
-    _kernel_y = y;
+    kernel_y = y;
 
-    double W2min = SQ(2.0 * pc->GeV);
-    // double Q2 = 2.0 * M_iso * E * x * _kernel_y;
     double xmax = SQ(pc->GeV) * integral_max_Q2 / (2.0 * M_iso * E * y);
     double xmin = SQ(pc->GeV) * integral_min_Q2 / (2.0 * M_iso * E * y);
     if (xmin > 1) {
@@ -426,28 +382,6 @@ double CrossSection::ds_dy(double E, double y) {
         xmax = 1.0;
     }
 
-    // double Q2min = 2.0 * M_iso * E * xmin * _kernel_y;
-    // q2min = 2 gev
-    // xmin = 1/m
-    // double Q2max = 2.0 * M_iso * E * xmax * _kernel_y;
-    // if (Q2min  / SQ(pc->GeV) < 2.0) {
-    //     return 0.0;
-    // }
-    // std::cout << xmin << " " << xmax << std::endl;
-    // std::cout << Q2min / SQ(pc->GeV) << " " << Q2max / SQ(pc->GeV) << std::endl;
-
-    // double W2 =  2.0 * M_iso * E * _kernel_y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
-    // if (W2 < W2min) {
-    //     return 1e-99;
-    // }
-    // if (Q2 / SQ(pc->GeV) < integral_min_Q2) {
-    //     return 1e-99;
-    // } 
-    // else if (Q2 / SQ(pc->GeV) > integral_max_Q2) {
-    //     return 1e-99;
-    // }
-    
-
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(10000);
     double result, error;
 
@@ -455,7 +389,7 @@ double CrossSection::ds_dy(double E, double y) {
     if (config.SF.mass_scheme == "parton") { 
         F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy_partonic>;
     } else {
-        F.function = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
+        F.function = &KernelHelper<CrossSection, &CrossSection::ds_dy_kernel>;
     }
     F.params = this;
     
@@ -465,43 +399,6 @@ double CrossSection::ds_dy(double E, double y) {
     return result;
 }
 
-// double CrossSection::ds_dy(double E, double y) {
-//     Set_Neutrino_Energy(E);
-//     _kernel_y = y
-
-//     double res,err;
-//     const unsigned long dim = 1; int calls = 50000;
-
-//     // integrating on the log of x and y
-//     double xl[dim] = { log(integral_min_x) };
-//     double xu[dim] = { log(integral_max_x) };
-
-//     gsl_rng_env_setup ();
-//     const gsl_rng_type *T = gsl_rng_default;
-//     gsl_rng *r = gsl_rng_alloc (T);
-
-//     gsl_monte_function F;
-//     F.f = &KernelHelper<CrossSection, &CrossSection::_ds_dy>;
-//     F.dim = 1;
-//     F.params = this;
-//     // F = { &KernelHelper<CrossSection, &CrossSection::_ds_dy>, dim, this};
-
-//     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-
-//     gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
-
-//     do
-//     {
-//         gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
-//     }
-//     while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
-
-//     gsl_monte_vegas_free (s_vegas);
-//     gsl_rng_free (r);
-
-//     return res;
-// }
-
 double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
 
@@ -510,7 +407,7 @@ double CrossSection::TotalXS(double E){
 
     // integrating on the log of x and y
     double xl[dim] = { log(integral_min_x), log(1.e-9) };
-    double xu[dim] = { log(integral_max_x)   , log(1.)    };
+    double xu[dim] = { log(integral_max_x), log(1.)    };
 
     gsl_rng_env_setup ();
     const gsl_rng_type *T = gsl_rng_default;
@@ -536,6 +433,52 @@ double CrossSection::TotalXS(double E){
     gsl_rng_free (r);
 
     return res;
+}
+
+bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
+    // First check that the x is within the bounds of the SF grids
+    if ((x < config.SF.xmin) || (x > config.SF.xmax)) {
+        return false;
+    }
+
+    double s = 2.0 * M_iso * E + SQ(M_iso);
+    double Q2 = (s - SQ(M_iso)) * x * y; 
+
+    // Check that the Q2 is within the bounds of the SF grids
+    if ( (Q2 < (config.SF.Q2min * SQ(pc->GeV))) || (Q2 > (config.SF.Q2max * SQ(pc->GeV))) ) {
+        // std::cout << Q2 << std::endl;
+        return false;
+    }
+    
+    // Check that the Q2 is within the integration bounds
+    if ( (Q2 < (integral_min_Q2 * SQ(pc->GeV))) || (Q2 > (integral_max_Q2 * SQ(pc->GeV))) ) {
+        // std::cout << Q2 << std::endl;
+        return false;
+    }
+    
+    // Calculate W^2
+    double W2 =  2.0 * M_iso * E * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+    
+    // Get the correct threshold
+    double W2_threshold = 4.0 * SQ(pc->GeV);
+    // switch(config.sf_type) {
+    //     case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
+    //     case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
+    //     // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); // (m_N + m_c)^2
+    //     // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); // (m_N + m_b)^2
+    //     // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
+    //     case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); // (m_N + m_D)^2
+    //     case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); // (m_N + m_B)^2
+    //     case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
+    //     default:             W2_threshold = 2.0 * SQ(pc->GeV); // TODO
+    // }
+
+    // Check W^2 threshold
+    if ( W2 < W2_threshold ) {
+        return false;
+    }
+
+    return true;
 }
 
 }

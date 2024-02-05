@@ -60,16 +60,13 @@ class CrossSection {
         double M_l; // lepton mass
         double ENU; // neutrino energy
 
-
-        double _kernel_y; // Used for integration
+        double kernel_y; // Used for integration
 
         // Limits of integration
         double integral_min_Q2;
         double integral_max_Q2;
         double integral_min_x;
         double integral_max_x;
-
-
 
         Configuration config;
 
@@ -94,9 +91,10 @@ class CrossSection {
         double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
-
+        bool PhaseSpaceIsGood(double x, double y, double E);
+        
         // ~ Kernel Functions ~
-        double _ds_dy(double k);
+        double ds_dy_kernel(double k);
         double ds_dxdy_kernel(double* k);
         double _ds_dy_partonic(double k);
         double _ds_dxdy_partonic(double* k);
