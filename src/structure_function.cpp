@@ -66,7 +66,6 @@ void StructureFunction::InitializeAPFEL() {
     //APFEL::SetFFNS(3);
     //APFEL::SetTheory("QUniD");
     //APFEL::SetTheory("QED");
-    //APFEL::SetTheory("QUniD");
     //APFEL::EnableLeptonEvolution(true);
     //APFEL::SetTauMass(1e10);
     //APFEL::SetPDFEvolution("exactalpha");

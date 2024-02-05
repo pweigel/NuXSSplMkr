@@ -77,7 +77,7 @@ void CrossSection::Load_F1(string path) {
         }
         F1.read_fits(path);
     }
-    std::cout << "Loaded F1!" << std::endl;
+    // std::cout << "Loaded F1!" << std::endl;
     F1_loaded = true;
 }
 
@@ -96,7 +96,7 @@ void CrossSection::Load_F2(string path) {
         }
         F2.read_fits(path);
     }
-    std::cout << "Loaded F2!" << std::endl;
+    // std::cout << "Loaded F2!" << std::endl;
     F2_loaded = true;
 }
 
@@ -115,7 +115,7 @@ void CrossSection::Load_F3(string path) {
         }
         F3.read_fits(path);
     }
-    std::cout << "Loaded F3!" << std::endl;
+    // std::cout << "Loaded F3!" << std::endl;
     F3_loaded = true;
 }
 
@@ -167,18 +167,24 @@ double CrossSection::ds_dxdy(double x, double y) {
     double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
     double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
     double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+    double F4_val = 0.0;
+    double F5_val = F2_val / x;
     
-    double term1, term2, term3;
+    double term1, term2, term3, term4, term5;
     if (config.XS.enable_mass_terms) {
-        term1 = y*y*x + SQ(M_l) * y / (2 * ENU * M_iso) * F1_val;
-        term2 = ((1.0 - SQ(M_l/ENU)/4.0) - (1.0 + M_iso * x / (2.0 * ENU)*y)) * F2_val;
-        term3 = config.cp_factor * ( x*y*(1-y/2) - SQ(M_l) * y / (4.0 * ENU * M_iso) ) * F3_val;
+        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_iso) ) * F1_val;
+        term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
+        term3 = (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
+        term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
+        term5 = -1.0 * SQ(M_l) / (2 * M_iso * ENU) * F5_val;
     } else {
         term1 = y*y*x * F1_val;
         term2 = ( 1 - y ) * F2_val;
         term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
+        term4 = 0.0;
+        term5 = 0.0;
     }
-    double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
+    double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
@@ -411,19 +417,19 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
     // Calculate W^2
     double W2 =  2.0 * M_iso * E * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
     
-    // Get the correct threshold, TODO: need to figure out why W^2 < 4 doesnt integrate properly (related to SF?)
-    double W2_threshold = 4.0 * SQ(pc->GeV);
-    // switch(config.sf_type) {
-    //     case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
-    //     case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
-    //     // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); // (m_N + m_c)^2
-    //     // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); // (m_N + m_b)^2
-    //     // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
-    //     case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); // (m_N + m_D)^2
-    //     case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); // (m_N + m_B)^2
-    //     case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
-    //     default:             W2_threshold = 2.0 * SQ(pc->GeV); // TODO
-    // }
+    // Get the correct threshold
+    double W2_threshold; // = 4.0 * SQ(pc->GeV);
+    switch(config.sf_type) {
+        case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
+        case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
+        // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); // (m_N + m_c)^2
+        // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); // (m_N + m_b)^2
+        // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
+        case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); // (m_N + m_D)^2
+        case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); // (m_N + m_B)^2
+        case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
+        default:             W2_threshold = 4.0 * SQ(pc->GeV); // TODO
+    }
 
     // Check W^2 threshold
     if ( W2 < W2_threshold ) {
