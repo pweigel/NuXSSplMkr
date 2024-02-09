@@ -22,6 +22,10 @@
 
 namespace nuxssplmkr {
 
+const std::vector<std::string> FLAVORS {
+  "light", "charm", "bottom", "top"
+};
+
 template<class T,double (T::*f)(double*)>
 double KernelHelper(double* x, size_t dim, void* param){
   T* p = (T*) param;
@@ -68,6 +72,10 @@ class CrossSection {
         double integral_min_x;
         double integral_max_x;
 
+        double charm_mass = 1.3;
+        double bottom_mass = 4.75;
+        double top_mass = 173.0; // for testing
+
         Configuration config;
 
     public:
@@ -109,6 +117,23 @@ class CrossSection {
         photospline::splinetable<> F1;
         photospline::splinetable<> F2;
         photospline::splinetable<> F3;
+
+        // FONLL complexity
+        // 0: What APFEL gives
+        // 1: "FONLL-C" for everything but t
+        // 2: Full decomposition
+        // int complexity = 0;
+        // photospline::splinetable<> F1lZM, F1cZM, F1bZM, F1tZM;
+        // photospline::splinetable<> F1cM, F1bM, F1tM;
+        // photospline::splinetable<> F1cM0, F1bM0, F1tM0;
+
+        // photospline::splinetable<> F2lZM, F2cZM, F2bZM, F2tZM;
+        // photospline::splinetable<> F2cM, F2bM, F2tM;
+        // photospline::splinetable<> F2cM0, F2bM0, F2tM0;
+
+        // photospline::splinetable<> F3lZM, F3cZM, F3bZM, F3tZM;
+        // photospline::splinetable<> F3cM, F3bM, F3tM;
+        // photospline::splinetable<> F3cM0, F3bM0, F3tM0;
 
         // ~ Settings ~
         void Set_Lepton_Mass(double m);

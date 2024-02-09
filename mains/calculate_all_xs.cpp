@@ -18,9 +18,13 @@ int main(int argc, char* argv[]){
     }
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
 
-    string targets[] = {"proton", "neutron"};
-    string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"total", "charm"};
+    // string targets[] = {"proton", "neutron"};
+    // string projectiles[] = {"neutrino", "antineutrino"};
+    // string sf_types[] = {"total", "charm", "top"};
+    string targets[] = {"proton"};
+    string projectiles[] = {"neutrino"};
+    string sf_types[] = {"total"};
+    // string sf_types[] = {"top"};
     // string targets[] = {"proton", "neutron"};
     // string projectiles[] = {"neutrino"};
     // string sf_types[] = {"charm"};
@@ -30,9 +34,9 @@ int main(int argc, char* argv[]){
     std::cout << "Making all cross sections!" << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
-    double logemin = 1;
-    double logemax = 11;
-    int NE = 200;
+    double logemin = 2;
+    double logemax = 10;
+    int NE = 100;
     double dE = (logemax - logemin) / (NE-1);
 
     int Ny = 100;
@@ -82,28 +86,30 @@ int main(int argc, char* argv[]){
 
                 for (int ei = 0; ei < NE; ei++) {
                     double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                    std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
+
                     double _xs = std::log10(xs->TotalXS(E));
                     outfile << E << "," << _xs << "\n";
                 }
                 outfile.close();
 
                 // ds/dy
-                std::ofstream dsdy_outfile;
-                dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
-                for (int ei = 0; ei < NE; ei++) {
-                    double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                    // std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
-                    for (int yi = 0; yi < Ny; yi++) { // loop over y
-                        double y = std::pow(10, logymin + yi * dy);
-                        // double y = ymin + yi * dy;
-                        // std::cout << E / 1e9 << " " << y << std::endl;
-                        double _dxs = std::log10(xs->ds_dy(E, y));
-                        // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
-                        dsdy_outfile << _dxs << std::endl;
-                    }
-                    // dsdy_outfile << "\n";
-                }
-                dsdy_outfile.close();
+                // std::ofstream dsdy_outfile;
+                // dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
+                // for (int ei = 0; ei < NE; ei++) {
+                //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
+                //     std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
+                //     for (int yi = 0; yi < Ny; yi++) { // loop over y
+                //         double y = std::pow(10, logymin + yi * dy);
+                //         // double y = ymin + yi * dy;
+                //         // std::cout << E / 1e9 << " " << y << std::endl;
+                //         double _dxs = std::log10(xs->ds_dy(E, y));
+                //         // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
+                //         dsdy_outfile << _dxs << std::endl;
+                //     }
+                //     // dsdy_outfile << "\n";
+                // }
+                // dsdy_outfile.close();
             }
         }
     }

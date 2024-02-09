@@ -34,13 +34,13 @@ int main(int argc, char* argv[]){
     CrossSection* xs = new CrossSection(config);
 
     // load the three structure function fit files
-    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
-    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".grid";
-    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".grid";
-    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".grid";
+    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".grid";
+    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".grid";
+    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".grid";
 
     std::vector<string> fns = {f1, f2, f3};
     for (string fn : fns) {
@@ -77,22 +77,8 @@ int main(int argc, char* argv[]){
             double _dxs = std::log10(xs->ds_dy(E, y));
             dsdy_outfile << _dxs << std::endl;
         }
-        // dsdy_outfile << "\n";
     }
     dsdy_outfile.close();
-
-    // SINGLE DIFFERENTIAL XS, linear y
-    // for (int ei = 0; ei < NE; ei++) { // loop over E
-    //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-    //     for (int yi = 0; yi < Ny; yi++) { // loop over y
-    //         double y = ymin + yi * dy;
-    //         outfile << std::log10(xs->ds_dy(E, y));
-    //         if (yi != Ny - 1) {
-    //             outfile << ",";
-    //         }
-    //     }
-    //     outfile << "\n";
-    // }
 
     return 0;
 }

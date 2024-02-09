@@ -32,6 +32,8 @@ class PhysConst {
         double alpha;
         /////////// units //////////
         // energy
+        double EeV;
+        double PeV;
         double TeV;
         double GeV;
         double MeV;

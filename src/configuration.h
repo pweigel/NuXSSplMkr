@@ -16,7 +16,6 @@ using namespace std;
 
 namespace nuxssplmkr {
 
-
 // Enums
 enum QCDOrder {LO, NLO, NNLO};
 enum Current {CC, NC};
@@ -55,6 +54,7 @@ struct SF_settings {
     QCDOrder perturbative_order;
     string DIS_process;
     Current current;
+    int FFNS;
 
     bool enable_FONLL_damping;
     double FONLL_damping_factor;
@@ -107,6 +107,8 @@ class Configuration {
     void Set_Projectile(string projectile_string);
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
+    void Set_Mass_Scheme(string mass_scheme);
+    void Set_Perturbative_Order(int pto);
 
     // settings structs
     General_settings general;

@@ -16,13 +16,14 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"total", "charm", "top"};
-    // string sf_types[] = {"top"};
+    // string sf_types[] = {"charm", "bottom", "top"};
+    // string sf_types[] = {"light", "charm", "bottom", "top"};
+    string sf_types[] = {"top"};
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
-    std::cout << "Making all splines!" << std::endl;
+    std::cout << "Making new FONLL splines!" << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     // Create a new config w/ the filename
@@ -34,7 +35,14 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
 
-    std::cout << "Structure function file will be saved to: " << out_folder.string() << std::endl;
+    std::cout << "Structure function files will be saved to: " << out_folder.string() << std::endl;
+
+    // config.Set_SF_Type("top");
+    // config.Set_Projectile("neutrino");
+    // config.Set_Target("proton");
+    // config.Set_Mass_Scheme("FONLL-C");
+    // config.Set_Perturbative_Order(2);
+    // config.SF.FFNS = 5;
 
     for (const string &sf_type : sf_types) {
         config.Set_SF_Type(sf_type);
@@ -59,6 +67,5 @@ int main(int argc, char* argv[]){
         }
 
     }
-
     return 0;
 }

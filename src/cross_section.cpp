@@ -145,16 +145,95 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
     return ds_dxdy(x, y);
 }
 
+// void LoadFONLL(string path) {
+//     // assume some naming convention 
+//     std::string base = "F3_"+projectile+"_"+target+"_total.fits";
+
+//     if (complexity == 0) {
+
+//     } else if (complexity == 1) {
+//         F3tM.read_fits(path + "");
+//         F3tM0.read_fits(path);
+//         F3tZM.read_fits(path);
+
+//     } else if (complexity == 2) {
+//         // F1
+//         F1lZM.read_fits(path);
+
+//         F1cM.read_fits(path);
+//         F1cM0.read_fits(path);
+//         F1cZM.read_fits(path);
+
+//         F1bM.read_fits(path);
+//         F1bM0.read_fits(path);
+//         F1bZM.read_fits(path);
+
+//         F1tM.read_fits(path);
+//         F1tM0.read_fits(path);
+//         F1tZM.read_fits(path);
+
+//         // F2
+//         F2lZM.read_fits(path);
+        
+//         F2cM.read_fits(path);
+//         F2cM0.read_fits(path);
+//         F2cZM.read_fits(path);
+
+//         F2bM.read_fits(path);
+//         F2bM0.read_fits(path);
+//         F2bZM.read_fits(path);
+
+//         F2tM.read_fits(path);
+//         F2tM0.read_fits(path);
+//         F2tZM.read_fits(path);
+
+//         // F3
+//         F3lZM.read_fits(path);
+        
+//         F3cM.read_fits(path);
+//         F3cM0.read_fits(path);
+//         F3cZM.read_fits(path);
+
+//         F3bM.read_fits(path);
+//         F3bM0.read_fits(path);
+//         F3bZM.read_fits(path);
+
+//         F3tM.read_fits(path);
+//         F3tM0.read_fits(path);
+//         F3tZM.read_fits(path);
+//     }
+
+//     F1.read_fits(path);
+// }
+
+// double CrossSection::ds_dxdy_FONLL(double x, double y) {
+//     // This is my version of FONLL
+//     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+
+//     double s = 2.0 * M_iso * ENU + SQ(M_iso);
+//     double Q2 = (s - SQ(M_iso)) * x * y;
+
+//     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
+//     double propagator = SQ( MW2 / (Q2 + MW2) );
+//     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
+
+//     // We must get the appropriate cross sections
+
+// }
+
+
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    double s = 2.0 * M_iso * ENU + SQ(M_iso);
+    double s = 2.0 * M_iso * ENU + SQ(M_iso);// - SQ(top_mass*pc->GeV);
     double Q2 = (s - SQ(M_iso)) * x * y;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+
+    // std::cout << ENU/ pc->GeV << " " << Q2/ SQ(pc->GeV) << " " << x << " " << y << std::endl;
 
     std::array<int, 2> F1_splc;
     std::array<int, 2> F2_splc;
@@ -174,7 +253,7 @@ double CrossSection::ds_dxdy(double x, double y) {
     if (config.XS.enable_mass_terms) {
         term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_iso) ) * F1_val;
         term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
-        term3 = (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
+        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
         term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
         term5 = -1.0 * SQ(M_l) / (2 * M_iso * ENU) * F5_val;
     } else {
@@ -381,7 +460,8 @@ double CrossSection::TotalXS(double E){
     }
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
 
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
+    // Is 1k good enough for warmup?
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
 
     do
     {
@@ -409,19 +489,21 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
         return false;
     }
     
+    // integral_max_Q2 = s;
     // Check that the Q2 is within the integration bounds
     if ( (Q2 < (integral_min_Q2 * SQ(pc->GeV))) || (Q2 > (integral_max_Q2 * SQ(pc->GeV))) ) {
         return false;
     }
     
-    // Calculate W^2
+    // Calculate W^2 = Q^2 (1/x - 1) + M_N^2
     double W2 =  2.0 * M_iso * E * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
     
     // Get the correct threshold
     double W2_threshold; // = 4.0 * SQ(pc->GeV);
     switch(config.sf_type) {
         case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
-        case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
+        case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); // (m_N + m_pi)^2
+        // case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
         // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); // (m_N + m_c)^2
         // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); // (m_N + m_b)^2
         // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val

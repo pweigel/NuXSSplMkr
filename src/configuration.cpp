@@ -19,6 +19,7 @@ void Configuration::Populate() {
     SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
     SF.DIS_process = j["SF"].at("DIS_process");
     SF.current = CurrentMap.at(SF.DIS_process);
+    SF.FFNS = -1; // TODO: Figure out how I want to handle this
 
     SF.enable_FONLL_damping = j["SF"].value("enable_FONLL_damping", true);
     SF.FONLL_damping_factor = j["SF"].value("FONLL_damping_factor", 2.0); // APFEL default is 2
@@ -108,6 +109,28 @@ void Configuration::Set_Projectile(string projectile_string) {
 void Configuration::Set_SF_Type(string _sf_type_string) {
     sf_type_string = _sf_type_string;
     sf_type = SFTypeMap.at(_sf_type_string);
+    // If we use FONLL, we want it to use the right threshold behavior
+    // For example, for Fc we want to do M3 -> M3 - D(ZM4 - M03) at m_c^2
+    if (SF.mass_scheme == "FONLL-A" || SF.mass_scheme == "FONLL-B" || SF.mass_scheme == "FONLL-C") {
+        switch (sf_type) {
+            case SFType::charm : SF.FFNS = 3 ; break;
+            case SFType::bottom: SF.FFNS = 4 ; break;
+            case SFType::top   : SF.FFNS = 5 ; break;
+            default            : SF.FFNS = -1; break;
+        }
+        if (SF.FFNS > 0) {
+            std::cout << "WARNING: FFNS is set to " << SF.FFNS << " to properly match FONLL calculation!" << std::endl;
+        }
+    }
+}
+
+void Configuration::Set_Mass_Scheme(string mass_scheme) {
+    SF.mass_scheme = mass_scheme;
+}
+
+void Configuration::Set_Perturbative_Order(int pto) {
+    SF.pto = pto;
+    SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
 }
 
 void Configuration::LoadPDFSet() {

@@ -53,6 +53,7 @@ void StructureFunction::InitializeAPFEL() {
         APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[6]);
     }
 
+    // APFEL::SetQLimits(std::sqrt(1e-2), std::sqrt(config.SF.Q2max));
     APFEL::SetQLimits(std::sqrt(config.SF.Q2min), std::sqrt(config.SF.Q2max));
     // std::cout << "Evolution Q limits: [" << std::sqrt(config.Q2min) << ", " << std::sqrt(config.Q2max) << "] GeV." << std::endl;
     //APFEL::SetPolarizationDIS(0);
@@ -63,6 +64,10 @@ void StructureFunction::InitializeAPFEL() {
     //APFEL::SetFastEvolution(true);
     //APFEL::LockGrids(true);
     //APFEL::EnableEvolutionOperator(true);
+    if (config.SF.FFNS > 0) {
+        APFEL::SetFFNS(config.SF.FFNS);
+    }
+
     //APFEL::SetFFNS(3);
     //APFEL::SetTheory("QUniD");
     //APFEL::SetTheory("QED");
@@ -445,7 +450,28 @@ void StructureFunction::BuildSplines(string outpath) {
         x_knots.push_back(knot);
     }
 
-    // Collect SF values
+    // setup grid stuff
+    string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+    string f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+    string f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+
+    std::ofstream f1_outfile;
+    f1_outfile.open(f1_grid_fn);
+    std::ofstream f2_outfile;
+    f2_outfile.open(f2_grid_fn);
+    std::ofstream f3_outfile;
+    f3_outfile.open(f3_grid_fn);
+
+    // Write header
+    f1_outfile << NQ2 << " " << Nx << "\n";
+    f1_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
+    f2_outfile << NQ2 << " " << Nx << "\n";
+    f2_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
+    f3_outfile << NQ2 << " " << Nx << "\n";
+    f3_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
+    
+
+    // Collect SF values and write grids
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F1_spline_data;
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F2_spline_data;
     std::deque<std::pair<double,std::array<unsigned int, 2>>> F3_spline_data;
@@ -511,9 +537,24 @@ void StructureFunction::BuildSplines(string outpath) {
                 _F3 = 0.0;
             }
 
+            // Collect spline data
             F1_spline_data.push_back(std::make_pair(_F1, std::array<unsigned int, 2>{Q2i, xi}));
             F2_spline_data.push_back(std::make_pair(_F2, std::array<unsigned int, 2>{Q2i, xi}));
             F3_spline_data.push_back(std::make_pair(_F3, std::array<unsigned int, 2>{Q2i, xi}));
+
+            // Write grid data
+            f1_outfile << _F1;
+            f2_outfile << _F2;
+            f3_outfile << _F3;
+            if (xi < Nx-1) {
+              f1_outfile << ",";
+              f2_outfile << ",";
+              f3_outfile << ",";
+            } else {
+              f1_outfile << "\n";
+              f2_outfile << "\n";
+              f3_outfile << "\n";
+            }
         }
     }
 

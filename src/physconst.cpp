@@ -56,6 +56,8 @@ PhysConst::PhysConst(void){
     #===============================================================================
     */
     // Energy
+    EeV = 1.0e18;                   // [eV/EeV]
+    PeV = 1.0e15;                   // [eV/PeV]
     TeV = 1.0e12;                   // [eV/TeV]
     GeV = 1.0e9;                    // [eV/GeV]
     MeV = 1.0e6;                    // [eV/MeV]

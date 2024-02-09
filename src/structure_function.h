@@ -124,7 +124,9 @@ class StructureFunction {
         double F2_PCAC(double x, double Q2);
         double F3_PCAC(double x, double Q2);
 
+        void ConstructFONLL();
         void BuildSplines(string outpath);
+        auto GetGrids();
         void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
