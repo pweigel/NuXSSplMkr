@@ -220,7 +220,56 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
 //     // We must get the appropriate cross sections
 
 // }
+double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
+    Set_Neutrino_Energy(E);
+    return ds_dxdQ2(x, Q2);
+}
 
+double CrossSection::ds_dxdQ2(double x, double Q2) {
+    double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+
+    double s = 2.0 * M_iso * ENU + SQ(M_iso);// - SQ(top_mass*pc->GeV);
+    // double Q2 = (s - SQ(M_iso)) * x * y;
+    double y = Q2 / (s - SQ(M_iso) * x);
+
+    double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
+    double propagator = SQ( MW2 / (Q2 + MW2) );
+    double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
+    std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+
+    // std::cout << ENU/ pc->GeV << " " << Q2/ SQ(pc->GeV) << " " << x << " " << y << std::endl;
+
+    std::array<int, 2> F1_splc;
+    std::array<int, 2> F2_splc;
+    std::array<int, 2> F3_splc;
+
+    F1.searchcenters(pt.data(), F1_splc.data());
+    F2.searchcenters(pt.data(), F2_splc.data());
+    F3.searchcenters(pt.data(), F3_splc.data());
+
+    double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+    double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+    double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+    double F4_val = 0.0;
+    double F5_val = F2_val / x;
+    
+    double term1, term2, term3, term4, term5;
+    if (config.XS.enable_mass_terms) {
+        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_iso) ) * F1_val;
+        term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
+        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
+        term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
+        term5 = -1.0 * SQ(M_l) / (2 * M_iso * ENU) * F5_val;
+    } else {
+        term1 = y*y*x * F1_val;
+        term2 = ( 1 - y ) * F2_val;
+        term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
+        term4 = 0.0;
+        term5 = 0.0;
+    }
+    double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
+    return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
+}
 
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
@@ -475,14 +524,11 @@ double CrossSection::TotalXS(double E){
     return res;
 }
 
-bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
-    // First check that the x is within the bounds of the SF grids
+bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
+// First check that the x is within the bounds of the SF grids
     if ((x < config.SF.xmin) || (x > config.SF.xmax)) {
         return false;
     }
-
-    double s = 2.0 * M_iso * E + SQ(M_iso);
-    double Q2 = (s - SQ(M_iso)) * x * y; 
 
     // Check that the Q2 is within the bounds of the SF grids
     if ( (Q2 < (config.SF.Q2min * SQ(pc->GeV))) || (Q2 > (config.SF.Q2max * SQ(pc->GeV))) ) {
@@ -496,7 +542,7 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
     }
     
     // Calculate W^2 = Q^2 (1/x - 1) + M_N^2
-    double W2 =  2.0 * M_iso * E * y * (1.0 - x) + SQ(M_iso); // Without the division // TODO: target mass
+    double W2 =  Q2 * (1.0 - x) / (x + 1e-15) + SQ(M_iso); // TODO: target mass
     
     // Get the correct threshold
     double W2_threshold; // = 4.0 * SQ(pc->GeV);
@@ -519,6 +565,12 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
     }
 
     return true;
+}
+
+bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
+    double s = 2.0 * M_iso * E + SQ(M_iso);
+    double Q2 = (s - SQ(M_iso)) * x * y; 
+    return PhaseSpaceIsGood_Q2(x, Q2, E);
 }
 
 }

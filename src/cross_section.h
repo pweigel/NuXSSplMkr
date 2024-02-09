@@ -86,7 +86,8 @@ class CrossSection {
 
         // ~ Calculations ~
         double ds_dxdy_LO(double x, double y); // TODO: Remove or fix
-
+        double ds_dxdQ2(double E, double x, double y);
+        double ds_dxdQ2(double x, double y);
         double ds_dxdy(double E, double x, double y);
         double ds_dxdy(double x, double y);
         double ds_dxdy_partonic(double E, double x, double y);
@@ -100,6 +101,7 @@ class CrossSection {
 
         double TotalXS(double E);
         bool PhaseSpaceIsGood(double x, double y, double E);
+        bool PhaseSpaceIsGood_Q2(double x, double Q2, double E);
         
         // ~ Kernel Functions ~
         double ds_dy_kernel(double k);
