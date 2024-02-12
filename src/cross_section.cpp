@@ -230,11 +230,11 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
 
     double s = 2.0 * M_iso * ENU + SQ(M_iso);// - SQ(top_mass*pc->GeV);
     // double Q2 = (s - SQ(M_iso)) * x * y;
-    double y = Q2 / (s - SQ(M_iso) * x);
+    double y = Q2 / ( (s - SQ(M_iso)) * x);
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
-    double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
+    double jacobian = 1; //s * x; // from d2s/dxdQ2 --> d2s/dxdy    
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
     // std::cout << ENU/ pc->GeV << " " << Q2/ SQ(pc->GeV) << " " << x << " " << y << std::endl;
@@ -525,7 +525,10 @@ double CrossSection::TotalXS(double E){
 }
 
 bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
-// First check that the x is within the bounds of the SF grids
+    Set_Neutrino_Energy(E);
+    double s = 2.0 * M_iso * E + SQ(M_iso);
+
+    // First check that the x is within the bounds of the SF grids  
     if ((x < config.SF.xmin) || (x > config.SF.xmax)) {
         return false;
     }
@@ -537,7 +540,13 @@ bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
     
     // integral_max_Q2 = s;
     // Check that the Q2 is within the integration bounds
-    if ( (Q2 < (integral_min_Q2 * SQ(pc->GeV))) || (Q2 > (integral_max_Q2 * SQ(pc->GeV))) ) {
+    if ( ( Q2 < integral_min_Q2 ) || (Q2 > integral_max_Q2) ) {
+        return false;
+    }
+
+    // Make sure y is less than 1
+    double y = Q2 / (s * x);
+    if (y > 1) {
         return false;
     }
     
