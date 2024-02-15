@@ -38,8 +38,6 @@ int main(int argc, char* argv[]){
     PhysConst* pc = new PhysConst();
     CrossSection* xs = new CrossSection(config);
 
-    std::cout << "TEST" << std::endl;
-
     // load the three structure function fit files
     string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
     string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
@@ -54,11 +52,11 @@ int main(int argc, char* argv[]){
     double logemax = 12;
     double dE = (logemax - logemin) / (NE-1);
 
-    double ymin = -7;
+    double ymin = -1;
     double ymax = 0;
     double dy = (ymax - ymin) / (Ny-1);
 
-    double xmin = -7;
+    double xmin = -5;
     double xmax = 0;
     double dx = (xmax - xmin) / (Nx-1);
 
@@ -68,14 +66,14 @@ int main(int argc, char* argv[]){
     xs->Load_Structure_Functions(f1, f2, f3);
     xs->Set_Lepton_Mass(pc->muon_mass);
     
-    double E = 1000.0 * pc->GeV;
-    double _xs = std::log10(xs->TotalXS(E));
-    std::cout << _xs << std::endl;
+    double E = 31440.4 * pc->GeV;
+    // double _xs = std::log10(xs->TotalXS(E));
+    // std::cout << _xs << std::endl;
     for (int yi = 0; yi < Ny; yi++) { // loop over y
         double y = pow(10, ymin + yi * dy);
         for (int xi = 0; xi < Nx; xi++) { // loop over x
             double x = pow(10, xmin + xi * dx);
-            std::cout << "x=" << x << ", " << "y=" << y << std::endl;
+            // std::cout << "x=" << x << ", " << "y=" << y << std::endl;
             double _dsdxdy;
             if (!xs->PhaseSpaceIsGood(x, y, E)) {
                 _dsdxdy = -99;

@@ -579,7 +579,7 @@ void StructureFunction::BuildSplines(string outpath) {
 
     // double smooth_Q2 = 1;
     // double smooth_x = 1;
-    double smooth = 1e-20;
+    double smooth = 1e-5;
 
     // Fit splines
     photospline::splinetable<> F1_spline;

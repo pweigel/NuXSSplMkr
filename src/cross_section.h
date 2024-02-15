@@ -5,6 +5,7 @@
 #include "physconst.h"
 #include "tools.h"
 #include "math.h"
+#include <tuple>
 #include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_vegas.h>
@@ -100,6 +101,7 @@ class CrossSection {
         double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
+        std::tuple<double, double> dsdy_xlims(double s, double y);
         bool PhaseSpaceIsGood(double x, double y, double E);
         bool PhaseSpaceIsGood_Q2(double x, double Q2, double E);
         

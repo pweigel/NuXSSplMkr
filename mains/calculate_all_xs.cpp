@@ -18,13 +18,13 @@ int main(int argc, char* argv[]){
     }
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
 
-    // string targets[] = {"proton", "neutron"};
-    // string projectiles[] = {"neutrino", "antineutrino"};
+    string targets[] = {"proton", "neutron"};
+    string projectiles[] = {"neutrino", "antineutrino"};
     // string sf_types[] = {"total", "charm", "top"};
-    string targets[] = {"proton"};
-    string projectiles[] = {"neutrino"};
-    string sf_types[] = {"total"};
-    // string sf_types[] = {"top"};
+    // string targets[] = {"proton"};
+    // string projectiles[] = {"neutrino"};
+    // string sf_types[] = {"total"};
+    string sf_types[] = {"light"};
     // string targets[] = {"proton", "neutron"};
     // string projectiles[] = {"neutrino"};
     // string sf_types[] = {"charm"};
@@ -35,17 +35,17 @@ int main(int argc, char* argv[]){
     std::cout << "=============================================" << std::endl << std::endl;
 
     double logemin = 2;
-    double logemax = 10;
-    int NE = 100;
+    double logemax = 9;
+    int NE = 200;
     double dE = (logemax - logemin) / (NE-1);
 
-    int Ny = 100;
+    // int Ny = 100;
     // double ymin = 1e-6;
     // double ymax = 1.0;
     // double dy = (ymax - ymin) / (Ny-1);
-    double logymin = -6;
-    double logymax = 0;
-    double dy = (logymax - logymin) / (Ny-1);
+    // double logymin = -6;
+    // double logymax = 0;
+    // double dy = (logymax - logymin) / (Ny-1);
 
     PhysConst* pc = new PhysConst();
 
@@ -87,8 +87,13 @@ int main(int argc, char* argv[]){
                 for (int ei = 0; ei < NE; ei++) {
                     double E = pc->GeV * std::pow(10, logemin + ei * dE);
                     std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
-
-                    double _xs = std::log10(xs->TotalXS(E));
+                    double _xs;
+                    if (E / pc->GeV > 0) {
+                         _xs = std::log10(xs->TotalXS(E));
+                    }
+                    else {
+                        _xs = -99;
+                    }
                     outfile << E << "," << _xs << "\n";
                 }
                 outfile.close();

@@ -25,6 +25,11 @@ int main(int argc, char* argv[]){
     config.Populate();  // Populate the SF info
     
     std::string data_folder = "../data/" + config.general.unique_name;
+    // Make the cross sections folder if it doesn't exist
+    boost::filesystem::path out_folder = data_folder + "/cross_sections/";
+    if (!boost::filesystem::exists(out_folder)) {
+        boost::filesystem::create_directories(out_folder);
+    }
 
     config.Set_Projectile(projectile);
     config.Set_Target(target);
@@ -38,33 +43,19 @@ int main(int argc, char* argv[]){
     string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
     string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
-    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".grid";
-    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".grid";
-    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".grid";
-
-    std::vector<string> fns = {f1, f2, f3};
-    for (string fn : fns) {
-        if (!fexists(fn)) {
-            std::cout << "Could not find file: " << fn << std::endl;
-        } else {
-            std::cout << "Found file: " << fn << std::endl;
-        }
-    }
-
     int NE = 200;
     int Ny = 100;
 
     double logemin = 1;
-    double logemax = 11;
+    double logemax = 9;
     double dE = (logemax - logemin) / (NE-1);
 
     double logymin = -6;
     double logymax = 0;
     double dy = (logymax - logymin) / Ny;
+
     xs->Set_Lepton_Mass(pc->muon_mass);
-    if (config.SF.mass_scheme != "parton") {
-        xs->Load_Structure_Functions(f1, f2, f3);
-    }
+    xs->Load_Structure_Functions(f1, f2, f3);
 
     // ds/dy
     std::ofstream dsdy_outfile;

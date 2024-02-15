@@ -10,8 +10,8 @@ CrossSection::CrossSection(Configuration& _config)
 
     integral_min_x = config.XS.xmin;
     integral_max_x = config.XS.xmax;
-    integral_min_Q2 = config.XS.Q2min;
-    integral_max_Q2 = config.XS.Q2max;
+    integral_min_Q2 = config.XS.Q2min * SQ(pc->GeV);
+    integral_max_Q2 = config.XS.Q2max * SQ(pc->GeV);
 }
 
 void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
@@ -121,7 +121,7 @@ void CrossSection::Load_F3(string path) {
 
 void CrossSection::Set_Neutrino_Energy(double E) {
     ENU = E;
-    integral_max_Q2 = 2.0 * M_iso * ENU; // TODO: M_ISO --> target mass
+    integral_max_Q2 = min(config.XS.Q2max*SQ(pc->GeV), 2.0 * M_iso * ENU); // TODO: M_ISO --> target mass
 }
 
 void CrossSection::Set_Lepton_Mass(double m) {
@@ -440,6 +440,8 @@ double CrossSection::ds_dy_kernel(double k) {
         return 1e-99;
     }
 
+    // std::cout << x << ", " << kernel_y << std::endl;
+
     double result = x * ds_dxdy(x, kernel_y);
     return result;
 }
@@ -460,14 +462,12 @@ double CrossSection::ds_dy_TMC() {
 double CrossSection::ds_dy(double E, double y) {
     Set_Neutrino_Energy(E);
     kernel_y = y;
+    double s = 2.0 * M_iso * E ;
 
-    double xmax = SQ(pc->GeV) * integral_max_Q2 / (2.0 * M_iso * E * y);
-    double xmin = SQ(pc->GeV) * integral_min_Q2 / (2.0 * M_iso * E * y);
-    if (xmin > 1) {
-        return 0.0;
-    }
-    if (xmax > 1) {
-        xmax = 1.0;
+    double xmin, xmax;
+    std::tie(xmin, xmax) = dsdy_xlims(s, kernel_y);
+    if (xmin > xmax) {
+        return 1e-99;
     }
 
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(10000);
@@ -524,6 +524,35 @@ double CrossSection::TotalXS(double E){
     return res;
 }
 
+std::tuple<double, double> CrossSection::dsdy_xlims(double s, double y) {
+    double xmin = 0.0;
+    double xmax = 1.0;
+
+    // Get the correct threshold (TODO: NC)
+    double W2_threshold; // = 4.0 * SQ(pc->GeV);
+    switch(config.sf_type) {
+        case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); break; // TODO
+        case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); break; //
+        // case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
+        // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
+        // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
+        // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+        case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
+        case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
+        case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+        default:             W2_threshold = 2.0 * SQ(pc->GeV); break; // TODO
+    }
+
+    // Q^2 = s x y > Qmin^2 --> x > Qmin^2 / s y
+    xmin = max(xmin, integral_min_Q2 / (s * y));
+    // W^2 = s y (1 - x) --> x < 1 - Wmin^2 / (2 m E y)
+    xmax = min(xmax, 1.0 - W2_threshold / (s * y));
+    // Q^2 = s x y < Qmax^2 --> x < Qmax^2 / s y
+    xmax = min(xmax, integral_max_Q2 / (s * y));
+
+    return std::make_tuple(xmin, xmax);
+}
+
 bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
     Set_Neutrino_Energy(E);
     double s = 2.0 * M_iso * E + SQ(M_iso);
@@ -553,19 +582,24 @@ bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
     // Calculate W^2 = Q^2 (1/x - 1) + M_N^2
     double W2 =  Q2 * (1.0 - x) / (x + 1e-15) + SQ(M_iso); // TODO: target mass
     
-    // Get the correct threshold
+    // Get the correct threshold (TODO: NC)
     double W2_threshold; // = 4.0 * SQ(pc->GeV);
     switch(config.sf_type) {
-        case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); // TODO
-        case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); // (m_N + m_pi)^2
-        // case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
-        // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); // (m_N + m_c)^2
-        // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); // (m_N + m_b)^2
-        // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
-        case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); // (m_N + m_D)^2
-        case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); // (m_N + m_B)^2
-        case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); // (m_N + m_t)^2, TODO: get right val
-        default:             W2_threshold = 4.0 * SQ(pc->GeV); // TODO
+        case SFType::total:  W2_threshold = 2.0 * SQ(pc->GeV); break; // TODO
+        case SFType::light:  W2_threshold = 2.0 * SQ(pc->GeV); break; // (m_N + m_pi)^2
+        // case SFType::light:  W2_threshold = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
+        // case SFType::charm:  W2_threshold = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
+        // case SFType::bottom: W2_threshold = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
+        // case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+        case SFType::charm:  W2_threshold = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
+        case SFType::bottom: W2_threshold = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
+        case SFType::top:    W2_threshold = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+        default:             W2_threshold = 2.0 * SQ(pc->GeV); break; // TODO
+    }
+
+    // try to fix top? this is the fake threshold from the pdfs
+    if ( (config.sf_type == SFType::top) && ( Q2 < 34 * SQ(pc->GeV))) {
+        return false;
     }
 
     // Check W^2 threshold
