@@ -1,11 +1,11 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO",
+    "unique_name": "CT18_NNLO_CKMT",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO",
+    "pdfset": "CT18NNLO",
     "replica": 0
   },
 
@@ -15,23 +15,20 @@
     "perturbative_order": 2,
     "DIS_process": "CC",
 
-    "enable_FONLL_damping": true,
-    "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
     "small_x_resummation": false,
     "small_x_order": "NLL",
 
-    "enable_TMC": false,
-    "enable_CKMT": false,
+    "enable_CKMT": true,
     "enable_PCAC": false,
 
     "Nx": 400,
     "NQ2": 500,
-    "xmin": 1e-12,
+    "xmin": 1e-4,
     "xmax": 1.0,
-    "Q2min": 1.69,
-    "Q2max": 1e6
+    "Q2min": 0.2,
+    "Q2max": 10
   },
 
   "CKMT": {
@@ -59,15 +56,11 @@
 
   },
 
-  "XS": {
-    "enable_mass_terms": true,
-
-    "integration": { 
-      "xmin": 1e-9,
-      "xmax": 1.0,
-      "Q2min": 1.69,
-      "Q2max": 1e12
-    }
+  "xs_integration": {
+    "xmin": 1e-9,
+    "xmax": 1.0,
+    "Q2min": 0.2,
+    "Q2max": 1e12
   },
 
   "constants": {

@@ -1,22 +1,22 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_nomass",
+    "unique_name": "EPPS21_NLO_Pb208",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO",
+    "pdfset": "EPPS21nlo_CT18Anlo_Pb208",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-C",
+    "mass_scheme": "FONLL-B",
     "disable_top": false,
-    "perturbative_order": 2,
+    "perturbative_order": 1,
     "DIS_process": "CC",
 
-    "enable_FONLL_damping": false,
-    "FONLL_damping_factor": 1.0,
+    "enable_FONLL_damping": true,
+    "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
     "small_x_resummation": false,
@@ -28,10 +28,10 @@
 
     "Nx": 400,
     "NQ2": 500,
-    "xmin": 1e-9,
+    "xmin": 1e-12,
     "xmax": 1.0,
     "Q2min": 1.69,
-    "Q2max": 1e12
+    "Q2max": 1e6
   },
 
   "CKMT": {
@@ -60,7 +60,7 @@
   },
 
   "XS": {
-    "enable_mass_terms": false,
+    "enable_mass_terms": true,
 
     "integration": { 
       "xmin": 1e-9,
