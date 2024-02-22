@@ -86,6 +86,18 @@ void Configuration::Populate() {
 
 }
 
+void Configuration::Set_Replica(int replica) {
+    // Make the pdf with LHAPDF and get its properties
+    pdf.replica = replica;
+    pdf.pdf = LHAPDF::mkPDF(pdf.pdfset, pdf.replica);
+    for (int i=1; i<7; i++){
+        pdf.pdf_quark_masses[i] = pdf.pdf->quarkMass(i);
+    }
+    pdf.PDFxmin  = pdf.pdf->xMin();
+    pdf.PDFQ2min = pdf.pdf->q2Min();
+    pdf.PDFQ2max = pdf.pdf->q2Max();
+}
+
 void Configuration::Set_Target(string target_string) {
     target = target_string;
     target_type = TargetTypeMap.at(target_string);

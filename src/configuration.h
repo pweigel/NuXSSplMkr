@@ -104,6 +104,7 @@ class Configuration {
     ~Configuration() { };
     void Populate();
     void LoadPDFSet();
+    void Set_Replica(int replica);
     void Set_Projectile(string projectile_string);
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
