@@ -53,9 +53,10 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 # CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 # all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
-all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy bin/construct_fonll bin/calculate_dsdxdy bin/calculate_dsdxdQ2
+all: bin/make_sf_splines bin/make_all_sf_splines bin/make_all_sf_splines_replicas bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy bin/construct_fonll bin/calculate_dsdxdy bin/calculate_dsdxdQ2 bin/calculate_all_dsdy bin/calculate_all_dsdy_replicas
 # test: bin/test_CKMT bin/test_TMC
 test: bin/test_grid bin/APFEL_check bin/test_dsdxdy #bin/apfelxx_test
+replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -68,11 +69,23 @@ bin/calculate_dsdxdy: src/tools.o src/configuration.o src/structure_function.o s
 bin/calculate_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
+bin/calculate_all_dsdy_replicas: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_dsdy_replicas.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
+bin/calculate_all_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_dsdy.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
+bin/calculate_all_xs_replicas: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs_replicas.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
 bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_all_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
+bin/make_all_sf_splines_replicas: src/configuration.o src/structure_function.o src/physconst.o mains/make_all_sf_splines_replicas.o
+	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_all_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
