@@ -31,18 +31,9 @@ int main(int argc, char* argv[]){
 
     if (vm.count("help")) {
         cout << desc << "\n";
-    return 1;
-}
-
-    // if (argc < 2) {
-    //     std::cout << "Not enough inputs." << std::endl;
-    //     return 0;
-    // }
-    // const std::string config_path = vm["config_path"].astype(std::string);
-    // const std::string projectile = vm["projectile"]; // neutrino or antineutrino
-    // const std::string target = vm["target"]; // proton or neutron
-    // const std::string xs_type = vm["xs_type"]; // Which SFs to use total, light, charm, ..
-
+        return 1;
+    }
+    
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
     Configuration config = Configuration(config_path);

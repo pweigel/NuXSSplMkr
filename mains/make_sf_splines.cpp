@@ -25,17 +25,25 @@ int main(int argc, char* argv[]){
     std::cout << "SF Type: " << sf_type << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
+    // Create a new config w/ the filename
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
-    
     config.Populate();  // Populate the SF info
-    boost::filesystem::path out_folder = "../data/" + config.general.unique_name;
+
+    boost::filesystem::path out_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
     if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
         boost::filesystem::create_directories(out_folder);
     }
 
-    config.Set_Target(target);
-    config.Set_Projectile(projectile);
+    std::cout << "Structure function file will be saved to: " << out_folder.string() << std::endl;
+
     config.Set_SF_Type(sf_type);
+    std::cout << "SFType set to: " << sf_type << std::endl;
+
+    config.Set_Projectile(projectile);
+    std::cout << "Projectile set to: " << projectile << std::endl;
+
+    config.Set_Target(target);
+    std::cout << "Target set to: " << target << std::endl;
 
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
@@ -43,8 +51,5 @@ int main(int argc, char* argv[]){
     sf.Set_Lepton_Mass(pc->muon_mass);
 
     sf.InitializeAPFEL();
-    // sf.BuildSplines(out_folder.string()); // Photospline
-    sf.BuildGrids(out_folder.string()); // Grid file
-
-    return 0;
+    sf.BuildSplines(out_folder.string());
 }

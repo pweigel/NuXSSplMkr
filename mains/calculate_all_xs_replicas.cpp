@@ -16,6 +16,7 @@ int main(int argc, char* argv[]){
         std::cout << "Too many inputs!" << std::endl;
         return 1;
     }
+
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
     const std::string replica_string = argv[2];
     const int replica = stoi(replica_string);
@@ -23,13 +24,7 @@ int main(int argc, char* argv[]){
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
     string sf_types[] = {"light", "charm"};
-    // string targets[] = {"proton"};
-    // string projectiles[] = {"neutrino"};
-    // string sf_types[] = {"total"};
-    // string sf_types[] = {"light"};
-    // string targets[] = {"proton", "neutron"};
-    // string projectiles[] = {"neutrino"};
-    // string sf_types[] = {"charm"};
+
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
@@ -41,14 +36,6 @@ int main(int argc, char* argv[]){
     double logemax = 9;
     int NE = 200;
     double dE = (logemax - logemin) / (NE-1);
-
-    // int Ny = 100;
-    // double ymin = 1e-6;
-    // double ymax = 1.0;
-    // double dy = (ymax - ymin) / (Ny-1);
-    // double logymin = -6;
-    // double logymax = 0;
-    // double dy = (logymax - logymin) / (Ny-1);
 
     PhysConst* pc = new PhysConst();
 
@@ -102,28 +89,9 @@ int main(int argc, char* argv[]){
                 }
                 outfile.close();
 
-                // ds/dy
-                // std::ofstream dsdy_outfile;
-                // dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + sf_type + ".out");
-                // for (int ei = 0; ei < NE; ei++) {
-                //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                //     std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
-                //     for (int yi = 0; yi < Ny; yi++) { // loop over y
-                //         double y = std::pow(10, logymin + yi * dy);
-                //         // double y = ymin + yi * dy;
-                //         // std::cout << E / 1e9 << " " << y << std::endl;
-                //         double _dxs = std::log10(xs->ds_dy(E, y));
-                //         // dsdy_outfile << (E / pc->GeV) << "," << y << "," << _dxs << std::endl;
-                //         dsdy_outfile << _dxs << std::endl;
-                //     }
-                //     // dsdy_outfile << "\n";
-                // }
-                // dsdy_outfile.close();
             }
         }
     }
-
-
 
     return 0;
 }

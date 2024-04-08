@@ -56,7 +56,6 @@ int main(int argc, char* argv[]){
                 sf.BuildSplines(out_folder.string());
             }
         }
-
     }
 
     return 0;
