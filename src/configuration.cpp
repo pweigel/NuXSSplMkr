@@ -32,6 +32,7 @@ void Configuration::Populate() {
     SF.enable_TMC = j["SF"].value("enable_TMC", false);
     SF.enable_CKMT = j["SF"].value("enable_CKMT", false);
     SF.enable_PCAC = j["SF"].value("enable_PCAC", false);
+    SF.TMC_Q2max = j["SF"].value("TMC_Q2max", 30.0);
     SF.use_AlbrightJarlskog = j["SF"].value("use_AlbrightJarlskog", true);
 
     SF.Nx = j["SF"].at("Nx");
@@ -41,17 +42,18 @@ void Configuration::Populate() {
     SF.Q2min = j["SF"].at("Q2min");
     SF.Q2max = j["SF"].at("Q2max");
 
-    if (SF.enable_CKMT) {
-        CKMT.Q0 = j["CKMT"].at("Q0"); // Matching scale
-        CKMT.Delta0 = j["CKMT"].at("Delta0");
-        CKMT.AlphaR = j["CKMT"].at("AlphaR");
-        CKMT.a = j["CKMT"].at("a");
-        CKMT.b = j["CKMT"].at("b");
-        CKMT.c = j["CKMT"].at("c");
-        CKMT.d = j["CKMT"].at("d");
-        CKMT.F2A = j["CKMT"]["F2"].at("A");   CKMT.F2B  = j["CKMT"]["F2"].at("B");   CKMT.F2f  = j["CKMT"]["F2"].at("f");
-        CKMT.xF3A = j["CKMT"]["xF3"].at("A"); CKMT.xF3B = j["CKMT"]["xF3"].at("B");  CKMT.xF3f = j["CKMT"]["xF3"].at("f");
-    }
+    CKMT.Q0 = j["CKMT"].value("Q0", 2.0); // Matching scale
+    CKMT.Delta0 = j["CKMT"].value("Delta0", 0.07684);
+    CKMT.AlphaR = j["CKMT"].value("AlphaR", 0.4150);
+    CKMT.a = j["CKMT"].value("a", 0.2631);
+    CKMT.b = j["CKMT"].value("b", 0.6452);
+    CKMT.c = j["CKMT"].value("c", 3.5489);
+    CKMT.d = j["CKMT"].value("d", 1.1170);
+    CKMT.F2A = j["CKMT"]["F2"].value("A", 0.5967);   CKMT.F2B  = j["CKMT"]["F2"].value("B", 2.7145);   CKMT.F2f  = j["CKMT"]["F2"].value("f", 0.5962);
+    CKMT.xF3A = j["CKMT"]["xF3"].value("A", 9.3955e-3); CKMT.xF3B = j["CKMT"]["xF3"].value("B", 2.4677);  CKMT.xF3f = j["CKMT"]["xF3"].value("f", 0.5962);
+
+    PCAC.A = j["PCAC"].value("A", 0.147);
+    PCAC.B = j["PCAC"].value("B", 0.265);
 
     XS.enable_mass_terms = j["XS"].value("enable_mass_terms", false);
     XS.xmin = j["XS"]["integration"].at("xmin");

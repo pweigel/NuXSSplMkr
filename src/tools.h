@@ -38,6 +38,7 @@ Table quickread(string);
 int quickread(string,Table);
 int quickwrite(string,Table);
 // other tools
+vector<double> multispace(double vmin, double vmid, double vmax, int nlogsteps, int nlinsteps);
 vector<double> linspace(double,double,int);
 vector<double> logspace(double,double,int);
 //Table intertable(Table,vector<double>);

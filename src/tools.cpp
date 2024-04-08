@@ -152,6 +152,28 @@ vector<double> logspace(double Emin,double Emax,int div){
     return logpoints;
 };
 
+vector<double> multispace(double vmin, double vmid, double vmax, int nlogsteps, int nlinsteps) {
+    // Spacing log from vmin to vmid, linear from vmid to vmax
+    // nlogsteps does not include vmid
+    // Example: x log spaced from 1e-10 to 1e-1, linspaced from 1e-1 to 1:
+    // multispace(1e-10, 1e-1, 1e0, 90, 10);
+    vector<double> points;
+
+    double logvmin = std::log10(vmin);
+    double logvmid = std::log10(vmid);
+    double dlogv = (logvmid - logvmin) / (nlogsteps);
+    double dlinv = (vmax - vmid) / (nlinsteps - 1);
+
+    for (int i = 0; i < nlogsteps; i++) {
+        points.push_back(logvmin + dlogv * i);
+    }
+
+    for (int i = 0; i < nlinsteps; i++) {
+        points.push_back(vmid + dlinv * i);
+    }
+    return points;
+}
+
 //Table intertable(Table xy_data, vector<double> x_array, int j1 = 0, int j2 = 1){
 //    Table result;
 //    int arraysize = xy_data.size();

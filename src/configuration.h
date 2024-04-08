@@ -67,6 +67,7 @@ struct SF_settings {
     bool enable_CKMT;
     bool enable_PCAC;
     bool use_AlbrightJarlskog;
+    double TMC_Q2max;
     
     int Nx, NQ2;
     double xmin, xmax, Q2min, Q2max;
@@ -79,6 +80,11 @@ struct CKMT_settings {
     double a, b, c, d;
     double F2A, F2B, F2f;
     double xF3A, xF3B, xF3f; // Note: we will apply cp_factor on xF3B!!!
+};
+
+struct PCAC_settings {
+    double A;
+    double B;
 };
 
 struct xs_settings {
@@ -116,6 +122,7 @@ class Configuration {
     PDF_settings pdf;
     SF_settings SF;
     CKMT_settings CKMT;
+    PCAC_settings PCAC;
     xs_settings XS;
     fundamental_constants constants;
     //

@@ -9,13 +9,6 @@ StructureFunction::StructureFunction(Configuration &_config)
 
     GF2   = SQ(pc->GF);
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
-
-    // Calculate fundamental constants
-    // s_w = config.Sin2ThW;
-    // Lu2 = ( 1. - (4./3.)*s_w) * ( 1. - (4./3.)*s_w);
-    // Ld2 = (-1. + (2./3.)*s_w) * (-1. + (2./3.)*s_w);
-    // Ru2 = (    - (4./3.)*s_w) * (    - (4./3.)*s_w);
-    // Rd2 = (      (2./3.)*s_w) * (      (2./3.)*s_w);
 }
 
 void StructureFunction::Set_Lepton_Mass(double m) {
@@ -244,6 +237,19 @@ double StructureFunction::F5(double x, double Q2) {
     }
 }
 
+double StructureFunction::RescalingVariable(double Q2) {
+    double m2;
+    switch(config.sf_type) {
+        case SFType::total:  m2 = 0; break;
+        case SFType::light:  m2 = 0; break;
+        case SFType::charm:  m2 = SQ(config.pdf.pdf_quark_masses[4]); break;
+        case SFType::bottom: m2 = SQ(config.pdf.pdf_quark_masses[5]); break;
+        case SFType::top:    m2 = SQ(config.pdf.pdf_quark_masses[6]); break;
+        default:             m2 = 0; break;
+    }
+    return 1.0 / (1 + m2 / Q2);
+}
+
 double StructureFunction::NachtmannR(double x, double Q2){
     double m = M_iso / (pc->GeV);
     return sqrt(1. + 4.*x*x*SQ(m)/Q2);
@@ -254,10 +260,19 @@ double StructureFunction::NachtmannXi(double x, double Q2){
     return 2.*x / denominator;
 }
 
+double StructureFunction::NachtmannXibar(double x, double Q2){
+    double denominator = 1. + NachtmannR(x, Q2);
+    double rescaling = RescalingVariable(Q2);
+    return 2.*x*rescaling / denominator;
+}
+
 template<class T,double (T::*f)(double,double), int n, int m>
 double StructureFunction::HGeneric(double xi, double Q2){
     // Integrate T::f from xi to 1 at Q2
-    gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
+    if (xi > 1.0) {
+        return 0.0;
+    }
+    gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
     double result, error;
     
     gsl_function F;
@@ -266,7 +281,7 @@ double StructureFunction::HGeneric(double xi, double Q2){
     F.function = &HK<T, f, n, m>;
     F.params = this;
     // double _integrate_xmax = 1.0;
-    gsl_integration_qags ( &F, xi, 0.99, 0, 1.e-5, 5000, w, &result, &error);
+    gsl_integration_qags ( &F, xi, 1.0, 0, 1.e-4, 10000, w, &result, &error);
     gsl_integration_workspace_free(w);
 
     return result;
@@ -284,9 +299,14 @@ double StructureFunction::G2(double xi, double Q2){
     return HGeneric<StructureFunction,&StructureFunction::F2,1,1>(xi, Q2) - xi*HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
 }
 
+
 double StructureFunction::F1_TMC(double x, double Q2) { // slow rescale?
     //todo: fix
     double xi = NachtmannXi(x, Q2);
+    // double xibar = NachtmannXibar(x, Q2);
+    if (xi > 1.0) {
+        return 0.0;
+    }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
     double term1 = (x / (xi * r)) * F1(xi, Q2);
@@ -297,6 +317,10 @@ double StructureFunction::F1_TMC(double x, double Q2) { // slow rescale?
 
 double StructureFunction::F2_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
+    // double xibar = NachtmannXibar(x, Q2);
+    if (xi > 1.0) {
+        return 0.0;
+    }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
@@ -316,12 +340,16 @@ double StructureFunction::F2_TMC(double x, double Q2) {
 
 double StructureFunction::F3_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
+    // double xibar = NachtmannXibar(x, Q2);
+    if (xi > 1.0) {
+      return 0.0;
+    }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
     // double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
     // double term2 = 2.0 * SQ(m * x / r) / (Q2 * r) * H3(xi, Q2)
-    double g2 = G2(xi, Q2);
+    // double g2 = G2(xi, Q2);
     double h3 = H3(xi, Q2);
 
     double term1 = x/(xi * r*r) * F3(xi, Q2);
@@ -372,9 +400,16 @@ double StructureFunction::F3_CKMT(double x, double Q2) {
 //     return 0.0;
 // }
 
-// double StructureFunction::F2_PCAC(double x, double Q2) {
-//     return 0.0;
-// }
+double StructureFunction::F2_PCAC(double x, double Q2) {
+    // reno paper
+    double delta = CKMT_Delta(Q2);
+    double n = CKMT_n(Q2);
+    double M_PCAC = 0.8;
+    double f_PCAC = 1.0 / SQ(1 + Q2 / SQ(M_PCAC));
+    double term1 = config.PCAC.A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), delta);
+    double term2 = config.PCAC.B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0-x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR - 1.0) * (1.0 + config.CKMT.F2f * (1.0 - x));
+    return f_PCAC * (term1 + term2);
+}
 
 std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf.pdf);
@@ -440,15 +475,36 @@ void StructureFunction::BuildSplines(string outpath) {
     }
 
     // Get the knots for Q2 and x
-    for ( double log_Q2 = std::log10(config.SF.Q2min) - d_log_Q2_knot; log_Q2 <= std::log10(config.SF.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
+    // for ( double log_Q2 = std::log10(config.SF.Q2min) - d_log_Q2_knot; log_Q2 <= std::log10(config.SF.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
+    //     double knot = log_Q2;
+    //     Q2_knots.push_back(knot);
+    // }
+    // for ( double log_x = std::log10(config.SF.xmin) - d_log_x_knot; log_x <= 1 + d_log_x_knot; log_x += d_log_x_knot ) {
+    //     double knot = log_x;
+    //     x_knots.push_back(knot);
+    // }
+
+    // ### Testing new knots ###
+    for ( double log_Q2 = 0; log_Q2 <= 1; log_Q2 += 0.01 ) {
         double knot = log_Q2;
         Q2_knots.push_back(knot);
     }
 
-    for ( double log_x = std::log10(config.SF.xmin) - d_log_x_knot; log_x <= 1 + d_log_x_knot; log_x += d_log_x_knot ) {
+    for ( double log_Q2 = 1 + d_log_Q2_knot; log_Q2 <= std::log10(config.SF.Q2max) + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
+        double knot = log_Q2;
+        Q2_knots.push_back(knot);
+    }
+
+    for ( double log_x = std::log10(config.SF.xmin) - d_log_x_knot; log_x <= -1.0-d_log_x_knot; log_x += d_log_x_knot ) {
         double knot = log_x;
         x_knots.push_back(knot);
     }
+
+    for ( double log_x = -1.0; log_x <= 0.25; log_x += 0.01 ) {
+        double knot = log_x;
+        x_knots.push_back(knot);
+    }
+    // ####
 
     // setup grid stuff
     string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
@@ -478,12 +534,21 @@ void StructureFunction::BuildSplines(string outpath) {
     for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
         double log_Q2 = std::log10(config.SF.Q2min) + Q2i * d_log_Q2;
         double Q2 = std::pow(10.0, log_Q2);
+        if (config.general.debug) {
+            std::cout << "Q2 = " << Q2 << std::endl;
+        }
+
+        double Q2eval = Q2;
+        if ( (config.SF.enable_CKMT) && (Q2 < SQ(config.CKMT.Q0))) {
+            Q2eval = SQ(config.CKMT.Q0);
+        }
 
         if (config.SF.mass_scheme != "parton") {
-            Set_Q_APFEL(std::sqrt(Q2));
+            Set_Q_APFEL(std::sqrt(Q2eval));
         }
 
         for (unsigned int xi = 0; xi < Nx; xi++) {
+
             double log_x = std::log10(config.SF.xmin) + xi * d_log_x;
             double x = std::pow(10.0, log_x);
 
@@ -492,23 +557,34 @@ void StructureFunction::BuildSplines(string outpath) {
             // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
 
             double _FL, _F1, _F2, _F3;
-            _FL = FL(x, Q2);
-            _F2 = F2(x, Q2);
-            _F1 = (_F2 - _FL) / (2. * x);
-            _F3 = F3(x, Q2);
+            // Compute structure functions at Q2eval
+            if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
+                _F1 = F1_TMC(x, Q2eval);
+                _F2 = F2_TMC(x, Q2eval);
+                _F3 = F3_TMC(x, Q2eval);
+            } else {
+                _FL = FL(x, Q2eval);
+                _F2 = F2(x, Q2eval);
+                _F1 = (_F2 - _FL) / (2. * x);
+                _F3 = F3(x, Q2eval);
+            }
+
             if (config.SF.enable_CKMT) {
                 double CKMT_Q20 = SQ(config.CKMT.Q0);
                 if (Q2 < CKMT_Q20) {
                     double _F2_CKMT    = F2_CKMT(x, Q2);
                     double _F3_CKMT    = F3_CKMT(x, Q2);
-                    double _F2_Q0      = F2(x, CKMT_Q20);
-                    double _F3_Q0      = F3(x, CKMT_Q20);
-                    double _F2_CKMT_Q0 = F2_CKMT(x, CKMT_Q20);
-                    double _F3_CKMT_Q0 = F3_CKMT(x, CKMT_Q20);
 
-                    // if (config.SF.enable_PCAC) {
-                        
-                    // }
+                    double _F2_Q0      = _F2;
+                    double _F3_Q0      = _F3;
+                    double _F2_CKMT_Q0 = F2_CKMT(x, Q2eval);
+                    double _F3_CKMT_Q0 = F3_CKMT(x, Q2eval);
+
+
+                    if (config.SF.enable_PCAC) {
+                        double _F2_PCAC = F2_PCAC(x, Q2);
+                        _F2_CKMT += _F2_PCAC;
+                    }
 
                     // R parameterization from Whitlow et al: Phys. Lett. B 250, 193 (1990)
                     // R is used to calculate F1 from F2
@@ -521,6 +597,8 @@ void StructureFunction::BuildSplines(string outpath) {
                     _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
                     _F1 = _F2 * (1.0 + 4.0 * SQ(M_iso * x)) / (2.0 * x * (_R + 1.0));
                     _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
+                } else {
+                    // if Q2 > CKMT_Q20, then we use the regular SFs (do nothing)
                 }
             }
 
@@ -608,184 +686,5 @@ void StructureFunction::BuildSplines(string outpath) {
     F2_spline.write_fits(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
     F3_spline.write_fits(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
 }
-
-void StructureFunction::BuildGrids(string outpath) {
-    const unsigned int Nx = config.SF.Nx;
-    const unsigned int NQ2 = config.SF.NQ2;
-
-    std::vector<double> x_arr;
-    std::vector<double> Q2_arr;
-
-    // Get the coefficients for parton calculation
-    if (config.SF.mass_scheme == "parton") {
-        GetCoefficients();
-    }
-
-    // Step sizes in log space
-    double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2 - 1);
-    double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / (Nx - 1);
-
-    std::cout << "log_Q2min = " << std::log10(config.SF.Q2min) << ", log_Q2max = " << std::log10(config.SF.Q2max) << std::endl;
-    std::cout << "log_xmin = " << std::log10(config.SF.xmin) << ", log_xmax = " << std::log10(config.SF.xmax) << std::endl;
-    std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
-
-    // Collect SF values
-    std::vector<double> F1_data;
-    std::vector<double> F2_data;
-    std::vector<double> F3_data;
-
-    string f1_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
-    string f2_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
-    string f3_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
-
-    std::ofstream f1_outfile;
-    f1_outfile.open(f1_fn);
-    std::ofstream f2_outfile;
-    f2_outfile.open(f2_fn);
-    std::ofstream f3_outfile;
-    f3_outfile.open(f3_fn);
-
-    f1_outfile << NQ2 << " " << Nx << "\n";
-    f1_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
-    f2_outfile << NQ2 << " " << Nx << "\n";
-    f2_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
-    f3_outfile << NQ2 << " " << Nx << "\n";
-    f3_outfile << std::log10(config.SF.Q2min) << " " << std::log10(config.SF.Q2max) << " " << std::log10(config.SF.xmin) << " " << std::log10(config.SF.xmax) << "\n";
-    
-    for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
-        double log_Q2 = std::log10(config.SF.Q2min) + Q2i * d_log_Q2;
-        double Q2 = std::pow(10.0, log_Q2);
-
-        if (config.SF.mass_scheme != "parton") {
-            Set_Q_APFEL(std::sqrt(Q2));
-        }
-
-        for (unsigned int xi = 0; xi < Nx; xi++) {
-            double log_x = std::log10(config.SF.xmin) + xi * d_log_x;
-            double x = std::pow(10.0, log_x);
-
-            // Do checks here
-           // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
-            // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
-
-            double _FL, _F1, _F2, _F3;
-            _FL = FL(x, Q2);
-            _F2 = F2(x, Q2);
-            _F1 = (_F2 - _FL) / (2. * x);
-            _F3 = F3(x, Q2);
-            if (config.SF.enable_CKMT) {
-                double CKMT_Q20 = SQ(config.CKMT.Q0);
-                if (Q2 < CKMT_Q20) {
-                    double _F2_CKMT    = F2_CKMT(x, Q2);
-                    double _F3_CKMT    = F3_CKMT(x, Q2);
-                    double _F2_Q0      = F2(x, CKMT_Q20);
-                    double _F3_Q0      = F3(x, CKMT_Q20);
-                    double _F2_CKMT_Q0 = F2_CKMT(x, CKMT_Q20);
-                    double _F3_CKMT_Q0 = F3_CKMT(x, CKMT_Q20);
-
-                    // if (config.SF.enable_PCAC) {
-                        
-                    // }
-
-                    // R parameterization from Whitlow et al: Phys. Lett. B 250, 193 (1990)
-                    // R is used to calculate F1 from F2
-                    double big_theta = 1.0 + 12.0 * (Q2 / (Q2 + 1.0)) * (SQ(0.125) / (SQ(0.125) + SQ(x)));
-                    // double b1 = 0.635;
-                    // double b2 = 0.5747;
-                    // double b3 = -0.3534;
-                    double _R = 0.635 / log(Q2/SQ(0.2)) * big_theta + 0.5747 / Q2 - 0.3534 / (Q2 + SQ(0.3));
-                    
-                    _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
-                    _F1 = _F2 * (1.0 + 4.0 * SQ(M_iso * x)) / (2.0 * x * (_R + 1.0));
-                    _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
-                }
-            }
-
-            if(!std::isfinite(_F1)) {
-                std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
-                _F1 = 0.0;
-            }
-            if(!std::isfinite(_F2)) {
-                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
-                _F2 = 0.0;
-            }
-            if(!std::isfinite(_F3)) {
-                std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
-                _F3 = 0.0;
-            }
-            F1_data.push_back(_F1);
-            f1_outfile << _F1;
-            F2_data.push_back(_F2);
-            f2_outfile << _F2;
-            F3_data.push_back(_F3);
-            f3_outfile << _F3;
-            if (xi < Nx-1) {
-              f1_outfile << ",";
-              f2_outfile << ",";
-              f3_outfile << ",";
-            } else {
-              f1_outfile << "\n";
-              f2_outfile << "\n";
-              f3_outfile << "\n";
-            }
-        }
-    }
-
-}
-
-// double StructureFunction::Evaluate(double Q2, double x, double y){
-//     // only evaluates central values
-
-//     LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf.pdf);
-//     string xt = "nearest";
-//     grid_central -> setExtrapolator(xt);
-
-//     map<int,double> xq_arr;
-//     for ( int p : partons ){
-//       xq_arr[p] = grid_central -> xfxQ2(p, x, Q2 / (pc->GeV2));
-//     }
-    
-//     return SigR_Nu_LO(x, y, xq_arr);
-// }
-
-// double StructureFunction::SigR_Nu_LO(double x, double y, map<int,double> xq_arr){
-//     double k = 0.;
-//     d_lepton = SQ(M_lepton)/(2.*M_iso*ENU);
-//     double y_p = (1. - d_lepton / x) + (1.- d_lepton/x - y) * (1. - y);
-//     double y_m = (1. - d_lepton / x) - (1.- d_lepton/x - y) * (1. - y);
-//     double a = y_p + CP_factor*y_m;
-//     double b = y_p - CP_factor*y_m;
-
-//       map<int,double> SigRcoef;
-
-//       // Coefficients for CC
-//     SigRcoef[1]  =    a ;
-//     SigRcoef[-1] =    b ;
-//     SigRcoef[2]  =    a ;
-//     SigRcoef[-2] =    b ;
-//     SigRcoef[3]  = 2.*a ;
-//     SigRcoef[-3] =   0. ;
-//     SigRcoef[4]  =   0. ;
-//     SigRcoef[-4] = 2.*b ;
-//     SigRcoef[5]  = 2.*a ;
-//     SigRcoef[-5] =   0. ;
-//     SigRcoef[21] =   0. ;
-
-//     if (CP_factor < 0 ){
-//         //fixes for antineutrinos
-//         SigRcoef[3]   = 0. ;
-//         SigRcoef[-3]  = 2.*b ;
-//         SigRcoef[4]   = 2.*a ;
-//         SigRcoef[-4]  = 0. ;
-//         SigRcoef[5]   = 0. ;
-//         SigRcoef[-5]  = 2.*b ;
-//     }
-
-//     for( int p : partons ) {
-//         k += SigRcoef[p]*xq_arr[p];
-//     }
-
-//     return k;
-// }
 
 }

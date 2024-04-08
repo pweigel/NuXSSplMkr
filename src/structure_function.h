@@ -40,7 +40,6 @@ double HK(double x, void* param){
   return ((double)m)*((p->*f)(x,p->_kernel_Q2))/pow(x,(double)n);
 }
 
-
 class StructureFunction {
     private:
         double s_w, Lu2, Ld2, Ru2, Rd2;
@@ -97,8 +96,10 @@ class StructureFunction {
         // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
+        double RescalingVariable(double Q2); // slow rescaling variable
         double NachtmannR(double x, double Q2);
         double NachtmannXi(double x, double Q2);
+        double NachtmannXibar(double x, double Q2); // w/ mass rescaling
 
         template<class T,double (T::*f)(double,double),int n,int m>
         double HGeneric(double x, double Q2);
@@ -126,8 +127,8 @@ class StructureFunction {
 
         void ConstructFONLL();
         void BuildSplines(string outpath);
-        auto GetGrids();
-        void BuildGrids(string outpath);
+        // auto GetGrids();
+        // void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         
