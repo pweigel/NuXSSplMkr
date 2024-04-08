@@ -73,11 +73,15 @@ class CrossSection {
         double integral_min_x;
         double integral_max_x;
 
+        double min_W2;
+
         double charm_mass = 1.3;
         double bottom_mass = 4.75;
         double top_mass = 173.0; // for testing
 
         Configuration config;
+
+        void SetThresholdW2();
 
     public:
         CrossSection(Configuration& _config);
