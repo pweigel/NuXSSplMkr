@@ -2,6 +2,7 @@
 #define __CROSS_SECTION_H
 #include "configuration.h"
 #include "structure_function.h"
+#include "phase_space.h"
 #include "physconst.h"
 #include "tools.h"
 #include "math.h"
@@ -80,6 +81,7 @@ class CrossSection {
         double top_mass = 173.0; // for testing
 
         Configuration config;
+        PhaseSpace &ps;
 
         void SetThresholdW2();
 
