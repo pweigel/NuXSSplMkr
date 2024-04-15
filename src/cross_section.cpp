@@ -446,7 +446,7 @@ double CrossSection::TotalXS(double E){
     }
 
     double res,err;
-    const unsigned long dim = 2; int calls = 50000;
+    const unsigned long dim = 2; int calls = 100000; // bump it
 
     // integrating on the log of x and y
     double xl[dim] = { log(integral_min_x), log(1.e-9) };
@@ -464,8 +464,8 @@ double CrossSection::TotalXS(double E){
     }
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
 
-    // Is 1k good enough for warmup?
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
+    // Is 1k good enough for warmup? -- Let's try 10k! (04/15/24)
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
 
     do
     {
