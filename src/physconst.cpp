@@ -99,6 +99,8 @@ PhysConst::PhysConst(void){
     
     proton_mass = 0.938272*GeV;
     neutron_mass = 0.939565*GeV; 
+    isoscalar_mass = 0.5*(proton_mass + neutron_mass);
+    m_N = isoscalar_mass;
     Wboson_mass = 80.385*GeV;
     Zboson_mass = 91.1876*GeV;
     

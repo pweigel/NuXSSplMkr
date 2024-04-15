@@ -75,6 +75,8 @@ class PhysConst {
         // mass
         double proton_mass;
         double neutron_mass;
+        double isoscalar_mass;
+        double m_N;
         double Wboson_mass;
         double Zboson_mass;
         double electron_mass;

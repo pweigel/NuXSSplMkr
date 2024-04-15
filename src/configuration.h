@@ -135,6 +135,10 @@ class Configuration {
     NeutrinoType neutrino_type;
 
     double cp_factor;
+
+    bool flag_set_flavor = false;
+    bool flag_set_projectile = false;
+    bool flag_set_target = false;
 };
 
 }

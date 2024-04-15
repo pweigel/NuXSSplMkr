@@ -80,13 +80,13 @@ class CrossSection {
         double bottom_mass = 4.75;
         double top_mass = 173.0; // for testing
 
-        Configuration config;
+        Configuration &config;
         PhaseSpace &ps;
 
         void SetThresholdW2();
 
     public:
-        CrossSection(Configuration& _config);
+        CrossSection(Configuration& _config, PhaseSpace& _ps);
         ~CrossSection() {};
 
         PhysConst* pc; // Constants
@@ -127,6 +127,9 @@ class CrossSection {
         photospline::splinetable<> F1;
         photospline::splinetable<> F2;
         photospline::splinetable<> F3;
+
+        // for testing
+        bool use_phase_space = false;
 
         // FONLL complexity
         // 0: What APFEL gives

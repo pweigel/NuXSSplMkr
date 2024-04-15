@@ -103,6 +103,8 @@ void Configuration::Set_Replica(int replica) {
 void Configuration::Set_Target(string target_string) {
     target = target_string;
     target_type = TargetTypeMap.at(target_string);
+
+    flag_set_target = true;
 }
 
 void Configuration::Set_Projectile(string projectile_string) {
@@ -118,6 +120,7 @@ void Configuration::Set_Projectile(string projectile_string) {
         default: 
             throw std::runtime_error("Cannot get CP Factor for specified projectile");
     }
+    flag_set_projectile = true;
 }
 
 void Configuration::Set_SF_Type(string _sf_type_string) {
@@ -136,6 +139,7 @@ void Configuration::Set_SF_Type(string _sf_type_string) {
             std::cout << "WARNING: FFNS is set to " << SF.FFNS << " to properly match FONLL calculation!" << std::endl;
         }
     }
+    flag_set_flavor = true;
 }
 
 void Configuration::Set_Mass_Scheme(string mass_scheme) {

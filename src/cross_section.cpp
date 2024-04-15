@@ -2,8 +2,8 @@
 
 namespace nuxssplmkr {
 
-CrossSection::CrossSection(Configuration& _config)  
-    : config(_config)
+CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)  
+    : config(_config), ps(_ps)
 {
     pc = new nuxssplmkr::PhysConst();
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
@@ -134,7 +134,12 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     double x = std::exp(k[0]);
     double y = std::exp(k[1]);
 
-    if (!PhaseSpaceIsGood(x, y, ENU)) {
+    bool ps_valid = ps.Validate(ENU, x, y);
+    bool native_valid = PhaseSpaceIsGood(x, y, ENU);
+
+    if (use_phase_space && !ps_valid) {
+        return 1e-99;
+    } else if (!use_phase_space && !native_valid) {
         return 1e-99;
     }
 
