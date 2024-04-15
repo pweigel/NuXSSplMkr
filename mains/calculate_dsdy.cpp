@@ -1,5 +1,6 @@
 #include "configuration.h"
 #include "physconst.h"
+#include "phase_space.h"
 #include "structure_function.h"
 #include "cross_section.h"
 #include "tools.h"
@@ -19,12 +20,16 @@ int main(int argc, char* argv[]){
     const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
 
+    const int replica = 0; // TODO: make this an input
+
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
     Configuration config = Configuration(config_path);
-    config.Populate();  // Populate the SF info
-    
-    std::string data_folder = "../data/" + config.general.unique_name;
+    config.Populate();
+    config.Set_Replica(replica);
+    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::cout << "Loading/saving data to: " << data_folder << std::endl;
+
     // Make the cross sections folder if it doesn't exist
     boost::filesystem::path out_folder = data_folder + "/cross_sections/";
     if (!boost::filesystem::exists(out_folder)) {
@@ -36,7 +41,11 @@ int main(int argc, char* argv[]){
     config.Set_SF_Type(xs_type);
 
     PhysConst* pc = new PhysConst();
-    CrossSection* xs = new CrossSection(config);
+
+    PhaseSpace ps(config);
+    ps.Print();
+
+    CrossSection* xs = new CrossSection(config, ps);
 
     // load the three structure function fit files
     string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";

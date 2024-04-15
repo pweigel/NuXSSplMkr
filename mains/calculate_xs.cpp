@@ -1,5 +1,6 @@
 #include "configuration.h"
 #include "physconst.h"
+#include "phase_space.h"
 #include "structure_function.h"
 #include "cross_section.h"
 #include <boost/filesystem.hpp>
@@ -57,11 +58,14 @@ int main(int argc, char* argv[]){
     config.Set_Target(target);
     std::cout << "Target set to: " << target << std::endl;
 
+    PhaseSpace ps(config);
+    ps.Print();
+
     string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + sf_type + ".fits";
     string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + sf_type + ".fits";
     string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + sf_type + ".fits";
 
-    CrossSection* xs = new CrossSection(config);
+    CrossSection* xs = new CrossSection(config, ps);
     if (config.SF.mass_scheme != "parton") {
         xs->Load_Structure_Functions(f1, f2, f3);
     }
@@ -74,6 +78,7 @@ int main(int argc, char* argv[]){
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         double _xs;
+        std::cout << "E [GeV] = " << std::pow(10, logemin + ei * dE) << std::endl;
         if (E / pc->GeV > 0) {
               _xs = std::log10(xs->TotalXS(E));
         }

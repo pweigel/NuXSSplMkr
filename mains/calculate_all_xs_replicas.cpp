@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    string sf_types[] = {"light", "charm"};
+    string sf_types[] = {"total", "light", "charm", "bottom", "top"};
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
 
     double logemin = 2;
     double logemax = 9;
-    int NE = 200;
+    int NE = 211;
     double dE = (logemax - logemin) / (NE-1);
 
     PhysConst* pc = new PhysConst();
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
 
                 for (int ei = 0; ei < NE; ei++) {
                     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-                    // std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
+                    std::cout << "E = " << E / pc->GeV << " GeV" << std::endl;
                     double _xs;
                     if (E / pc->GeV > 0) {
                          _xs = std::log10(xs->TotalXS(E));

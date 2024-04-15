@@ -46,9 +46,11 @@ int main(int argc, char* argv[]){
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
     Configuration config = Configuration(config_path);
-    config.Populate();  // Populate the SF info
+    config.Populate();
+    config.Set_Replica(replica);
+    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::cout << "Loading/saving data to: " << data_folder << std::endl;
     
-    std::string data_folder = "../data/" + config.general.unique_name;
     // Make the cross sections folder if it doesn't exist
     boost::filesystem::path out_folder = data_folder + "/cross_sections/";
     if (!boost::filesystem::exists(out_folder)) {
