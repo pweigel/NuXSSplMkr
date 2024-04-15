@@ -6,8 +6,9 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     : config(_config), ps(_ps)
 {
     pc = new nuxssplmkr::PhysConst();
-    M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
+    M_iso = pc->isoscalar_mass;
 
+    // TODO: Get this from the phase space
     integral_min_x = config.XS.xmin;
     integral_max_x = config.XS.xmax;
     integral_min_Q2 = config.XS.Q2min * SQ(pc->GeV);
@@ -152,81 +153,6 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
     return ds_dxdy(x, y);
 }
 
-// void LoadFONLL(string path) {
-//     // assume some naming convention 
-//     std::string base = "F3_"+projectile+"_"+target+"_total.fits";
-
-//     if (complexity == 0) {
-
-//     } else if (complexity == 1) {
-//         F3tM.read_fits(path + "");
-//         F3tM0.read_fits(path);
-//         F3tZM.read_fits(path);
-
-//     } else if (complexity == 2) {
-//         // F1
-//         F1lZM.read_fits(path);
-
-//         F1cM.read_fits(path);
-//         F1cM0.read_fits(path);
-//         F1cZM.read_fits(path);
-
-//         F1bM.read_fits(path);
-//         F1bM0.read_fits(path);
-//         F1bZM.read_fits(path);
-
-//         F1tM.read_fits(path);
-//         F1tM0.read_fits(path);
-//         F1tZM.read_fits(path);
-
-//         // F2
-//         F2lZM.read_fits(path);
-        
-//         F2cM.read_fits(path);
-//         F2cM0.read_fits(path);
-//         F2cZM.read_fits(path);
-
-//         F2bM.read_fits(path);
-//         F2bM0.read_fits(path);
-//         F2bZM.read_fits(path);
-
-//         F2tM.read_fits(path);
-//         F2tM0.read_fits(path);
-//         F2tZM.read_fits(path);
-
-//         // F3
-//         F3lZM.read_fits(path);
-        
-//         F3cM.read_fits(path);
-//         F3cM0.read_fits(path);
-//         F3cZM.read_fits(path);
-
-//         F3bM.read_fits(path);
-//         F3bM0.read_fits(path);
-//         F3bZM.read_fits(path);
-
-//         F3tM.read_fits(path);
-//         F3tM0.read_fits(path);
-//         F3tZM.read_fits(path);
-//     }
-
-//     F1.read_fits(path);
-// }
-
-// double CrossSection::ds_dxdy_FONLL(double x, double y) {
-//     // This is my version of FONLL
-//     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
-
-//     double s = 2.0 * M_iso * ENU + SQ(M_iso);
-//     double Q2 = (s - SQ(M_iso)) * x * y;
-
-//     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
-//     double propagator = SQ( MW2 / (Q2 + MW2) );
-//     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-
-//     // We must get the appropriate cross sections
-
-// }
 double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
     Set_Neutrino_Energy(E);
     return ds_dxdQ2(x, Q2);
@@ -443,11 +369,15 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
 
 double CrossSection::ds_dy_kernel(double k) {
     double x = std::exp(k);
-    if (!PhaseSpaceIsGood(x, kernel_y, ENU)) {
+
+    bool ps_valid = ps.Validate(ENU, x, kernel_y);
+    bool native_valid = PhaseSpaceIsGood(x, kernel_y, ENU);
+
+    if (use_phase_space && !ps_valid) {
+        return 1e-99;
+    } else if (!use_phase_space && !native_valid) {
         return 1e-99;
     }
-
-    // std::cout << x << ", " << kernel_y << std::endl;
 
     double result = x * ds_dxdy(x, kernel_y);
     return result;
