@@ -129,7 +129,7 @@ class CrossSection {
         photospline::splinetable<> F3;
 
         // for testing
-        bool use_phase_space = false;
+        bool use_phase_space = true;
 
         // FONLL complexity
         // 0: What APFEL gives

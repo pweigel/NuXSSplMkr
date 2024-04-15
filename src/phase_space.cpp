@@ -48,6 +48,31 @@ void PhaseSpace::SetFinalStateMass(double m_fs) {
     // W2_min = pow(pc->m_N + m_fs, 2);
 }
 
+bool PhaseSpace::Validate(double E) {
+    /*
+    TODO
+    */
+    flag=0;
+    double s = 2 * pc->m_N * E + pow(pc->m_N, 2);
+
+    if (s < Q2_min || s < W2_min) {
+        flag = 1;
+        return false;
+    }
+
+    return true;
+}
+
+bool PhaseSpace::Validate(double E, double y) {
+    /*
+    TODO
+    */
+    flag = 0;
+    Validate(E);
+    
+    return true;
+}
+
 bool PhaseSpace::Validate(double E, double x, double y) {
     /* 
     Check that the point (E, x, y) is valid given the constraints
@@ -67,7 +92,7 @@ bool PhaseSpace::Validate(double E, double x, double y) {
     }
     // double eta = 1.0; // Q^2 / m^2
 
-    if ((Q2 < Q2_min) || (Q2 > Q2_max)) {
+    if ((Q2 < Q2_min) || (Q2 > Q2_max) || (s > Q2_max)) {
         /* 
         Constraints from:
         PDF minimum/maximum Q^2

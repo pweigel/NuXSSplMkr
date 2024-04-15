@@ -9,14 +9,6 @@ namespace nuxssplmkr {
 
 class PhaseSpace {
     private:
-        double Q2_min;
-        double Q2_max;
-
-        double W2_min;
-        double W2_max;
-
-        double x_min, x_max, y_min, y_max;
-
         Configuration &config;
         
     public:
@@ -26,6 +18,8 @@ class PhaseSpace {
         void Compute(double m_fs);
         void SetFinalStateMass(double m_fs);
 
+        bool Validate(double E);
+        bool Validate(double E, double y);
         bool Validate(double E, double x, double y);
 
         void Print();
@@ -34,6 +28,14 @@ class PhaseSpace {
 
         int flag = 0;
         bool debug = false;
+
+        double Q2_min;
+        double Q2_max;
+
+        double W2_min;
+        double W2_max;
+
+        double x_min, x_max, y_min, y_max;
 };
 
 }

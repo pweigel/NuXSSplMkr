@@ -471,9 +471,15 @@ double CrossSection::ds_dy(double E, double y) {
     kernel_y = y;
     double s = 2.0 * M_iso * E ;
 
-    double xmin, xmax;
-    std::tie(xmin, xmax) = dsdy_xlims(s, kernel_y);
-    if (xmin > xmax) {
+    // double xmin, xmax;
+    // std::tie(xmin, xmax) = dsdy_xlims(s, kernel_y);
+    // if (xmin > xmax) {
+    //     return 1e-99;
+    // }
+
+    double xmin = ps.x_min;
+    double xmax = ps.x_max;
+    if (!ps.Validate(E)) {
         return 1e-99;
     }
 
@@ -498,11 +504,14 @@ double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
     double s = 2.0 * M_iso * E + SQ(M_iso);
     
-    if (s < integral_min_Q2){
-        return 1e-99;
-    }
+    // if (s < integral_min_Q2){
+    //     return 1e-99;
+    // }
 
-    if (s < min_W2) {
+    // if (s < min_W2) {
+    //     return 1e-99;
+    // }
+    if (!ps.Validate(E)) {
         return 1e-99;
     }
 
