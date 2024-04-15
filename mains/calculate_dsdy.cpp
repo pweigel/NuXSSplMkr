@@ -72,11 +72,13 @@ int main(int argc, char* argv[]){
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         std::cout << "E = " << E / (pc->GeV) << " GeV" << std::endl;
+        dsdy_outfile << E / (pc->GeV);
         for (int yi = 0; yi < Ny; yi++) { // loop over y
             double y = std::pow(10, logymin + yi * dy);
             double _dxs = std::log10(xs->ds_dy(E, y));
-            dsdy_outfile << _dxs << std::endl;
+            dsdy_outfile << "," << _dxs;
         }
+        dsdy_outfile << std::endl;
     }
     dsdy_outfile.close();
 
