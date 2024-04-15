@@ -139,9 +139,9 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     bool native_valid = PhaseSpaceIsGood(x, y, ENU);
 
     if (use_phase_space && !ps_valid) {
-        return 1e-99;
+        return 0;
     } else if (!use_phase_space && !native_valid) {
-        return 1e-99;
+        return 0;
     }
 
     // Jacobian = x * y, needed because we're integrating over log space
@@ -374,9 +374,9 @@ double CrossSection::ds_dy_kernel(double k) {
     bool native_valid = PhaseSpaceIsGood(x, kernel_y, ENU);
 
     if (use_phase_space && !ps_valid) {
-        return 1e-99;
+        return 0;
     } else if (!use_phase_space && !native_valid) {
-        return 1e-99;
+        return 0;
     }
 
     double result = x * ds_dxdy(x, kernel_y);
@@ -410,7 +410,7 @@ double CrossSection::ds_dy(double E, double y) {
     double xmin = ps.x_min;
     double xmax = ps.x_max;
     if (!ps.Validate(E)) {
-        return 1e-99;
+        return 0;
     }
 
     gsl_integration_workspace * w = gsl_integration_workspace_alloc(10000);
@@ -435,14 +435,14 @@ double CrossSection::TotalXS(double E){
     double s = 2.0 * M_iso * E + SQ(M_iso);
     
     // if (s < integral_min_Q2){
-    //     return 1e-99;
+    //     return 0;
     // }
 
     // if (s < min_W2) {
-    //     return 1e-99;
+    //     return 0;
     // }
     if (!ps.Validate(E)) {
-        return 1e-99;
+        return 0;
     }
 
     double res,err;
