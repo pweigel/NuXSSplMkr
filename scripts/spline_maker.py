@@ -163,7 +163,7 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
     x = f(energies) - 9.0 # convert to GeV
     y = f(y_values)
     w = f(x_values)
-    z = of(datas)
+    z = datas
 
     knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
              np.linspace(y.min()-1,y.max()+1,N[1],endpoint = True),
@@ -177,11 +177,17 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
     print(num_data_points)
 
     nd_data = photospline.ndsparse(int(num_data_points), 3)
-    for i in range(datas.shape[0]):
-        for j in range(datas.shape[1]):
-            for k in range(datas.shape[2]):
-                if datas[i, j, k] > 0.0:
+    maxes = [0, 0, 0]
+    for i in range(z.shape[0]):
+        for j in range(z.shape[1]):
+            for k in range(z.shape[2]):
+                if z[i, j, k] > 0:
                     nd_data.insert(np.log10(z[i, j, k]), [i, j, k])
+                    if i > maxes[0]: maxes[0] = i
+                    if j > maxes[1]: maxes[1] = j
+                    if k > maxes[2]: maxes[2] = k
+      
+    print(maxes, z.shape)
 
     weights = np.ones(num_data_points)
     result = photospline.glam_fit(nd_data, weights, [x, y, w], knots, order, smooth, penaltyorder)
@@ -198,4 +204,4 @@ if __name__ == "__main__":
     
     infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/dsdxdy_neutrino_proton_light.out'
     outfile = '3d_spline_light.fits'
-    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[100, 50, 50])
+    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50])
