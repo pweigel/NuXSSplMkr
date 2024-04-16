@@ -27,7 +27,8 @@ CXX 		= g++
 #Dynamic Library
 
 #Flags
-CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++17 -g -Wall
+# CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++17 -g -Wall
+CXX_FLAGS       =  $(INCLUDE_PATH) -I. -fPIC -std=c++17 -g -Wall
 
 # LD 		= clang++
 LD 		= g++
@@ -53,20 +54,24 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 # CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
 
 # all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
-all: bin/make_sf_splines bin/make_all_sf_splines bin/make_all_sf_splines_replicas bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy bin/construct_fonll bin/calculate_dsdxdy bin/calculate_dsdxdQ2 bin/calculate_all_dsdy bin/calculate_all_dsdy_replicas
+# all: bin/make_sf_splines bin/make_all_sf_splines bin/make_all_sf_splines_replicas bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy bin/construct_fonll bin/calculate_dsdxdy bin/calculate_dsdxdQ2 bin/calculate_all_dsdy bin/calculate_all_dsdy_replicas
 # test: bin/test_CKMT bin/test_TMC
-test: bin/test_grid bin/APFEL_check bin/test_dsdxdy #bin/apfelxx_test
-replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
+# test: bin/test_TMC bin/test_CKMT
+# replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
+all: bin/calculate_xs bin/calculate_dsdy bin/calculate_dsdxdy
+test: bin/test_new_phase_space bin/test_qed_corrections 
+# structure_functions:
+# cross_sections: bin/calculate_xs
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 bin/calculate_dsdxdQ2: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdxdQ2.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_dsdxdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdxdy.o
+bin/calculate_dsdxdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_dsdxdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_dsdy.o
+bin/calculate_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_dsdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_all_dsdy_replicas: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_dsdy_replicas.o
@@ -78,7 +83,7 @@ bin/calculate_all_dsdy: src/tools.o src/configuration.o src/structure_function.o
 bin/calculate_all_xs_replicas: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs_replicas.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_xs.o
+bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_all_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs.o
@@ -108,6 +113,11 @@ bin/apfelxx_test: tests/apfelxx_test.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 bin/test_dsdxdy: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o tests/test_dsdxdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/test_new_phase_space: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o tests/test_new_phase_space.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/test_qed_corrections: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o tests/test_qed_corrections.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+
 %.o:%.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@
 

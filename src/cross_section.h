@@ -67,6 +67,8 @@ class CrossSection {
         double ENU; // neutrino energy
 
         double kernel_y; // Used for integration
+        double kernel_x; // Used for integration
+        double kernel_L; // large log for rc integration
 
         // Limits of integration
         double integral_min_Q2;
@@ -80,8 +82,13 @@ class CrossSection {
         double bottom_mass = 4.75;
         double top_mass = 173.0; // for testing
 
+        double rc_prefactor;
+
         Configuration &config;
         PhaseSpace &ps;
+
+        bool rc_dsdxdy_loaded = false;
+        photospline::splinetable<> rc_dsdxdy; // cross section for rc calcs TODO: rename this
 
         void SetThresholdW2();
 
@@ -116,6 +123,15 @@ class CrossSection {
         double ds_dxdy_kernel(double* k);
         double _ds_dy_partonic(double k);
         double _ds_dxdy_partonic(double* k);
+
+        // ~ QED Corrections ~
+        double qed_splitting(double z);  // splitting function
+        double rc_jacobian(double x, double y, double z); // vars -> hat(vars)
+        double rc_kernel(double k);
+        double calculate_rc_dsdxdy(double z, double E, double x, double y);
+        double calculate_rc_dsdxdy(double z, double E, double x, double y, double L);
+        double rc_integrate(double E, double x, double y);
+        void rc_load_dsdxdy(string spline_path); // load dsdxdy for rc
 
         Grid Load_Grid(string path);
 

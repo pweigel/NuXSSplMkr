@@ -7,6 +7,7 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
 {
     pc = new nuxssplmkr::PhysConst();
     M_iso = pc->isoscalar_mass;
+    rc_prefactor = (pc->alpha / (2.0 * M_PI));
 
     // TODO: Get this from the phase space
     integral_min_x = config.XS.xmin;
@@ -246,6 +247,9 @@ double CrossSection::ds_dxdy(double x, double y) {
         term5 = 0.0;
     }
     double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
+    // if (xs < 0.0) {
+    //     std::cout << F1_val << "," << F2_val << "," << F3_val << std::endl;
+    // }
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
@@ -441,6 +445,8 @@ double CrossSection::TotalXS(double E){
     // if (s < min_W2) {
     //     return 0;
     // }
+    double xmin = ps.x_min;
+    double xmax = ps.x_max;
     if (!ps.Validate(E)) {
         return 0;
     }
@@ -449,8 +455,8 @@ double CrossSection::TotalXS(double E){
     const unsigned long dim = 2; int calls = 100000; // bump it
 
     // integrating on the log of x and y
-    double xl[dim] = { log(integral_min_x), log(1.e-9) };
-    double xu[dim] = { log(integral_max_x), log(1.)    };
+    double xl[dim] = { log(xmin), log(1.e-9) };
+    double xu[dim] = { log(xmax), log(1.)    };
 
     gsl_rng_env_setup ();
     const gsl_rng_type *T = gsl_rng_default;
@@ -554,6 +560,110 @@ bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
     double s = 2.0 * M_iso * E + SQ(M_iso);
     double Q2 = (s - SQ(M_iso)) * x * y; 
     return PhaseSpaceIsGood_Q2(x, Q2, E);
+}
+
+/*
+Radiative Corrections
+*/
+double CrossSection::qed_splitting(double z) {
+    return (1.0 + z*z) / (1.0 - z);
+    // return exp( log1p(z*z) - log1p(-z) );
+}
+
+double CrossSection::rc_jacobian(double x, double y, double z) {
+    return y / (z * (z + y - 1.0));
+    // return exp( log(y) - log(z) - log(z + y - 1.0) );
+}
+
+double CrossSection::rc_kernel(double k) {
+    return calculate_rc_dsdxdy(k, ENU, kernel_x, kernel_y, kernel_L);
+}
+
+double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y) {
+    double s = 2.0 * M_iso * E + SQ(M_iso);
+    double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l));
+    return calculate_rc_dsdxdy(z, E, x, y, L);
+}
+
+double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y, double L) {
+    double xhat = x * y / (z + y - 1.0);
+    double yhat = (z + y - 1.0) / z;
+    double zmin = 1.0 - y * (1.0 - x);
+
+    // double s = 2.0 * M_iso * E + SQ(M_iso);
+    // double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
+
+    std::array<double, 3> pt{{std::log10(E / pc->GeV), std::log10(x), std::log10(y)}};
+    std::array<int, 3> xs_splc;
+    rc_dsdxdy.searchcenters(pt.data(), xs_splc.data());
+    double xs_val = rc_dsdxdy.ndsplineeval(pt.data(), xs_splc.data(), 0); // log10(xs[log10(E),log10(x),log10(y)])
+
+    double term1 = 0.0;
+    if (z > zmin) {
+        if (xhat >= 1.0) {
+            xhat = 1.0;
+        }
+
+        if (yhat >= 1.0) {
+            yhat = 1.0;
+        }
+
+        if (xhat > 1.0 || yhat > 1.0) {
+            std::cout << z << "," << x << "," << y << "," << xhat - 1.0 << "," << yhat - 1.0 << std::endl;   
+        }
+
+        std::array<double, 3> pt_hat{{std::log10(E / z / pc->GeV), std::log10(xhat), std::log10(yhat)}};
+        std::array<int, 3> xs_hat_splc;
+        rc_dsdxdy.searchcenters(pt_hat.data(), xs_hat_splc.data());
+        double xs_hat_val = rc_dsdxdy.ndsplineeval(pt_hat.data(), xs_hat_splc.data(), 0); // log10(xs_hat[log10(E),log10(x),log10(y)])
+        term1 = rc_jacobian(x, y, z) * pow(10.0, xs_hat_val);
+        // std::cout << std::log10(E / pc->GeV) << "," << xhat << "," << yhat << "," << z << "," << zmin << "," <<  qed_splitting(z) << "," << rc_jacobian(x, y, z) << "," << term1 - pow(10.0, xs_val) << std::endl;
+    }
+    return rc_prefactor * qed_splitting(z) * (term1 - pow(10.0, xs_val));
+}
+
+double CrossSection::rc_integrate(double E, double x, double y) {
+    Set_Neutrino_Energy(E);
+    kernel_y = y;
+    kernel_x = x;
+    
+    double s = 2.0 * M_iso * E;// + SQ(M_iso);
+    kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
+
+    double integrate_zmin = 0.0;
+    double integrate_zmax = 0.9999;
+
+    if (!ps.Validate(E, x, y)) {
+        return 0;
+    }
+
+    // gsl_integration_workspace * w = gsl_integration_workspace_alloc(50000);
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(1000);
+    double result, error;
+    size_t neval;
+
+    gsl_function F;
+    F.function = &KernelHelper<CrossSection, &CrossSection::rc_kernel>;
+    F.params = this;
+
+    // int status = gsl_integration_qag(&F, integrate_zmin, integrate_zmax, 0, 1.e-3, 50000, 6, w, &result, &error);
+    int status = gsl_integration_cquad(&F, integrate_zmin, integrate_zmax, 0, 1.e-3, w, &result, &error, &neval);
+    if (status != 0) {
+        std::cout << "ERR: " << status << std::endl;
+    }
+    // gsl_integration_workspace_free(w);
+    gsl_integration_cquad_workspace_free(w);
+
+    return kernel_L * result;
+    
+}
+
+void CrossSection::rc_load_dsdxdy(string spline_path) {
+    if (rc_dsdxdy_loaded) {
+        rc_dsdxdy = photospline::splinetable<>();
+    }
+    rc_dsdxdy.read_fits(spline_path);
+    rc_dsdxdy_loaded = true;
 }
 
 }
