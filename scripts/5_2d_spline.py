@@ -38,13 +38,19 @@ rcParams['legend.fontsize']       = 20
 
 def load_file(fname):
     energies = []
-    sigma = []
+    dsdy = []
     with open(fname, 'r') as f:
+        n = 0
         for line in f.readlines():
-            d = [float(x) for x in line.rstrip('\n').split(',')]
-            energies.append(d[0])
-            sigma.append(np.array(d[1:]))
-    return np.array(energies), np.array(sigma)
+            if n == 0:
+                energies = np.array([float(x) for x in line.rstrip('\n').split(',')[1:]])
+            elif n == 1:
+                y_values = np.array([float(x) for x in line.rstrip('\n').split(',')[1:]])
+            else:
+                d = np.array([float(x) for x in line.rstrip('\n').split(',')])
+                dsdy.append(d)
+            n += 1
+    return energies / 1e9, y_values, np.array(dsdy)
 
 
 if __name__ == '__main__':
@@ -53,38 +59,36 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     
-    energies, xs = load_file(base_path + '/total_neutrino_proton_light.out')
-    spline_path = 'test_spline_light.fits'
+    energies, y_values, dsdy = load_file(base_path + '/dsdy_neutrino_proton_light.out')
+    spline_path = '2d_spline_light.fits'
     spline = photospline.SplineTable(spline_path)
-    ax.scatter(energies / 1e9, xs, s=5)
-    ax.plot(energies / 1e9, 10**spline.evaluate_simple([np.log10(energies / 1e9)]), color='k')
+    E = np.log10(energies[100])
+    _y_values = np.linspace(-6, 0, 1001)
     
+    dxs = spline.evaluate_simple([E, _y_values])
+    ax.scatter(y_values, dsdy[100, :])
+    ax.plot(10**_y_values, dxs)
+
+    ax.set_xscale('log')
+    ax.set_xlim([1e-6, 1])
+    ax.set_yscale('linear')
     
-    energies, xs = load_file(base_path + '/total_neutrino_proton_charm.out')
-    spline_path = 'test_spline_charm.fits'
-    spline = photospline.SplineTable(spline_path)
-    ax.scatter(energies / 1e9, xs, s=5)
-    ax.plot(energies / 1e9, 10**spline.evaluate_simple([np.log10(energies / 1e9)]), color='k')
+    plt.savefig('5_2d_spline_y.pdf')
     
-    energies, xs = load_file(base_path + '/total_neutrino_proton_bottom.out')
-    spline_path = 'test_spline_bottom.fits'
-    spline = photospline.SplineTable(spline_path)
-    ax.scatter(energies / 1e9, xs, s=5)
-    ax.plot(energies / 1e9, 10**spline.evaluate_simple([np.log10(energies / 1e9)]), color='k')
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
     
-    energies, xs = load_file(base_path + '/total_neutrino_proton_top.out')
-    spline_path = 'test_spline_top.fits'
-    spline = photospline.SplineTable(spline_path)
-    
-    ax.scatter(energies / 1e9, xs, s=5)
-    top_energies = np.logspace(3, 9, 1001)
-    top_xs = 10**spline.evaluate_simple([np.log10(top_energies)])
-    ax.plot(top_energies, top_xs, color='k')
-    
+    E = np.linspace(1, 9, 1001)
+    m = 90
+    y = y_values[m]
+    ax.scatter(energies, dsdy[:, m])
+    print(y)
+    dxs = 10**spline.evaluate_simple([E, y])
+    print(dxs)
+
+    ax.plot(10**E, dxs)
+
     ax.set_xscale('log')
     ax.set_yscale('log')
     
-    print(xs)
-
-    plt.savefig('5_1d_spline.pdf')
-    
+    plt.savefig('5_2d_spline_E.pdf')
