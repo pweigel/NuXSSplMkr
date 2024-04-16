@@ -94,23 +94,26 @@ def SplineFitMaker2D(filename, outfile='out.fits', scale = 'lin', prefix = '', s
         print("Error: unknown scale.")
         exit()
 
-    # shape = tuple(np.unique(datas[:,i]).size for i in range(2))
-    # datas = datas.reshape(shape + (datas.size/reduce(operator.mul,shape),))
-
     x = f(energies) - 9.0 # convert to GeV
     y = f(y_values)
-    z = datas
+    z = f(datas)
+    num_data_points = np.sum(datas > 0)
+
+    nd_data = photospline.ndsparse(int(num_data_points), 2)
+    for i in range(datas.shape[0]):
+        for j in range(datas.shape[1]):
+            if datas[i, j] != 0:
+                nd_data.insert(np.log10(datas[i, j]), [i, j])
 
     knots = [np.linspace(x.min()-1,x.max()+1, N[0],endpoint = True),
              np.linspace(y.min()-1,y.max()+1, N[1],endpoint = True)]
     
     order = [2, 2]
-    smooth = [1.0e-5, 1.0e-5]
+    smooth = [1.0e-15, 1.0e-15]
     penaltyorder = [2, 2]
 
-    weight = np.ones(z.shape)
-    zs, w = ndsparse.from_data(z, weight)
-    result = photospline.glam_fit(zs, w, [x, y], knots, order, smooth, penaltyorder)
+    w = np.ones(num_data_points)
+    result = photospline.glam_fit(nd_data, w, [x, y], knots, order, smooth, penaltyorder)
     result.write(outfile)
     
     print("Done. Generated: "  + outfile)

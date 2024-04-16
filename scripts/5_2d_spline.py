@@ -65,7 +65,7 @@ if __name__ == '__main__':
     E = np.log10(energies[100])
     _y_values = np.linspace(-6, 0, 1001)
     
-    dxs = spline.evaluate_simple([E, _y_values])
+    dxs = 10**spline.evaluate_simple([E, _y_values])
     ax.scatter(y_values, dsdy[100, :])
     ax.plot(10**_y_values, dxs)
 
@@ -74,17 +74,15 @@ if __name__ == '__main__':
     ax.set_yscale('linear')
     
     plt.savefig('5_2d_spline_y.pdf')
-    
+        
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     
     E = np.linspace(1, 9, 1001)
     m = 90
-    y = y_values[m]
+    y = np.log10(y_values[m])
     ax.scatter(energies, dsdy[:, m])
-    print(y)
     dxs = 10**spline.evaluate_simple([E, y])
-    print(dxs)
 
     ax.plot(10**E, dxs)
 
