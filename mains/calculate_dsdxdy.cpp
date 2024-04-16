@@ -1,6 +1,7 @@
 
 #include "configuration.h"
 #include "physconst.h"
+#include "phase_space.h"
 #include "structure_function.h"
 #include "cross_section.h"
 #include <boost/filesystem.hpp>
@@ -12,36 +13,17 @@ using namespace nuxssplmkr;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]){
-    std::string config_path;
-    std::string projectile;
-    std::string target;
-    std::string xs_type;
-    po::options_description desc("Options");
-    desc.add_options()
-        ("help", "Print help message")
-        ("config_path", po::value<std::string>(&config_path), "Path to configuration file")
-        ("projectile", po::value<std::string>(&projectile), "'neutrino' or 'antineutrino'")
-        ("target", po::value<std::string>(&target), "'proton' or 'neutron'")
-        ("xs_type", po::value<std::string>(&xs_type), "Which flavors to consider")
-    ;
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+   if (argc < 2) {
+        std::cout << "Not enough inputs." << std::endl;
+        return 0;
+    }
+    const std::string config_path = argv[1];
+    const std::string projectile = argv[2]; // neutrino or antineutrino
+    const std::string target = argv[3]; // proton or neutron
+    const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
 
-    if (vm.count("help")) {
-        cout << desc << "\n";
-    return 1;
-}
-
-    // if (argc < 2) {
-    //     std::cout << "Not enough inputs." << std::endl;
-    //     return 0;
-    // }
-    // const std::string config_path = vm["config_path"].astype(std::string);
-    // const std::string projectile = vm["projectile"]; // neutrino or antineutrino
-    // const std::string target = vm["target"]; // proton or neutron
-    // const std::string xs_type = vm["xs_type"]; // Which SFs to use total, light, charm, ..
+    const int replica = 0; // TODO: make this an input
 
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
@@ -62,7 +44,10 @@ int main(int argc, char* argv[]){
     config.Set_SF_Type(xs_type);
 
     PhysConst* pc = new PhysConst();
-    CrossSection* xs = new CrossSection(config);
+    PhaseSpace ps(config);
+    ps.Print();
+
+    CrossSection* xs = new CrossSection(config, ps);
 
     // load the three structure function fit files
     string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
@@ -70,21 +55,21 @@ int main(int argc, char* argv[]){
     string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
     // TOTAL XS
-    int NE = 100;
+    int NE = 200;
     int Ny = 100;
     int Nx = 100;
 
     double logemin = 2;
-    double logemax = 12;
+    double logemax = 9;
     double dE = (logemax - logemin) / (NE-1);
 
-    double ymin = -1;
-    double ymax = 0;
-    double dy = (ymax - ymin) / (Ny-1);
+    double logymin = -7;
+    double logymax = 0;
+    double dy = (logymax - logymin) / (Ny-1);
 
-    double xmin = -5;
-    double xmax = 0;
-    double dx = (xmax - xmin) / (Nx-1);
+    double logxmin = -7;
+    double logxmax = 0;
+    double dx = (logxmax - logxmin) / (Nx-1);
 
     std::ofstream outfile;
     outfile.open(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
@@ -92,43 +77,60 @@ int main(int argc, char* argv[]){
     xs->Load_Structure_Functions(f1, f2, f3);
     xs->Set_Lepton_Mass(pc->muon_mass);
     
-    double E = 31440.4 * pc->GeV;
-    // double _xs = std::log10(xs->TotalXS(E));
-    // std::cout << _xs << std::endl;
-    for (int yi = 0; yi < Ny; yi++) { // loop over y
-        double y = pow(10, ymin + yi * dy);
-        for (int xi = 0; xi < Nx; xi++) { // loop over x
-            double x = pow(10, xmin + xi * dx);
-            // std::cout << "x=" << x << ", " << "y=" << y << std::endl;
-            double _dsdxdy;
-            if (!xs->PhaseSpaceIsGood(x, y, E)) {
-                _dsdxdy = -99;
-            } else {
-                _dsdxdy = std::log10(xs->ds_dxdy(E, x, y));
-            }
-             
-            outfile << _dsdxdy;
+    // Get the energy, inelasticity values and put them in the header
+    std::vector<double> energy_values;
+    outfile << "E";
+    for (int ei = 0; ei < NE; ei++) {
+        double E = pc->GeV * std::pow(10, logemin + ei * dE);
+        energy_values.push_back(E);
+        outfile << "," << E;
+    }
+    outfile << std::endl;
 
-            if ( !((yi == Ny - 1) && (xi == Nx - 1)) ) {
-                outfile << ",";
+    std::vector<double> inelasticity_values;
+    outfile << "y";
+    for (int yi = 0; yi < Ny; yi++) {
+        double y = std::pow(10, logymin + yi * dy);
+        inelasticity_values.push_back(y);
+        outfile << "," << y;
+    }
+    outfile << std::endl;
+
+    std::vector<double> x_values;
+    outfile << "x";
+    for (int xi = 0; xi < Nx; xi++) {
+        double x = std::pow(10, logxmin + xi * dx);
+        x_values.push_back(x);
+        outfile << "," << x;
+    }
+    outfile << std::endl;
+
+    for (int ei = 0; ei < NE; ei++) {
+        double E = energy_values[ei];
+        for (int yi = 0; yi < Ny; yi++) { // loop over y
+            double y = inelasticity_values[yi];
+            for (int xi = 0; xi < Nx; xi++) { // loop over x
+                double x = x_values[xi];
+                double _dsdxdy;
+
+                bool valid = ps.Validate(E, x, y);
+                if (!valid) {
+                    _dsdxdy = 0.0;
+                } else {
+                    _dsdxdy = std::log10(xs->ds_dxdy(E, x, y));
+                }
+
+                outfile << _dsdxdy;
+                if ( !((yi == Ny - 1) && (xi == Nx - 1)) ) {
+                    outfile << ",";
+                }
             }
+            outfile << std::endl;
         }
+        outfile << std::endl;
     }
 
     outfile.close();
-
-    // SINGLE DIFFERENTIAL XS, linear y
-    // for (int ei = 0; ei < NE; ei++) { // loop over E
-    //     double E = pc->GeV * std::pow(10, logemin + ei * dE);
-    //     for (int yi = 0; yi < Ny; yi++) { // loop over y
-    //         double y = ymin + yi * dy;
-    //         outfile << std::log10(xs->ds_dy(E, y));
-    //         if (yi != Ny - 1) {
-    //             outfile << ",";
-    //         }
-    //     }
-    //     outfile << "\n";
-    // }
 
     return 0;
 }

@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
         double _xs;
         std::cout << "E [GeV] = " << std::pow(10, logemin + ei * dE) << std::endl;
         if (E / pc->GeV > 0) {
-              _xs = std::log10(xs->TotalXS(E));
+              _xs = xs->TotalXS(E);
         }
         else {
             _xs = -99;

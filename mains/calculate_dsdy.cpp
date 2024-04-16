@@ -69,18 +69,43 @@ int main(int argc, char* argv[]){
     // ds/dy
     std::ofstream dsdy_outfile;
     dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+
+    // Get the energy, inelasticity values and put them in the header
+    std::vector<double> energy_values;
+    dsdy_outfile << "E";
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
+        energy_values.push_back(E);
+        dsdy_outfile << "," << E;
+    }
+    dsdy_outfile << std::endl;
+
+    std::vector<double> inelasticity_values;
+    dsdy_outfile << "y";
+    for (int yi = 0; yi < Ny; yi++) {
+        double y = std::pow(10, logymin + yi * dy);
+        inelasticity_values.push_back(y);
+        dsdy_outfile << "," << y;
+    }
+    dsdy_outfile << std::endl;
+
+    for (int ei = 0; ei < NE; ei++) { // loop over E
+        double E = energy_values[ei];
         std::cout << "E = " << E / (pc->GeV) << " GeV" << std::endl;
-        dsdy_outfile << E / (pc->GeV);
         for (int yi = 0; yi < Ny; yi++) { // loop over y
-            double y = std::pow(10, logymin + yi * dy);
-            double _dxs = std::log10(xs->ds_dy(E, y));
-            dsdy_outfile << "," << _dxs;
+            double y = inelasticity_values[yi];
+            double _dxs = xs->ds_dy(E, y);
+
+            dsdy_outfile << _dxs;
+            if ( !(yi == Ny - 1) ) {
+                dsdy_outfile << ",";
+            }
         }
         dsdy_outfile << std::endl;
     }
     dsdy_outfile.close();
+
+
 
     return 0;
 }
