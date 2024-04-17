@@ -88,7 +88,6 @@ class CrossSection {
         PhaseSpace &ps;
 
         bool rc_dsdxdy_loaded = false;
-        photospline::splinetable<> rc_dsdxdy; // cross section for rc calcs TODO: rename this
 
         void SetThresholdW2();
 
@@ -132,7 +131,8 @@ class CrossSection {
         double calculate_rc_dsdxdy(double z, double E, double x, double y, double L);
         double rc_integrate(double E, double x, double y);
         void rc_load_dsdxdy(string spline_path); // load dsdxdy for rc
-
+        photospline::splinetable<> rc_dsdxdy; // cross section for rc calcs TODO: rename this
+        
         Grid Load_Grid(string path);
 
         void Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path);

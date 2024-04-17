@@ -596,7 +596,7 @@ double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y,
     std::array<double, 3> pt{{std::log10(E / pc->GeV), std::log10(x), std::log10(y)}};
     std::array<int, 3> xs_splc;
     rc_dsdxdy.searchcenters(pt.data(), xs_splc.data());
-    double xs_val = rc_dsdxdy.ndsplineeval(pt.data(), xs_splc.data(), 0); // log10(xs[log10(E),log10(x),log10(y)])
+    double xs_val = rc_dsdxdy.ndsplineeval(pt.data(), xs_splc.data(), 0);
 
     double term1 = 0.0;
     if (z > zmin) {
@@ -612,13 +612,13 @@ double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y,
             std::cout << z << "," << x << "," << y << "," << xhat - 1.0 << "," << yhat - 1.0 << std::endl;   
         }
 
-        std::array<double, 3> pt_hat{{std::log10(E / z / pc->GeV), std::log10(xhat), std::log10(yhat)}};
+        std::array<double, 3> pt_hat{{std::log10(E / pc->GeV), std::log10(xhat), std::log10(yhat)}};
         std::array<int, 3> xs_hat_splc;
         rc_dsdxdy.searchcenters(pt_hat.data(), xs_hat_splc.data());
-        double xs_hat_val = rc_dsdxdy.ndsplineeval(pt_hat.data(), xs_hat_splc.data(), 0); // log10(xs_hat[log10(E),log10(x),log10(y)])
+        double xs_hat_val = rc_dsdxdy.ndsplineeval(pt_hat.data(), xs_hat_splc.data(), 0);
         term1 = rc_jacobian(x, y, z) * pow(10.0, xs_hat_val);
-        // std::cout << std::log10(E / pc->GeV) << "," << xhat << "," << yhat << "," << z << "," << zmin << "," <<  qed_splitting(z) << "," << rc_jacobian(x, y, z) << "," << term1 - pow(10.0, xs_val) << std::endl;
     }
+
     return rc_prefactor * qed_splitting(z) * (term1 - pow(10.0, xs_val));
 }
 
@@ -631,14 +631,14 @@ double CrossSection::rc_integrate(double E, double x, double y) {
     kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
     double integrate_zmin = 0.0;
-    double integrate_zmax = 0.9999;
+    double integrate_zmax = 0.999;
 
     if (!ps.Validate(E, x, y)) {
         return 0;
     }
 
     // gsl_integration_workspace * w = gsl_integration_workspace_alloc(50000);
-    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(1000);
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);
     double result, error;
     size_t neval;
 
