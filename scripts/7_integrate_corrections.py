@@ -3,6 +3,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 import photospline
+import scipy.integrate
 
 rcParams['font.family']           = 'serif'
 rcParams['font.serif']            = 'Computer Modern Roman'
@@ -36,24 +37,6 @@ rcParams['legend.frameon']        = False
 rcParams['legend.title_fontsize'] = 20
 rcParams['legend.fontsize']       = 20
 
-def load_file(fname):
-    energies = []
-    dsdxdy = []
-    with open(fname, 'r') as f:
-        n = 0
-        for line in f.readlines():
-            if n == 0:
-                energies = np.array([float(x) for x in line.rstrip('\n').split(',')[1:]])
-            elif n == 1:
-                y_values = np.array([float(x) for x in line.rstrip('\n').split(',')[1:]])
-            elif n == 2:
-                x_values = np.array([float(x) for x in line.rstrip('\n').split(',')[1:]])
-            else:
-                d = np.array([float(x) for x in line.rstrip('\n').split(',')])
-                dsdxdy.append(d)
-            n += 1
-    return energies / 1e9, y_values, x_values, np.array(dsdxdy)
-  
 if __name__ == '__main__':
     base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections'
     spline_path = '/n/home06/pweigel/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
@@ -61,12 +44,6 @@ if __name__ == '__main__':
     
     rc_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/bin/dsdxdy_nu_CC_iso_rc.out'
     xs_rc = np.loadtxt(rc_path, skiprows=3, delimiter=',')
-
-    # filename = base_path + '/no_rc_dsdxdy_neutrino_proton_light.out'
-    # xs_no_rc = np.loadtxt(filename, skiprows=3, delimiter=',')
-
-    # fig = plt.figure(figsize=(12, 9))
-    # ax = fig.add_subplot(111)
     
     print(xs_rc.shape)
     with open(rc_path, 'r') as f:
@@ -84,52 +61,27 @@ if __name__ == '__main__':
     for i, y in enumerate(y_values):
         for j, x in enumerate(x_values):
             xs_spline[i, j] = 10**spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
-            
     
-    print(xs_spline)
-    fig = plt.figure(figsize=(12,9))
-    ax = fig.add_subplot(111)
-    _x, _y = np.meshgrid(x_values, y_values)
-    ax_img = ax.pcolormesh(_x, _y, 100 * xs_rc / xs_spline, vmin=-100.0, vmax=100.0, cmap='RdBu', rasterized=True)
+    dsdy = np.zeros(len(y_values))
+    for i, y in enumerate(y_values):
+        dsdy[i] = scipy.integrate.simpson(xs_spline[i, :], x_values)
     
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim([1e-5, 1])
-    ax.set_ylim([1e-5, 1])
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+    dsdy_rc = np.zeros(len(y_values))
+    for i, y in enumerate(y_values):
+        dsdy_rc[i] = scipy.integrate.simpson(xs_rc[i, :], x_values)
     
-    plt.colorbar(ax_img, ax=ax, label=r'$\frac{d^2 \sigma^{(1)}}{dxdy} / \frac{d^2 \sigma^{(0)}}{dxdy}$ $[\%]$')
-    plt.tight_layout()
-    plt.savefig('6_qed_corrections_1.pdf')
+    dsdy_tot = dsdy + dsdy_rc
+    total_xs = scipy.integrate.simpson(dsdy_tot, y_values)
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
-    _x, _y = np.meshgrid(x_values, y_values)
-    ax_img = ax.pcolormesh(_x, _y, xs_spline, norm=mpl.colors.LogNorm(vmin=1e-42)) #
-    
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim([1e-5, 1])
-    ax.set_ylim([1e-5, 1])
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    
-    plt.colorbar(ax_img, ax=ax)
+    ax.plot(y_values, dsdy / total_xs, color='r', linewidth=3, label=r'$\frac{d\sigma^{(0)}}{dy}$')
+    ax.plot(y_values, dsdy_rc / total_xs, color='b', linewidth=3, label=r'$\frac{d\sigma^{(1)}}{dy}$')
+    ax.plot(y_values, (dsdy + dsdy_rc) / total_xs, color='k', linewidth=3, label=r'$\frac{d\sigma^{(0)}}{dy}+\frac{d\sigma^{(1)}}{dy}$')
+    ax.plot([0, 1], [0, 0], color='k', alpha=0.33, linestyle='--')
+    ax.set_xlim([0, 1])
+    ax.set_xlabel(r'$y$')
+    ax.set_ylabel(r'$\frac{1}{\sigma}\frac{d\sigma}{dy}$')
+    ax.legend()
     plt.tight_layout()
-    plt.savefig('6_qed_corrections_2.pdf')
-    
-    fig = plt.figure(figsize=(12,9))
-    ax = fig.add_subplot(111)
-    _x, _y = np.meshgrid(x_values, y_values)
-    ax_img = ax.pcolormesh(_x, _y, xs_rc, norm=mpl.colors.LogNorm(vmin=1e-42))
-    
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    
-    plt.colorbar(ax_img, ax=ax)
-    plt.tight_layout()
-    plt.savefig('6_qed_corrections_3.pdf')
-        
+    plt.savefig('7_dsdy_rc.pdf')

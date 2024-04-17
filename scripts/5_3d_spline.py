@@ -64,7 +64,7 @@ if __name__ == '__main__':
     
     xs = np.loadtxt(filename, skiprows=3, delimiter=',')
     print(xs.shape)
-    
+    # 0.00546228,0.00107227
     # Let's get the E, y, x vectors
     with open(filename, 'r') as f:
         energies = np.array([float(x) for x in f.readline().rstrip('\n').split(',')[1:]])
@@ -86,12 +86,38 @@ if __name__ == '__main__':
     out = spline.evaluate_simple([np.log10(energies) - 9.0, x, y])
     # print(xs[10, :, :])
     ax.scatter(energies / 1e9, xs[:, -10, -10], s=5)
-    # print(out)
+    print(out[:25])
     ax.plot(energies / 1e9, 10**out)
-    print(10**out)
-    print(10**(energies-9.0))
+
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.savefig('5_3d_spline.pdf')
+    
+    E = 8.0
+    y_values = np.linspace(-0.1, 0, 100)
+    
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
+
+    x = np.log10(0.001)
+    out = spline.evaluate_simple([E, x, y_values])
+    ax.plot(10**y_values, 10**out)
+    
+    x = np.log10(0.005)
+    out = spline.evaluate_simple([E, x, y_values])
+    ax.plot(10**y_values, 10**out)
+    
+    x = np.log10(0.01)
+    out = spline.evaluate_simple([E, x, y_values])
+    ax.plot(10**y_values, 10**out)
+    
+    x = np.log10(0.015)
+    out = spline.evaluate_simple([E, x, y_values])
+    ax.plot(10**y_values, 10**out)
+    
     ax.set_xscale('log')
     ax.set_yscale('log')
     
-    plt.savefig('5_3d_spline.pdf')
+    plt.savefig('test.pdf')
+
     

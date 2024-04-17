@@ -81,8 +81,8 @@ def SplineFitMaker2D(filename, outfile='out.fits', scale = 'lin', prefix = '', s
     with open(filename, 'r') as f:
         energies = np.array([float(x) for x in f.readline().rstrip('\n').split(',')[1:]])
         y_values = np.array([float(x) for x in f.readline().rstrip('\n').split(',')[1:]])
-    print(energies)
-    print(y_values)
+    # print(energies)
+    # print(y_values)
     # exit()
 
     f = lambda x : x
@@ -132,7 +132,7 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
 
 
     datas = np.loadtxt(filename, skiprows=skip_header, delimiter=',')
-    print(datas.shape)
+    # print(datas.shape)
     
     # Let's get the E, y, x vectors
     with open(filename, 'r') as f:
@@ -174,7 +174,7 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
     penaltyorder = [2, 2, 2]
     
     num_data_points = np.sum(datas > 0.0)
-    print(num_data_points)
+    # print(num_data_points)
 
     nd_data = photospline.ndsparse(int(num_data_points), 3)
     maxes = [0, 0, 0]
@@ -183,11 +183,6 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
             for k in range(z.shape[2]):
                 if z[i, j, k] > 0:
                     nd_data.insert(np.log10(z[i, j, k]), [i, j, k])
-                    if i > maxes[0]: maxes[0] = i
-                    if j > maxes[1]: maxes[1] = j
-                    if k > maxes[2]: maxes[2] = k
-      
-    print(maxes, z.shape)
 
     weights = np.ones(num_data_points)
     result = photospline.glam_fit(nd_data, weights, [x, y, w], knots, order, smooth, penaltyorder)
@@ -202,6 +197,6 @@ if __name__ == "__main__":
     outfile = '2d_spline_light.fits'
     # SplineFitMaker2D(infile, outfile, scale='log', skip_header=2, N=[200, 100])
     
-    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/dsdxdy_neutrino_proton_light.out'
-    outfile = '3d_spline_light.fits'
+    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/rc_dsdxdy_neutrino_proton_light.out'
+    outfile = 'rc_3d_spline_light.fits'
     SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50])
