@@ -631,7 +631,7 @@ double CrossSection::rc_integrate(double E, double x, double y) {
     kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
     double integrate_zmin = 0.0;
-    double integrate_zmax = 0.999;
+    double integrate_zmax = 0.9999;
 
     if (!ps.Validate(E, x, y)) {
         return 0;

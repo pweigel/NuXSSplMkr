@@ -87,7 +87,8 @@ if __name__ == '__main__':
             
     
     print(xs_spline)
-    fig = plt.figure(figsize=(12,9))
+    exit()
+    fig = plt.figure(figsize=(12*1.1,9*1.1))
     ax = fig.add_subplot(111)
     _x, _y = np.meshgrid(x_values, y_values)
     ax_img = ax.pcolormesh(_x, _y, 100 * xs_rc / xs_spline, vmin=-100.0, vmax=100.0, cmap='RdBu', rasterized=True)
@@ -114,6 +115,8 @@ if __name__ == '__main__':
     ax.set_ylim([1e-5, 1])
     ax.set_xlabel('x')
     ax.set_ylabel('y')
+    # ax.tick_params(axis='x', which='both')
+    # ax.set_aspect(1)
     
     plt.colorbar(ax_img, ax=ax)
     plt.tight_layout()

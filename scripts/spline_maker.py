@@ -118,7 +118,7 @@ def SplineFitMaker2D(filename, outfile='out.fits', scale = 'lin', prefix = '', s
     
     print("Done. Generated: "  + outfile)
 
-def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header = 3,  N = 50, outname = "", oscale = 'lin'):
+def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header = 3,  N = 50, outname = "", oscale = 'lin', mod_knots=False):
     """
     Creates a spline table from a table of numbers. Then
     saves the table using the sanem filename as given.
@@ -169,8 +169,24 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
              np.linspace(y.min()-1,y.max()+1,N[1],endpoint = True),
              np.linspace(w.min()-1,w.max()+1,N[2],endpoint = True)]
     
+    if mod_knots:
+        y_knots = np.append(
+            np.linspace(y.min()-1, -1, N[1]-20, endpoint = False),
+            np.log10(np.linspace(0.1, 1.1, 20, endpoint = True))
+        )
+
+        knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
+                 y_knots,
+                 np.linspace(w.min()-1,w.max()+1,N[2],endpoint = True)]
+        print(y_knots)
+    # print(x.max(), y.max())
+    # knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
+    #          np.linspace(y.min()-1,0.00001,N[1],endpoint = True),
+    #          np.linspace(w.min()-1,0.00001,N[2],endpoint = True)]
+    
     order = [2, 2, 2]
-    smooth = [1.0e-15, 1.0e-15, 1.0e-5]
+    # smooth = [1.0e-15, 1.0e-15, 1.0e-15]
+    smooth = [1.0e-10, 1.0e-10, 1.0e-10]
     penaltyorder = [2, 2, 2]
     
     num_data_points = np.sum(datas > 0.0)
@@ -181,7 +197,7 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
     for i in range(z.shape[0]):
         for j in range(z.shape[1]):
             for k in range(z.shape[2]):
-                if z[i, j, k] > 0:
+                if z[i, j, k] > 0.0:
                     nd_data.insert(np.log10(z[i, j, k]), [i, j, k])
 
     weights = np.ones(num_data_points)
@@ -197,6 +213,11 @@ if __name__ == "__main__":
     outfile = '2d_spline_light.fits'
     # SplineFitMaker2D(infile, outfile, scale='log', skip_header=2, N=[200, 100])
     
-    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/rc_dsdxdy_neutrino_proton_light.out'
-    outfile = 'rc_3d_spline_light.fits'
-    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50])
+    # infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/rc_dsdxdy_neutrino_proton_light.out'
+    # outfile = 'rc_3d_spline_light.fits'
+    # SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50])
+    
+    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected.out'
+    outfile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected.fits'
+    # SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[80, 90, 90])
+    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50], mod_knots=True)

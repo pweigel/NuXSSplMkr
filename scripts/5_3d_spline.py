@@ -56,9 +56,9 @@ def load_file(fname):
 
 
 if __name__ == '__main__':
-    base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections'
-    filename = base_path + '/dsdxdy_neutrino_proton_light.out'
-    
+    base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections'
+    filename = base_path + '/dsdxdy_nu_CC_iso_corrected.out'
+        
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     
@@ -74,50 +74,87 @@ if __name__ == '__main__':
     xs = xs.reshape(len(energies), len(y_values), len(x_values))
     print(xs.shape, energies.shape, y_values.shape, x_values.shape)
     
-    spline_path = '3d_spline_light.fits'
+    spline_path = base_path + '/dsdxdy_nu_CC_iso_corrected.fits'
     spline = photospline.SplineTable(spline_path)
+    csms_path = '~/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
+    csms_spline = photospline.SplineTable(csms_path)
+    nx = -11
+    ny = -11
     
-    x = np.log10(x_values)[-10]
-    y = np.log10(y_values)[-10]
+    x = np.log10(x_values)[nx]
+    y = np.log10(y_values)[ny]
     # energies = np.linspace(2, 9, 100)
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     out = spline.evaluate_simple([np.log10(energies) - 9.0, x, y])
     # print(xs[10, :, :])
-    ax.scatter(energies / 1e9, xs[:, -10, -10], s=5)
+    ax.scatter(energies / 1e9, xs[:, nx, ny], s=5)
     print(out[:25])
     ax.plot(energies / 1e9, 10**out)
 
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig('5_3d_spline.pdf')
+    plt.savefig('5_3d_spline_rc.pdf')
+
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
     
-    E = 8.0
-    y_values = np.linspace(-0.1, 0, 100)
+    nE = 25
+    selected_energy = np.log10(energies[nE]) - 9
+    print(selected_energy)
+    
+    xscorr = np.zeros((len(y_values), len(x_values)))
+    for i, y in enumerate(y_values):
+        for j, x in enumerate(x_values):
+            v = 10**spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
+            w = 10**csms_spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
+            print(x, y, v, w)
+            xscorr[i, j] = v
+
+    _x, _y = np.meshgrid(x_values, y_values)
+    ax_img = ax.pcolormesh(_x, _y, xscorr, norm=mpl.colors.LogNorm())
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.colorbar(ax_img, ax=ax)
+    plt.savefig('test.pdf')
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
-
-    x = np.log10(0.001)
-    out = spline.evaluate_simple([E, x, y_values])
-    ax.plot(10**y_values, 10**out)
-    
-    x = np.log10(0.005)
-    out = spline.evaluate_simple([E, x, y_values])
-    ax.plot(10**y_values, 10**out)
-    
-    x = np.log10(0.01)
-    out = spline.evaluate_simple([E, x, y_values])
-    ax.plot(10**y_values, 10**out)
-    
-    x = np.log10(0.015)
-    out = spline.evaluate_simple([E, x, y_values])
-    ax.plot(10**y_values, 10**out)
-    
+    _x, _y = np.meshgrid(x_values, y_values)
+    ax_img = ax.pcolormesh(_x, _y, xs[nE, :, :], norm=mpl.colors.LogNorm())
     ax.set_xscale('log')
     ax.set_yscale('log')
+    plt.colorbar(ax_img, ax=ax)
+    plt.savefig('test2.pdf')
     
-    plt.savefig('test.pdf')
+    # E = 3.0
+    # y_values = np.linspace(-5, -1, 100)
+    
+    # fig = plt.figure(figsize=(12, 9))
+    # ax = fig.add_subplot(111)
+
+    # # x = np.log10(0.1)
+    # # out = spline.evaluate_simple([E, x, y_values])
+    # # ax.plot(10**y_values, 10**out)
+    
+    # # x = np.log10(0.005)
+    # # out = spline.evaluate_simple([E, x, y_values])
+    # # ax.plot(10**y_values, 10**out)
+    
+    # x = np.log10(0.1)
+    # out = spline.evaluate_simple([E, x, y_values])
+    # ax.plot(10**y_values, 10**out)
+    
+    # x = np.log10(0.15)
+    # out = spline.evaluate_simple([E, x, y_values])
+    # ax.plot(10**y_values, 10**out)
+    
+    # ax.set_xscale('linear')
+    # ax.set_yscale('linear')
+    
+    # plt.savefig('test.pdf')
+    
+
 
     
