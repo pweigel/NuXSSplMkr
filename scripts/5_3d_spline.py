@@ -83,14 +83,14 @@ if __name__ == '__main__':
     csms_path = '~/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
     csms_spline = photospline.SplineTable(csms_path)
     
-    nE = -1
+    nE = 50
     nx = -25
     ny = -25
     
     x = np.log10(x_values)[nx]
     y = np.log10(y_values)[ny]    
     selected_energy = np.log10(energies[nE]) - 9
-    
+    print('ENERGY = ', selected_energy)
     spline_energies = np.linspace(np.log10(energies[0]), np.log10(energies[-1]), 250) - 9
     spline_x = np.linspace(np.log10(x_values[0]), np.log10(x_values[-1]), 250)
     spline_y = np.linspace(np.log10(y_values[0]), np.log10(y_values[-1]), 250)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     ax = fig.add_subplot(111)
     out = spline.evaluate_simple([selected_energy, spline_x, y])
     out_csms = csms_spline.evaluate_simple([selected_energy, spline_x, y])
-    print(out)
+    # print(out)
     ax.scatter(x_values, xs[nE, :, ny], s=5)
     ax.plot(10**spline_x, 10**out)
     ax.plot(10**spline_x, 10**out_csms)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     ax = fig.add_subplot(111)
     out = spline.evaluate_simple([selected_energy, x, spline_y])
     out_csms = csms_spline.evaluate_simple([selected_energy, x, spline_y])
-    print(out)
+    # print(out)
     ax.scatter(y_values, xs[nE, nx, :], s=5)
     ax.plot(10**spline_y, 10**out)
     ax.plot(10**spline_y, 10**out_csms)
