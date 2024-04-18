@@ -53,11 +53,11 @@ int main(int argc, char* argv[]){
     double logemax = 9;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -9;
-    double logymax = -1;
-    double dy = (logymax - logymin) / ( (Ny-20) - 1);
+    double logymin = -7;
+    double logymax = 0;
+    double dy = (logymax - logymin) / (Ny-1);
 
-    double logxmin = -9;
+    double logxmin = -7;
     double logxmax = 0;
     double dx = (logxmax - logxmin) / (Nx-1);
 
@@ -89,37 +89,24 @@ int main(int argc, char* argv[]){
     */
     std::vector<double> inelasticity_values;
     outfile << "y";
-    for (int yi = 0; yi < Ny - 20; yi++) {
+    for (int yi = 0; yi < Ny; yi++) {
         double y = std::pow(10, logymin + yi * dy);
         inelasticity_values.push_back(y);
         outfile << "," << y;
-        // norc_outfile << "," << y;
-        // std::cout << y << std::endl;
     }
-
-    for (int yi = 1; yi < 20; yi++) {
-        double y = std::pow(10, logymin + dy * (Ny-20-1)) + yi * (1.0 - 0.1) / (20);
-        inelasticity_values.push_back(y);
-        outfile << "," << y;
-        // std::cout << y << std::endl;
-    }
-    inelasticity_values.push_back(0.98);
-    outfile << "," << "0.98";
-    std::cout << "size of y-values = " << inelasticity_values.size() << std::endl;
+    // std::cout << "size of y-values = " << inelasticity_values.size() << std::endl;
 
     outfile << std::endl;
     // norc_outfile << std::endl;
 
     std::vector<double> x_values;
     outfile << "x";
-    for (int xi = 0; xi < Nx-1; xi++) {
+    for (int xi = 0; xi < Nx; xi++) {
         double x = std::pow(10, logxmin + xi * dx);
         x_values.push_back(x);
         outfile << "," << x;
         // norc_outfile << "," << x;
     }
-    x_values.push_back(0.99);
-    outfile << "," << "0.99";
     outfile << std::endl;
     // norc_outfile << std::endl;
 
@@ -133,10 +120,11 @@ int main(int argc, char* argv[]){
 
         auto t1 = std::chrono::high_resolution_clock::now();
 
-        for (int yi = 0; yi < Ny; yi++) { // loop over y
-            double y = inelasticity_values[yi];
-            for (int xi = 0; xi < Nx; xi++) { // loop over x
-                double x = x_values[xi];
+        for (int xi = 0; xi < Nx; xi++) { // loop over x
+            double x = x_values[xi];
+            for (int yi = 0; yi < Ny; yi++) { // loop over y
+                double y = inelasticity_values[yi];
+
                 // double _dsdxdy;
                 double _rc_dsdxdy;
                 double xs_val;
@@ -146,7 +134,10 @@ int main(int argc, char* argv[]){
                 if (!valid) {
                     // _dsdxdy = 0.0;
                     _rc_dsdxdy = 0.0;
-                    xs_val = 0.0;
+                    std::array<double, 3> pt{{std::log10(E / pc->GeV), std::log10(x), std::log10(y)}};
+                    std::array<int, 3> xs_splc;
+                    xs->rc_dsdxdy.searchcenters(pt.data(), xs_splc.data());
+                    xs_val = pow(10.0, xs->rc_dsdxdy.ndsplineeval(pt.data(), xs_splc.data(), 0));
                 } else {
                     // _dsdxdy = xs->ds_dxdy(E, x, y);
                     _rc_dsdxdy = xs->rc_integrate(E, x, y);
@@ -156,9 +147,14 @@ int main(int argc, char* argv[]){
                     xs_val = pow(10.0, xs->rc_dsdxdy.ndsplineeval(pt.data(), xs_splc.data(), 0));
                 }
 
-                outfile << xs_val + _rc_dsdxdy;
+                if (xs_val + _rc_dsdxdy > 0) {
+                    outfile << xs_val + _rc_dsdxdy;
+                } else {
+                    outfile << 0.0;
+                }
+
                 // norc_outfile << _dsdxdy;
-                if ( !(xi == Nx - 1) ) {
+                if ( !(yi == Ny - 1) ) {
                     outfile << ",";
                     // norc_outfile << ",";
                 }

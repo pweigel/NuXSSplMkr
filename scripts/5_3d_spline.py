@@ -57,7 +57,7 @@ def load_file(fname):
 
 if __name__ == '__main__':
     base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections'
-    filename = base_path + '/dsdxdy_nu_CC_iso_corrected.out'
+    filename = base_path + '/dsdxdy_nu_CC_iso_corrected_logspaced.out'
         
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -74,46 +74,92 @@ if __name__ == '__main__':
     xs = xs.reshape(len(energies), len(y_values), len(x_values))
     print(xs.shape, energies.shape, y_values.shape, x_values.shape)
     
-    spline_path = base_path + '/dsdxdy_nu_CC_iso_corrected.fits'
+    y_values = y_values[:-1]
+    x_values = x_values[:-1]
+    xs = xs[:, :-1, :-1]
+    
+    spline_path = base_path + '/dsdxdy_nu_CC_iso_corrected_logspaced.fits'
     spline = photospline.SplineTable(spline_path)
     csms_path = '~/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
     csms_spline = photospline.SplineTable(csms_path)
-    nx = -11
-    ny = -11
+    
+    nE = -1
+    nx = -25
+    ny = -25
     
     x = np.log10(x_values)[nx]
-    y = np.log10(y_values)[ny]
-    # energies = np.linspace(2, 9, 100)
+    y = np.log10(y_values)[ny]    
+    selected_energy = np.log10(energies[nE]) - 9
     
+    spline_energies = np.linspace(np.log10(energies[0]), np.log10(energies[-1]), 250) - 9
+    spline_x = np.linspace(np.log10(x_values[0]), np.log10(x_values[-1]), 250)
+    spline_y = np.linspace(np.log10(y_values[0]), np.log10(y_values[-1]), 250)
+
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
-    out = spline.evaluate_simple([np.log10(energies) - 9.0, x, y])
-    # print(xs[10, :, :])
+    out = spline.evaluate_simple([spline_energies, x, y])
+    out_csms = csms_spline.evaluate_simple([spline_energies, x, y])
     ax.scatter(energies / 1e9, xs[:, nx, ny], s=5)
-    print(out[:25])
-    ax.plot(energies / 1e9, 10**out)
-
+    ax.plot(10**spline_energies, 10**out)
+    ax.plot(10**spline_energies, 10**out_csms)
+    Emin = 1.0 / (2*0.938*x_values[nx]*y_values[ny])
+    ax.plot([Emin, Emin], [1e-40, 1e-32], color='k', alpha=0.5)
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig('5_3d_spline_rc.pdf')
-
+    ax.set_ylim([1e-40, 1e-32])
+    plt.savefig('5_3d_spline_rc_E.pdf')
+    
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
+    out = spline.evaluate_simple([selected_energy, spline_x, y])
+    out_csms = csms_spline.evaluate_simple([selected_energy, spline_x, y])
+    print(out)
+    ax.scatter(x_values, xs[nE, :, ny], s=5)
+    ax.plot(10**spline_x, 10**out)
+    ax.plot(10**spline_x, 10**out_csms)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylim([1e-40, 1e-32])
+    plt.savefig('5_3d_spline_rc_x.pdf')
+    
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
+    out = spline.evaluate_simple([selected_energy, x, spline_y])
+    out_csms = csms_spline.evaluate_simple([selected_energy, x, spline_y])
+    print(out)
+    ax.scatter(y_values, xs[nE, nx, :], s=5)
+    ax.plot(10**spline_y, 10**out)
+    ax.plot(10**spline_y, 10**out_csms)
+    # Emin = 1.0 / (2*0.938*x_values[nx]*y_values[ny])
+    # ax.plot([Emin, Emin], [1e-40, 1e-32], color='k', alpha=0.5)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylim([1e-40, 1e-32])
+    plt.savefig('5_3d_spline_rc_y.pdf')
+    # exit()
+    
+    
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     
-    nE = 25
-    selected_energy = np.log10(energies[nE]) - 9
     print(selected_energy)
     
     xscorr = np.zeros((len(y_values), len(x_values)))
+    xs_spl = np.zeros((len(y_values), len(x_values)))
     for i, y in enumerate(y_values):
         for j, x in enumerate(x_values):
-            v = 10**spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
+            a = spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
+            print(y, x, a, np.log10(xs[nE, j, i]))
+
+            v = 10**a
             w = 10**csms_spline.evaluate_simple([selected_energy, np.log10(x), np.log10(y)])
-            print(x, y, v, w)
-            xscorr[i, j] = v
+            # print(x, y, v, w)
+            
+            xscorr[j, i] = v
+            xs_spl[j, i] = w
 
     _x, _y = np.meshgrid(x_values, y_values)
-    ax_img = ax.pcolormesh(_x, _y, xscorr, norm=mpl.colors.LogNorm())
+    ax_img = ax.pcolormesh(_x, _y, xscorr.T, norm=mpl.colors.LogNorm(vmin=1e-42, vmax=1e-37))
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.colorbar(ax_img, ax=ax)
@@ -122,11 +168,20 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
     _x, _y = np.meshgrid(x_values, y_values)
-    ax_img = ax.pcolormesh(_x, _y, xs[nE, :, :], norm=mpl.colors.LogNorm())
+    ax_img = ax.pcolormesh(_x, _y, np.abs(xs[nE, :, :].T), norm=mpl.colors.LogNorm(vmin=1e-42, vmax=1e-37))#, norm=mpl.colors.LogNorm(vmin=1e-42))
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.colorbar(ax_img, ax=ax)
     plt.savefig('test2.pdf')
+    
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111)
+    _x, _y = np.meshgrid(x_values, y_values)
+    ax_img = ax.pcolormesh(_x, _y, xs_spl.T, norm=mpl.colors.LogNorm(vmin=1e-42, vmax=1e-37))
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.colorbar(ax_img, ax=ax)
+    plt.savefig('test3.pdf')
     
     # E = 3.0
     # y_values = np.linspace(-5, -1, 100)

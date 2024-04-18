@@ -161,44 +161,63 @@ def SplineFitMaker3D(filename, outfile, scale = 'lin', prefix = '', skip_header 
         exit()
 
     x = f(energies) - 9.0 # convert to GeV
-    y = f(y_values)
-    w = f(x_values)
-    z = datas
+    y = f(y_values) # x
+    w = f(x_values) # y
+    z = datas       # dsigma_dxdy
 
     knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
-             np.linspace(y.min()-1,y.max()+1,N[1],endpoint = True),
-             np.linspace(w.min()-1,w.max()+1,N[2],endpoint = True)]
-    
-    if mod_knots:
-        y_knots = np.append(
-            np.linspace(y.min()-1, -1, N[1]-20, endpoint = False),
-            np.log10(np.linspace(0.1, 1.1, 20, endpoint = True))
-        )
-
-        knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
-                 y_knots,
-                 np.linspace(w.min()-1,w.max()+1,N[2],endpoint = True)]
-        print(y_knots)
-    # print(x.max(), y.max())
-    # knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
-    #          np.linspace(y.min()-1,0.00001,N[1],endpoint = True),
-    #          np.linspace(w.min()-1,0.00001,N[2],endpoint = True)]
+             np.linspace(y.min()-2,y.max()+2,N[1],endpoint = True),
+             np.linspace(w.min()-2,w.max()+2,N[2],endpoint = True)]
     
     order = [2, 2, 2]
-    # smooth = [1.0e-15, 1.0e-15, 1.0e-15]
     smooth = [1.0e-10, 1.0e-10, 1.0e-10]
     penaltyorder = [2, 2, 2]
-    
-    num_data_points = np.sum(datas > 0.0)
-    # print(num_data_points)
 
-    nd_data = photospline.ndsparse(int(num_data_points), 3)
-    maxes = [0, 0, 0]
+    num_data_points = np.sum(datas > 0.0)
+
+    Q2_array = np.zeros(z.shape)
     for i in range(z.shape[0]):
         for j in range(z.shape[1]):
             for k in range(z.shape[2]):
-                if z[i, j, k] > 0.0:
+                s = 2 * 0.938 * (energies[i] / 1e9)
+                Q2 = s * x_values[j] * y_values[k]
+                Q2_array[i, j, k] = Q2
+    # num_data_points = np.sum(Q_array > 1.0)
+    
+    nd_data = photospline.ndsparse(int(num_data_points), 3)
+    for i in range(z.shape[0]):
+        for j in range(z.shape[1]):
+            for k in range(z.shape[2]):
+                s = 2 * 0.938 * (energies[i] / 1e9)
+                Q2 = Q2_array[i, j, k]
+                if (z[i, j, k] > 0.0):
                     nd_data.insert(np.log10(z[i, j, k]), [i, j, k])
+                # else:
+                    # nd_data.insert(-50+2*np.log10(Q2), [i, j, k])
+    # num_data_points = 0
+    # for i in range(z.shape[0]):
+    #     _s = 2 * 0.938 * (energies[i] / 1e9)
+    #     for j in range(z.shape[1]):
+    #         _x = x_values[j]
+    #         for k in range(z.shape[2]):
+    #             _y = y_values[k]
+    #             _Q2 = _s * _x * _y
+    #             if (z[i, j, k] > 0.0) and (_Q2 > 1.0):
+    #                 num_data_points += 1
+                
+    # nd_data = photospline.ndsparse(int(num_data_points), 3)    
+    # for i in range(z.shape[0]):
+    #     _s = 2 * 0.938 * (energies[i] / 1e9)
+    #     for j in range(z.shape[1]):
+    #         _x = x_values[j]
+    #         for k in range(z.shape[2]):
+    #             _y = y_values[k]
+    #             _Q2 = _s * _x * _y
+    #             # TODO: This is for the CSMS cross section splines only!
+    #             if (z[i, j, k] > 0.0) and (_Q2 > 1.75):  
+    #                 nd_data.insert(np.log10(z[i, j, k]), [i, j, k])
+    #             elif (z[i, j, k] > 0.0) and (_Q2 < 1.75 and _Q2 > 1.0):
+    #                 nd_data.insert(np.log10(z[i, j, k]* (_Q2 / 1.75)**2), [i, j, k])
 
     weights = np.ones(num_data_points)
     result = photospline.glam_fit(nd_data, weights, [x, y, w], knots, order, smooth, penaltyorder)
@@ -217,7 +236,7 @@ if __name__ == "__main__":
     # outfile = 'rc_3d_spline_light.fits'
     # SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50])
     
-    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected.out'
-    outfile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected.fits'
-    # SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[80, 90, 90])
-    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50], mod_knots=True)
+    infile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected_logspaced.out'
+    outfile = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected_logspaced.fits'
+    SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[80, 90, 90])
+    # SplineFitMaker3D(infile, outfile, scale='log', oscale='log', skip_header=3, N=[50, 50, 50], mod_knots=False)
