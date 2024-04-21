@@ -86,6 +86,7 @@ void Configuration::Populate() {
         constants.Mboson2 = constants.MassZ * constants.MassZ;
     }
 
+    dynamic_W2_min = j["XS"].value("dynamic_W2_min", false);
 }
 
 void Configuration::Set_Replica(int replica) {

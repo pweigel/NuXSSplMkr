@@ -139,6 +139,8 @@ class Configuration {
     bool flag_set_flavor = false;
     bool flag_set_projectile = false;
     bool flag_set_target = false;
+
+    bool dynamic_W2_min = false;
 };
 
 }

@@ -371,14 +371,9 @@ double StructureFunction::CKMT_Delta(double Q2) {
 }
 
 double StructureFunction::F_CKMT(double x, double Q2, double A, double B, double f) {
-    // reno paper
+    // Jeong/Reno Paper: https://arxiv.org/pdf/2307.09241.pdf
     double delta = CKMT_Delta(Q2);
     double n = CKMT_n(Q2);
-    // double term1 = A * pow(x, -1.0 * delta) *  pow((1.0 - x), n+4);
-    // double term2 = pow(Q2 / (Q2 + config.CKMT.a), 1 + delta);
-    // double term3 = B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0 - x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR);
-    // double term4 = (1.0 + f * (1.0 - x));
-    // return (term1 * term2 + term3 * term4);
     double term1 = A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), 1.0 + delta);
     double term2 = B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0-x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR) * (1.0 + f * (1.0 - x));
     return (term1 + term2);
@@ -396,12 +391,24 @@ double StructureFunction::F3_CKMT(double x, double Q2) {
     return xF3_CKMT(x, Q2) / x;
 }
 
+double StructureFunction::R_CKMT(double x, double Q2){
+    // R parameterization from Whitlow et al: Phys. Lett. B 250, 193 (1990)
+    double big_theta = 1.0 + 12.0 * (Q2 / (Q2 + 1.0)) * (SQ(0.125) / (SQ(0.125) + SQ(x)));
+    return 0.635 / log(Q2/SQ(0.2)) * big_theta + 0.5747 / Q2 - 0.3534 / (SQ(Q2) + SQ(0.3));
+}
+
+double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
+    double m = M_iso / pc->GeV;
+    double _R = R_CKMT(x, Q2);
+    return _F2 * (1.0 + 4.0 * SQ(m * x) / Q2) / (2.0 * x * (_R + 1.0));
+}
+
 // double StructureFunction::FL_PCAC(double x, double Q2) {
 //     return 0.0;
 // }
 
 double StructureFunction::F2_PCAC(double x, double Q2) {
-    // reno paper
+    // Jeong/Reno Paper: https://arxiv.org/pdf/2307.09241.pdf
     double delta = CKMT_Delta(Q2);
     double n = CKMT_n(Q2);
     double M_PCAC = 0.8;
@@ -421,6 +428,117 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
       xq_arr[p] = grid_central -> xfxQ2(p, x, Q2/(pc->GeV2));
     }
     return xq_arr;
+}
+
+std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
+    double _FL, _F1, _F2, _F3;
+
+    double Q2_eval = Q2;  // Q2 that the SFs are evaluated at
+    if ( (config.SF.enable_CKMT) ) {
+        Q2_eval = SQ(config.CKMT.Q0); // get CKMT reference Q0
+    }
+
+    if (config.SF.mass_scheme != "parton") {
+        Set_Q_APFEL(std::sqrt(Q2_eval));
+    }
+
+    // Get F1/F2/F3
+    if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
+        _F1 = F1_TMC(x, Q2_eval);
+        _F2 = F2_TMC(x, Q2_eval);
+        _F3 = F3_TMC(x, Q2_eval);
+    } else {
+        _FL = FL(x, Q2_eval);
+        _F2 = F2(x, Q2_eval);
+        _F1 = (_F2 - _FL) / (2. * x);
+        _F3 = F3(x, Q2_eval);
+    }
+
+    if (config.SF.enable_CKMT) {
+        /* 
+        When using CKMT, we evaluate the APFEL-based SFs using the threshold
+        value of Q0 and use the parameterized SFs below the threshold.
+        */
+        double CKMT_Q2 = SQ(config.CKMT.Q0);
+        if (Q2 < CKMT_Q2) {
+            double _F2_CKMT    = F2_CKMT(x, Q2);
+            double _F3_CKMT    = F3_CKMT(x, Q2);
+            double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+            
+            double _F1_Q0      = _F1;
+            double _F2_Q0      = _F2;
+            double _F3_Q0      = _F3;
+            double _F2_CKMT_Q0 = F2_CKMT(x, Q2_eval);
+            double _F3_CKMT_Q0 = F3_CKMT(x, Q2_eval);
+            double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, Q2_eval);
+
+            double _F2_PCAC;
+            double _F2_PCAC_Q0;
+            if (config.SF.enable_PCAC) {
+                _F2_PCAC = F2_PCAC(x, Q2);
+                _F2_PCAC_Q0 = F2_PCAC(x, Q2_eval);
+                _F2_CKMT += _F2_PCAC;
+                _F2_CKMT_Q0 += _F2_PCAC_Q0;
+            }
+
+            _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
+            _F1 = _F1_CKMT * (_F1_Q0 / _F1_CKMT_Q0);
+            _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
+        } else {
+            // if Q^2 > Q0^2, then we use the regular SFs (do nothing)
+        }
+    }
+
+    return {_F1, _F2, _F3};
+}
+
+void StructureFunction::Compute() {
+    /*
+    Refactored version of the calculations fron BuildSplines
+    */
+    const unsigned int Nx = config.SF.Nx;
+    const unsigned int NQ2 = config.SF.NQ2;
+
+    std::vector<double> x_arr;
+    std::vector<double> Q2_arr;
+
+    // Get the coefficients for parton calculation
+    if (config.SF.mass_scheme == "parton") {
+        GetCoefficients();
+    }
+
+    // Step sizes in log space
+    // TODO: log-lin spacing in x at some point
+    double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2 - 1);
+    double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / (Nx - 1);
+
+    // Get the Q2 and x values
+    size_t N_samples = Nx * NQ2;
+    for ( double log_Q2 = std::log10(config.SF.Q2min); log_Q2<std::log10(config.SF.Q2max); log_Q2 += d_log_Q2 ) {
+        double powQ2 = std::pow( 10, log_Q2);
+        double Q2 = log_Q2;
+        if (powQ2 > config.SF.Q2max) continue;
+        Q2_arr.push_back(Q2);
+    }
+
+    for ( double log_x = std::log10(config.SF.xmin); log_x<std::log10(config.SF.xmax); log_x += d_log_x ) {
+        double powx = std::pow( 10, log_x);
+        double x = log_x ;
+        if ( powx > config.SF.xmax ) continue;
+        x_arr.push_back(x);
+    }
+
+    std::tuple<double,double,double> sfs;
+    for (unsigned int Q2i = 0; Q2i < NQ2; Q2i++) {
+        double log_Q2 = std::log10(config.SF.Q2min) + Q2i * d_log_Q2;
+        double Q2 = std::pow(10.0, log_Q2);
+
+        for (unsigned int xi = 0; xi < Nx; xi++) {
+            double log_x = std::log10(config.SF.xmin) + xi * d_log_x;
+            double x = std::pow(10.0, log_x);
+            sfs = EvaluateSFs(x, Q2);
+        }
+    }
 }
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
@@ -552,10 +670,6 @@ void StructureFunction::BuildSplines(string outpath) {
             double log_x = std::log10(config.SF.xmin) + xi * d_log_x;
             double x = std::pow(10.0, log_x);
 
-            // Do checks here
-           // if ( Q2*(1/z-1)+mass_nucl*mass_nucl <= TMath::Power(mass_nucl+mPDFQrk[TMath::Abs(pdg_fq)],2) ) { sf_stream << 0. << "  "; continue; }
-            // if (Q2 * (1/x - 1) + 0.93 * 0.93 <= )
-
             double _FL, _F1, _F2, _F3;
             // Compute structure functions at Q2eval
             if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
@@ -579,7 +693,6 @@ void StructureFunction::BuildSplines(string outpath) {
                     double _F3_Q0      = _F3;
                     double _F2_CKMT_Q0 = F2_CKMT(x, Q2eval);
                     double _F3_CKMT_Q0 = F3_CKMT(x, Q2eval);
-
 
                     if (config.SF.enable_PCAC) {
                         double _F2_PCAC = F2_PCAC(x, Q2);

@@ -93,7 +93,6 @@ class StructureFunction {
         double F5(double x, double Q2);
 
         double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
-        // double F2_NLO(map<int, double>& xq_arr);
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
         double RescalingVariable(double Q2); // slow rescaling variable
@@ -119,6 +118,8 @@ class StructureFunction {
         double xF3_CKMT(double x, double Q2);
         double F3_CKMT(double x, double Q2);
         double F_CKMT(double x, double Q2, double A, double B, double f);
+        double R_CKMT(double x, double Q2);
+        double F1_CKMT(double _F2, double x, double Q2);
 
         double F1_PCAC(double x, double Q2);
         double FL_PCAC(double x, double Q2);
@@ -126,6 +127,8 @@ class StructureFunction {
         double F3_PCAC(double x, double Q2);
 
         void ConstructFONLL();
+        std::tuple<double,double,double> EvaluateSFs(double x, double Q2);
+        void Compute();
         void BuildSplines(string outpath);
         // auto GetGrids();
         // void BuildGrids(string outpath);
