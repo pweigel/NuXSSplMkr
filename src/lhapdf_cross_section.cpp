@@ -1,4 +1,4 @@
-#include "lhapdf_cross_section.h"
+#include "NuXSSplMkr/lhapdf_cross_section.h"
 
 //#define DEBUG
 //#define _DIPOLE__

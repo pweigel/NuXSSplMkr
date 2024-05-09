@@ -1,4 +1,4 @@
-#include "cross_section.h"
+#include "NuXSSplMkr/cross_section.h"
 
 namespace nuxssplmkr {
 

@@ -1,4 +1,4 @@
-#include "configuration.h"
+#include "NuXSSplMkr/configuration.h"
 using namespace std;
 
 namespace nuxssplmkr{

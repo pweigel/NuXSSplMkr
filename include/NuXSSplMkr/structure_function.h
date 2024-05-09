@@ -68,6 +68,7 @@ class StructureFunction {
         double fpi = 0.93 * pion_mass;
 
         bool use_AlbrightJarlskog;
+        bool save_splines = true;
 
     public:
         StructureFunction(Configuration& _config);
@@ -129,9 +130,8 @@ class StructureFunction {
         void ConstructFONLL();
         std::tuple<double,double,double> EvaluateSFs(double x, double Q2);
         void Compute();
+        void BuildGrids(string outpath);
         void BuildSplines(string outpath);
-        // auto GetGrids();
-        // void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         

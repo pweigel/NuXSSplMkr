@@ -1,4 +1,4 @@
-#include "structure_function.h"
+#include "NuXSSplMkr/structure_function.h"
 
 namespace nuxssplmkr {
 
@@ -272,17 +272,17 @@ double StructureFunction::HGeneric(double xi, double Q2){
     if (xi > 1.0) {
         return 0.0;
     }
-    gsl_integration_workspace * w = gsl_integration_workspace_alloc (10000);
-    double result, error;
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    double result, error;
     
     gsl_function F;
     Set_Q_APFEL(std::sqrt(Q2));
     _kernel_Q2 = Q2;
     F.function = &HK<T, f, n, m>;
     F.params = this;
+    size_t neval;
     // double _integrate_xmax = 1.0;
-    gsl_integration_qags ( &F, xi, 1.0, 0, 1.e-4, 10000, w, &result, &error);
-    gsl_integration_workspace_free(w);
+    int status = gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-4, w, &result, &error, &neval);
+    gsl_integration_cquad_workspace_free(w);
 
     return result;
 }
@@ -460,6 +460,8 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
         value of Q0 and use the parameterized SFs below the threshold.
         */
         double CKMT_Q2 = SQ(config.CKMT.Q0);
+        // std::cout << "Q2_eval = " << Q2_eval << ", Q2 = " << Q2 << ", CKMT_Q2 = " << CKMT_Q2 << std::endl;
+
         if (Q2 < CKMT_Q2) {
             double _F2_CKMT    = F2_CKMT(x, Q2);
             double _F3_CKMT    = F3_CKMT(x, Q2);
@@ -539,6 +541,11 @@ void StructureFunction::Compute() {
             sfs = EvaluateSFs(x, Q2);
         }
     }
+}
+
+void StructureFunction::BuildGrids(string outpath) {
+    save_splines = false;
+    BuildSplines(outpath);
 }
 
 // TODO: The order of x, Q2 in splines is not consistent with the function definitions here
@@ -671,49 +678,8 @@ void StructureFunction::BuildSplines(string outpath) {
             double x = std::pow(10.0, log_x);
 
             double _FL, _F1, _F2, _F3;
-            // Compute structure functions at Q2eval
-            if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
-                _F1 = F1_TMC(x, Q2eval);
-                _F2 = F2_TMC(x, Q2eval);
-                _F3 = F3_TMC(x, Q2eval);
-            } else {
-                _FL = FL(x, Q2eval);
-                _F2 = F2(x, Q2eval);
-                _F1 = (_F2 - _FL) / (2. * x);
-                _F3 = F3(x, Q2eval);
-            }
-
-            if (config.SF.enable_CKMT) {
-                double CKMT_Q20 = SQ(config.CKMT.Q0);
-                if (Q2 < CKMT_Q20) {
-                    double _F2_CKMT    = F2_CKMT(x, Q2);
-                    double _F3_CKMT    = F3_CKMT(x, Q2);
-
-                    double _F2_Q0      = _F2;
-                    double _F3_Q0      = _F3;
-                    double _F2_CKMT_Q0 = F2_CKMT(x, Q2eval);
-                    double _F3_CKMT_Q0 = F3_CKMT(x, Q2eval);
-
-                    if (config.SF.enable_PCAC) {
-                        double _F2_PCAC = F2_PCAC(x, Q2);
-                        _F2_CKMT += _F2_PCAC;
-                    }
-
-                    // R parameterization from Whitlow et al: Phys. Lett. B 250, 193 (1990)
-                    // R is used to calculate F1 from F2
-                    double big_theta = 1.0 + 12.0 * (Q2 / (Q2 + 1.0)) * (SQ(0.125) / (SQ(0.125) + SQ(x)));
-                    // double b1 = 0.635;
-                    // double b2 = 0.5747;
-                    // double b3 = -0.3534;
-                    double _R = 0.635 / log(Q2/SQ(0.2)) * big_theta + 0.5747 / Q2 - 0.3534 / (Q2 + SQ(0.3));
-                    
-                    _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
-                    _F1 = _F2 * (1.0 + 4.0 * SQ(M_iso * x)) / (2.0 * x * (_R + 1.0));
-                    _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
-                } else {
-                    // if Q2 > CKMT_Q20, then we use the regular SFs (do nothing)
-                }
-            }
+            
+            std::tie(_F1, _F2, _F3) = EvaluateSFs(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
@@ -749,55 +715,57 @@ void StructureFunction::BuildSplines(string outpath) {
         }
     }
 
-    // Put data into ndsparses
-    photospline::ndsparse F1_data(F1_spline_data.size(), 2);
-    for(auto& entry : F1_spline_data) {
-        F1_data.insertEntry(entry.first, &entry.second[0]);
-    }
-    photospline::ndsparse F2_data(F2_spline_data.size(), 2);
-    for(auto& entry : F2_spline_data) {
-        F2_data.insertEntry(entry.first, &entry.second[0]);
-    }
-    photospline::ndsparse F3_data(F3_spline_data.size(), 2);
-    for(auto& entry : F3_spline_data) {
-        F3_data.insertEntry(entry.first, &entry.second[0]);
-    }
+    if (save_splines) {
+        // Put data into ndsparses
+        photospline::ndsparse F1_data(F1_spline_data.size(), 2);
+        for(auto& entry : F1_spline_data) {
+            F1_data.insertEntry(entry.first, &entry.second[0]);
+        }
+        photospline::ndsparse F2_data(F2_spline_data.size(), 2);
+        for(auto& entry : F2_spline_data) {
+            F2_data.insertEntry(entry.first, &entry.second[0]);
+        }
+        photospline::ndsparse F3_data(F3_spline_data.size(), 2);
+        for(auto& entry : F3_spline_data) {
+            F3_data.insertEntry(entry.first, &entry.second[0]);
+        }
 
-    // TODO: These should all be the same size
-    std::vector<double> F1_weights(F1_spline_data.size(),1.);
-    std::vector<double> F2_weights(F2_spline_data.size(),1.);
-    std::vector<double> F3_weights(F3_spline_data.size(),1.);
+        // TODO: These should all be the same size
+        std::vector<double> F1_weights(F1_spline_data.size(),1.);
+        std::vector<double> F2_weights(F2_spline_data.size(),1.);
+        std::vector<double> F3_weights(F3_spline_data.size(),1.);
 
-    // double smooth_Q2 = 1;
-    // double smooth_x = 1;
-    double smooth = 1e-5;
+        // double smooth_Q2 = 1;
+        // double smooth_x = 1;
+        double smooth = 1e-5;
 
-    // Fit splines
-    photospline::splinetable<> F1_spline;
-    F1_spline.fit(F1_data, F1_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
-                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
-    if(std::isnan(*F1_spline.get_coefficients())){
-				std::cerr << "F1 spline fit has failed!" << std::endl;
+        // Fit splines
+        photospline::splinetable<> F1_spline;
+        F1_spline.fit(F1_data, F1_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
+                      {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+        if(std::isnan(*F1_spline.get_coefficients())){
+            std::cerr << "F1 spline fit has failed!" << std::endl;
+        }
+
+        photospline::splinetable<> F2_spline;
+        F2_spline.fit(F2_data, F2_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
+                      {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+        if(std::isnan(*F2_spline.get_coefficients())){
+            std::cerr << "F2 spline fit has failed!" << std::endl;
+        }
+
+        photospline::splinetable<> F3_spline;
+        F3_spline.fit(F3_data, F3_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
+                      {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
+        if(std::isnan(*F3_spline.get_coefficients())){
+            std::cerr << "F3 spline fit has failed!" << std::endl;
+        }
+
+        // Write splines
+        F1_spline.write_fits(outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
+        F2_spline.write_fits(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
+        F3_spline.write_fits(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
     }
-
-    photospline::splinetable<> F2_spline;
-    F2_spline.fit(F2_data, F2_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
-                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
-    if(std::isnan(*F2_spline.get_coefficients())){
-				std::cerr << "F2 spline fit has failed!" << std::endl;
-    }
-
-    photospline::splinetable<> F3_spline;
-    F3_spline.fit(F3_data, F3_weights, std::vector<std::vector<double>>{Q2_arr, x_arr}, orders, 
-                  {Q2_knots, x_knots}, {smooth, smooth}, {2, 2});
-    if(std::isnan(*F3_spline.get_coefficients())){
-				std::cerr << "F3 spline fit has failed!" << std::endl;
-    }
-
-    // Write splines
-    F1_spline.write_fits(outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
-    F2_spline.write_fits(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
-    F3_spline.write_fits(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
 }
 
 }

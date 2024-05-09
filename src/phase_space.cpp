@@ -1,4 +1,4 @@
-#include "phase_space.h"
+#include "NuXSSplMkr/phase_space.h"
 
 namespace nuxssplmkr {
 
