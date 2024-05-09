@@ -1,9 +1,9 @@
 
-#include "configuration.h"
-#include "physconst.h"
-#include "phase_space.h"
-#include "structure_function.h"
-#include "cross_section.h"
+#include "NuXSSplMkr/configuration.h"
+#include "NuXSSplMkr/physconst.h"
+#include "NuXSSplMkr/phase_space.h"
+#include "NuXSSplMkr/structure_function.h"
+#include "NuXSSplMkr/cross_section.h"
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -54,7 +54,6 @@ int main(int argc, char* argv[]){
     string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
     string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
-    // TOTAL XS
     int NE = 200;
     int Ny = 100;
     int Nx = 100;
@@ -117,17 +116,22 @@ int main(int argc, char* argv[]){
                 if (!valid) {
                     _dsdxdy = 0.0;
                 } else {
-                    _dsdxdy = std::log10(xs->ds_dxdy(E, x, y));
+                    _dsdxdy = xs->rc_integrate(E, x, y);
+                    // if (_dsdxdy == 0.0) {
+                    //     _dsdxdy = 0.0;
+                    // } else {
+                    //     _dsdxdy = std::log10(_dsdxdy);
+                    // }
                 }
 
                 outfile << _dsdxdy;
-                if ( !((yi == Ny - 1) && (xi == Nx - 1)) ) {
+                if ( !(xi == Nx - 1) ) {
                     outfile << ",";
                 }
             }
             outfile << std::endl;
         }
-        outfile << std::endl;
+        // outfile << std::endl;
     }
 
     outfile.close();

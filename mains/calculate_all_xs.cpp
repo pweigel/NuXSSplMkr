@@ -1,7 +1,7 @@
-#include "configuration.h"
-#include "physconst.h"
-#include "structure_function.h"
-#include "cross_section.h"
+#include "NuXSSplMkr/configuration.h"
+#include "NuXSSplMkr/physconst.h"
+#include "NuXSSplMkr/structure_function.h"
+#include "NuXSSplMkr/cross_section.h"
 #include <boost/filesystem.hpp>
 #include <iostream>
 #include <fstream>

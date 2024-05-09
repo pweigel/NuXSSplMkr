@@ -1,6 +1,6 @@
-#include "configuration.h"
-#include "physconst.h"
-#include "structure_function.h"
+#include "NuXSSplMkr/configuration.h"
+#include "NuXSSplMkr/physconst.h"
+#include "NuXSSplMkr/structure_function.h"
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
@@ -25,11 +25,19 @@ int main(int argc, char* argv[]){
     std::cout << "SF Type: " << sf_type << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
+    int replica = 0;
+
+    // Create a new config w/ the filename
+    std::cout << config_path << std::endl;
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
+    config.Populate();
+    config.Set_Replica(replica);
+    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::cout << "Loading/saving data to: " << data_folder << std::endl;
     
-    config.Populate();  // Populate the SF info
-    boost::filesystem::path out_folder = "../data/" + config.general.unique_name;
-    if (!boost::filesystem::exists(out_folder)) {  // make the out_folder if it does not exist
+    // Make the sf folder if it doesn't exist
+    boost::filesystem::path out_folder = data_folder;
+    if (!boost::filesystem::exists(out_folder)) {
         boost::filesystem::create_directories(out_folder);
     }
 
@@ -43,8 +51,8 @@ int main(int argc, char* argv[]){
     sf.Set_Lepton_Mass(pc->muon_mass);
 
     sf.InitializeAPFEL();
-    sf.BuildSplines(out_folder.string()); // Photospline
-    // sf.BuildGrids(out_folder.string()); // Grid file
+    // sf.BuildSplines(out_folder.string()); // Photospline
+    sf.BuildGrids(out_folder.string()); // Grid file
 
     return 0;
 }

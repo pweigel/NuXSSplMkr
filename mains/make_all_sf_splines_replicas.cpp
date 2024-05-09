@@ -1,6 +1,6 @@
-#include "configuration.h"
-#include "physconst.h"
-#include "structure_function.h"
+#include "NuXSSplMkr/configuration.h"
+#include "NuXSSplMkr/physconst.h"
+#include "NuXSSplMkr/structure_function.h"
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
