@@ -14,26 +14,32 @@ void PhaseSpace::Initialize() {
     y_max = 1.0;
     Q2_min = config.XS.Q2min * SQ(pc->GeV); // config
     Q2_max = config.XS.Q2max * SQ(pc->GeV); // config
-    W2_min = 4.0  * SQ(pc->GeV); // config/mass
+    
+    if (config.XS.enable_shallow_region) {
+        W2_min = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
+    } else {
+        W2_min = 2.0  * SQ(pc->GeV);
+    }
     W2_max = 1e20 * SQ(pc->GeV);
 
     // If the flag has been set, then change the min W2
-    if (config.flag_set_flavor && config.dynamic_W2_min) {
-        switch(config.sf_type) {
-            case SFType::total:  W2_min = 2.0 * SQ(pc->GeV); break; // TODO
-            case SFType::light:  W2_min = 2.0 * SQ(pc->GeV); break; // (m_N + m_pi)^2
-            // case SFType::light:  min_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
-            // case SFType::charm:  min_W2 = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
-            // case SFType::bottom: min_W2 = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
-            // case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-            case SFType::charm:  W2_min = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
-            case SFType::bottom: W2_min = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
-            case SFType::top:    W2_min = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-            default:             W2_min = 2.0 * SQ(pc->GeV); break; // TODO
-        }
-    } else if (config.dynamic_W2_min) {
-        std::cout << "WARNING: config flavor type has not been set when initializing the phase space and dynamic W2min was enabled!!" << std::endl;
-    }
+    // if (config.flag_set_flavor && config.dynamic_W2_min) {
+    //     switch(config.sf_type) {
+    //         case SFType::total:  W2_min = 2.0 * SQ(pc->GeV); break; // TODO
+    //         case SFType::light:  W2_min = 2.0 * SQ(pc->GeV); break; // (m_N + m_pi)^2
+    //         // case SFType::light:  min_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
+    //         // case SFType::charm:  min_W2 = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
+    //         // case SFType::bottom: min_W2 = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
+    //         // case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+    //         case SFType::charm:  W2_min = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
+    //         case SFType::bottom: W2_min = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
+    //         case SFType::top:    W2_min = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+    //         default:             W2_min = 2.0 * SQ(pc->GeV); break; // TODO
+    //     }
+    // } else if (config.dynamic_W2_min) {
+    //     std::cout << "WARNING: config flavor type has not been set when initializing the phase space and dynamic W2min was enabled!!" << std::endl;
+    // }
+
 }
 
 void PhaseSpace::SetFinalStateMass(double m_fs) {

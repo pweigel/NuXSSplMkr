@@ -500,18 +500,29 @@ std::tuple<double, double> CrossSection::dsdy_xlims(double s, double y) {
 }
 
 void CrossSection::SetThresholdW2() {
-    switch(config.sf_type) {
-        case SFType::total:  min_W2 = 2.0 * SQ(pc->GeV); break; // TODO
-        case SFType::light:  min_W2 = 2.0 * SQ(pc->GeV); break; // (m_N + m_pi)^2
-        // case SFType::light:  min_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
-        // case SFType::charm:  min_W2 = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
-        // case SFType::bottom: min_W2 = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
-        // case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-        case SFType::charm:  min_W2 = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
-        case SFType::bottom: min_W2 = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
-        case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-        default:             min_W2 = 2.0 * SQ(pc->GeV); break; // TODO
+
+    double lowest_W2;
+    // If we enable the shallow region, we include the low W^2 region!
+    if (config.XS.enable_shallow_region) {
+        lowest_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
+    } else {
+        lowest_W2 = 2.0 * SQ(pc->GeV);
     }
+
+    min_W2 = lowest_W2;
+    // Need to think this one through -PW
+    // switch(config.sf_type) {
+    //     case SFType::total:  min_W2 = lowest_W2; break; // TODO
+    //     case SFType::light:  min_W2 = lowest_W2; break; // (m_N + m_pi)^2
+    //     // case SFType::light:  min_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
+    //     // case SFType::charm:  min_W2 = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
+    //     // case SFType::bottom: min_W2 = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
+    //     // case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+    //     case SFType::charm:  min_W2 = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
+    //     case SFType::bottom: min_W2 = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
+    //     case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
+    //     default:             min_W2 = lowest_W2; break; // TODO
+    // }
 }
 
 bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {

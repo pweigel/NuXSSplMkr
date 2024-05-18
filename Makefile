@@ -13,7 +13,7 @@ SOURCES 	= $(wildcard src/*.cpp)
 OBJECTS 	= $(SOURCES:.cpp=.o)
 
 INCLUDE_PATH 	= -I/usr/local/include -I./inc
-INCLUDE_PATH  	+= -I$(CURRENT_DIR)/src
+INCLUDE_PATH  	+= -I$(CURRENT_DIR)/include
 INCLUDE_PATH  	+= -I$(PREFIX)/include
 INCLUDE_PATH    += -I$(SROOT)/include
 INCLUDE_PATH    += -I$(PREFIX)/include/suitesparse  # TODO: Try to figure this out, needed for -
@@ -59,9 +59,9 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 # test: bin/test_TMC bin/test_CKMT
 # replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
 all: bin/calculate_xs bin/calculate_dsdy bin/calculate_dsdxdy
-test: bin/test_new_phase_space bin/test_qed_corrections 
-# structure_functions:
-# cross_sections: bin/calculate_xs
+test: bin/test_quick_eval
+structure_functions: bin/make_sf_grid bin/make_all_sf_splines
+cross_sections: bin/calculate_xs bin/calculate_all_xs bin/calculate_all_dsdy
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o
 # 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
@@ -74,31 +74,31 @@ bin/calculate_dsdxdy: src/tools.o src/configuration.o src/structure_function.o s
 bin/calculate_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_dsdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_all_dsdy_replicas: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_dsdy_replicas.o
+bin/calculate_all_dsdy_replicas: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_all_dsdy_replicas.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_all_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_dsdy.o
+bin/calculate_all_dsdy: src/tools.o src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_all_dsdy.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_all_xs_replicas: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs_replicas.o
+bin/calculate_all_xs_replicas: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_all_xs_replicas.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/calculate_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/calculate_all_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o mains/calculate_all_xs.o
+bin/calculate_all_xs: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o mains/calculate_all_xs.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/make_all_sf_splines_replicas: src/configuration.o src/structure_function.o src/physconst.o mains/make_all_sf_splines_replicas.o
+bin/make_all_sf_splines_replicas: src/configuration.o src/structure_function.o src/physconst.o src/phase_space.o mains/make_all_sf_splines_replicas.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_all_sf_splines.o
+bin/make_all_sf_splines: src/configuration.o src/structure_function.o src/physconst.o src/phase_space.o mains/make_all_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/make_sf_splines: src/configuration.o src/structure_function.o src/physconst.o mains/make_sf_splines.o
+bin/make_sf_splines: src/configuration.o src/structure_function.o src/physconst.o src/phase_space.o mains/make_sf_splines.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
-bin/construct_fonll: src/configuration.o src/structure_function.o src/physconst.o mains/construct_fonll.o
+bin/construct_fonll: src/configuration.o src/structure_function.o src/physconst.o src/phase_space.o mains/construct_fonll.o
 	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 bin/test_CKMT: src/configuration.o src/structure_function.o src/physconst.o tests/test_CKMT.o
@@ -117,6 +117,10 @@ bin/test_new_phase_space: src/configuration.o src/structure_function.o src/cross
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
 bin/test_qed_corrections: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o tests/test_qed_corrections.o
 	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/test_quick_eval: src/configuration.o src/structure_function.o src/cross_section.o src/physconst.o src/phase_space.o tests/test_quick_eval.o
+	$(LD) $^ $(LIBS) $(LD_FLAGS) -o $@
+bin/make_sf_grid: src/configuration.o src/structure_function.o src/physconst.o src/phase_space.o mains/make_sf_grid.o
+	$(LD)  $^ $(LIBS) $(LD_FLAGS) -o $@
 
 %.o:%.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@

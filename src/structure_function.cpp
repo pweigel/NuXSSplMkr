@@ -281,7 +281,7 @@ double StructureFunction::HGeneric(double xi, double Q2){
     F.params = this;
     size_t neval;
     // double _integrate_xmax = 1.0;
-    int status = gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-4, w, &result, &error, &neval);
+    int status = gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-3, w, &result, &error, &neval);
     gsl_integration_cquad_workspace_free(w);
 
     return result;
@@ -400,7 +400,10 @@ double StructureFunction::R_CKMT(double x, double Q2){
 double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
     double m = M_iso / pc->GeV;
     double _R = R_CKMT(x, Q2);
-    return _F2 * (1.0 + 4.0 * SQ(m * x) / Q2) / (2.0 * x * (_R + 1.0));
+    // Eq. 2 from Whitlow et al:
+    // R = (F2 / (2xF1)) ( 1 + 4 M^2 x^2/Q^2) - 1
+    // R + 1 = 
+    return _F2 * (1.0 + 4.0 * SQ(m * x) / (Q2 * SQ(pc->GeV))) / (2.0 * x * (_R + 1.0));
 }
 
 // double StructureFunction::FL_PCAC(double x, double Q2) {

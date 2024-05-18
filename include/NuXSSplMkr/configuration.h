@@ -89,6 +89,7 @@ struct PCAC_settings {
 
 struct xs_settings {
     bool enable_mass_terms;
+    bool enable_shallow_region;
     double xmin, xmax, Q2min, Q2max; // integration limits
 };
 

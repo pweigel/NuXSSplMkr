@@ -1,5 +1,6 @@
 #include "NuXSSplMkr/configuration.h"
 #include "NuXSSplMkr/physconst.h"
+#include "NuXSSplMkr/phase_space.h"
 #include "NuXSSplMkr/structure_function.h"
 #include "NuXSSplMkr/cross_section.h"
 #include <boost/filesystem.hpp>
@@ -20,14 +21,10 @@ int main(int argc, char* argv[]){
 
     string targets[] = {"proton", "neutron"};
     string projectiles[] = {"neutrino", "antineutrino"};
-    // string sf_types[] = {"total", "charm", "top"};
-    // string targets[] = {"proton"};
-    // string projectiles[] = {"neutrino"};
-    // string sf_types[] = {"total"};
-    string sf_types[] = {"light"};
-    // string targets[] = {"proton", "neutron"};
-    // string projectiles[] = {"neutrino"};
-    // string sf_types[] = {"charm"};
+    string sf_types[] = {"total", "light", "charm", "top"};
+    
+    int replica = 0;
+
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
@@ -36,16 +33,8 @@ int main(int argc, char* argv[]){
 
     double logemin = 2;
     double logemax = 9;
-    int NE = 200;
+    int NE = 100;
     double dE = (logemax - logemin) / (NE-1);
-
-    // int Ny = 100;
-    // double ymin = 1e-6;
-    // double ymax = 1.0;
-    // double dy = (ymax - ymin) / (Ny-1);
-    // double logymin = -6;
-    // double logymax = 0;
-    // double dy = (logymax - logymin) / (Ny-1);
 
     PhysConst* pc = new PhysConst();
 
@@ -71,11 +60,14 @@ int main(int argc, char* argv[]){
                 config.Set_Target(target);
                 std::cout << "Target set to: " << target << std::endl;
 
+                PhaseSpace ps(config);
+                ps.Print();
+
                 string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + sf_type + ".fits";
                 string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + sf_type + ".fits";
                 string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + sf_type + ".fits";
 
-                CrossSection* xs = new CrossSection(config);
+                CrossSection* xs = new CrossSection(config, ps);
                 if (config.SF.mass_scheme != "parton") {
                     xs->Load_Structure_Functions(f1, f2, f3);
                 }

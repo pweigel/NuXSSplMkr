@@ -56,6 +56,7 @@ void Configuration::Populate() {
     PCAC.B = j["PCAC"].value("B", 0.265);
 
     XS.enable_mass_terms = j["XS"].value("enable_mass_terms", false);
+    XS.enable_shallow_region = j["XS"].value("enable_shallow_region", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
     XS.xmax = j["XS"]["integration"].at("xmax");
     XS.Q2min = j["XS"]["integration"].at("Q2min");
