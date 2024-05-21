@@ -51,22 +51,16 @@ int main(int argc, char* argv[]){
 
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
-    sf.Set_Mode(mode); // TODO: setter -PW
+    sf.Set_Mode(mode);
 
     sf.Set_Lepton_Mass(pc->muon_mass);
 
-    if (mode == 2) {
+    if (mode > 1) {
         sf.LoadSplines(data_folder);
     } else {
         sf.InitializeAPFEL();
     }
-    // sf.BuildSplines(out_folder.string()); // Photospline
     sf.BuildGrids(data_folder); // Grid file
-
-    // nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker(config);
-    // string gridinfile = data_folder + "/F1_neutrino_proton_light.grid";
-    // string fitsoutfile = data_folder + "/F1_neutrino_proton_light.fits";
-    // splmkr.MakeSpline(gridinfile, fitsoutfile);
 
     return 0;
 }

@@ -1,7 +1,7 @@
 {
   "general": {
     "unique_name": "CSMS",
-    "debug": true
+    "debug": false
   },
 
   "PDF": {

@@ -18,7 +18,8 @@ void StructureFunction::Set_Mode(int _mode) {
         case 0: {insuffix = ""; outsuffix = ""; break;}
         case 1: {insuffix = ""; outsuffix = ""; break;}
         case 2: {insuffix = ""; outsuffix = "_TMC"; break;}
-        case 3: {insuffix = "_TMC_"; outsuffix = "_PCAC"; break;}
+        case 3: {insuffix = "_TMC"; outsuffix = "_CKMT"; break;}
+        case 4: {insuffix = "_TMC"; outsuffix = "_PCAC"; break;}
     }
 }
 
@@ -561,6 +562,7 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
             _F2 = F2(x, Q2);
             _F1 = (_F2 - _FL) / (2. * x);
             _F3 = F3(x, Q2);
+            std::cout << _F1 << std::endl;
             break;
         }
         case 2: // TMC
@@ -575,83 +577,87 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
         }
         case 3: // CKMT
         {
-            // // Check if we're below Q0
-            // double Q2_eval = Q2;
-            // if (Q2 < config.CKMT.Q0) {
-            //     Q2_eval = config.CKMT.Q0;
-            // }
+            // Check if we're below Q0
+            double Q2_eval = Q2;
+            if (Q2 <= SQ(config.CKMT.Q0)) {
+                Q2_eval = SQ(config.CKMT.Q0);
+            }
 
-            // std::array<int, 2> spline_centers;
-            // std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
-            // spline_F1.searchcenters(pt.data(), spline_centers.data());
-            // spline_F2.searchcenters(pt.data(), spline_centers.data());
-            // spline_F3.searchcenters(pt.data(), spline_centers.data());
+            std::array<int, 2> spline_centers;
+            std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
+            spline_F1.searchcenters(pt.data(), spline_centers.data());
+            spline_F2.searchcenters(pt.data(), spline_centers.data());
+            spline_F3.searchcenters(pt.data(), spline_centers.data());
 
-            // double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
 
-            // double _F1_CKMT = F1_CKMT(f1, x, Q2);
-            // double _F2_CKMT = F2_CKMT(f2, x, Q2);
-            // double _F3_CKMT = F3_CKMT(f3, x, Q2);
+            if (Q2 <= SQ(config.CKMT.Q0)) {
+                double _F2_CKMT    = F2_CKMT(x, Q2);
+                double _F3_CKMT    = F3_CKMT(x, Q2);
+                double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+
+                double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
+                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0));
+                double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
+
+                _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
+                _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
+                _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+
+                std::cout << _F2_CKMT << ", " << _F2_CKMT_Q0 << ", " << f2 << std::endl;
+            } else {
+                _F1 = f1;
+                _F2 = f2;
+                _F3 = f3;
+            }
+            break;
+        }
+        case 4: // PCAC + CKMT
+        {
+            // Check if we're below Q0
+            double Q2_eval = Q2;
+            if (Q2 <= SQ(config.CKMT.Q0)) {
+                Q2_eval = SQ(config.CKMT.Q0);
+            }
+
+            std::array<int, 2> spline_centers;
+            std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
+            spline_F1.searchcenters(pt.data(), spline_centers.data());
+            spline_F2.searchcenters(pt.data(), spline_centers.data());
+            spline_F3.searchcenters(pt.data(), spline_centers.data());
+
+            double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
+
+            if (Q2 <= SQ(config.CKMT.Q0)) {
+                double _F2_CKMT    = F2_CKMT(x, Q2);
+                double _F3_CKMT    = F3_CKMT(x, Q2);
+                double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+
+                double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
+                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0));
+                double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
+
+
+                double _F2_PCAC = F2_PCAC(x, Q2);
+                double _F2_PCAC_Q0 = F2_PCAC(x, SQ(config.CKMT.Q0));
+                _F2_CKMT += _F2_PCAC;
+                _F2_CKMT_Q0 += _F2_PCAC_Q0;
+
+                _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
+                _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
+                _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+            } else {
+                _F1 = f1;
+                _F2 = f2;
+                _F3 = f3;
+            }
+            break;
         }
     }
-
-    // double Q2_eval = Q2;  // Q2 that the SFs are evaluated at
-    // if ( (config.SF.enable_CKMT) ) {
-    //     Q2_eval = SQ(config.CKMT.Q0); // get CKMT reference Q0
-    // }
-
-    // if ((config.SF.mass_scheme != "parton") || (Q2_eval != _Q2_cached)) {
-    //     Set_Q_APFEL(std::sqrt(Q2_eval));
-    //     _Q2_cached = Q2_eval;  // We cache this so we don't keep running the APFEL function
-    // }
-
-    // // Get F1/F2/F3
-    // if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
-    //     _F1 = F1_TMC(x, Q2_eval);
-    //     _F2 = F2_TMC(x, Q2_eval);
-    //     _F3 = F3_TMC(x, Q2_eval);
-    // } else {
-
-    // }
-
-    // if (config.SF.enable_CKMT) {
-    //     /* 
-    //     When using CKMT, we evaluate the APFEL-based SFs using the threshold
-    //     value of Q0 and use the parameterized SFs below the threshold.
-    //     */
-    //     double CKMT_Q2 = SQ(config.CKMT.Q0);
-    //     // std::cout << "Q2_eval = " << Q2_eval << ", Q2 = " << Q2 << ", CKMT_Q2 = " << CKMT_Q2 << std::endl;
-
-    //     if (Q2 < CKMT_Q2) {
-    //         double _F2_CKMT    = F2_CKMT(x, Q2);
-    //         double _F3_CKMT    = F3_CKMT(x, Q2);
-    //         double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
-            
-    //         double _F1_Q0      = _F1;
-    //         double _F2_Q0      = _F2;
-    //         double _F3_Q0      = _F3;
-    //         double _F2_CKMT_Q0 = F2_CKMT(x, Q2_eval);
-    //         double _F3_CKMT_Q0 = F3_CKMT(x, Q2_eval);
-    //         double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, Q2_eval);
-
-    //         double _F2_PCAC;
-    //         double _F2_PCAC_Q0;
-    //         if (config.SF.enable_PCAC) {
-    //             _F2_PCAC = F2_PCAC(x, Q2);
-    //             _F2_PCAC_Q0 = F2_PCAC(x, Q2_eval);
-    //             _F2_CKMT += _F2_PCAC;
-    //             _F2_CKMT_Q0 += _F2_PCAC_Q0;
-    //         }
-
-    //         _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
-    //         _F1 = _F1_CKMT * (_F1_Q0 / _F1_CKMT_Q0);
-    //         _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
-    //     } else {
-    //         // if Q^2 > Q0^2, then we use the regular SFs (do nothing)
-    //     }
-    // }
 
     return {_F1, _F2, _F3};
 }
@@ -737,13 +743,8 @@ void StructureFunction::BuildGrids(string outpath) {
             std::cout << "Q2 = " << Q2 << std::endl;
         }
 
-        double Q2eval = Q2;
-        if ( (config.SF.enable_CKMT) && (Q2 < SQ(config.CKMT.Q0))) {
-            Q2eval = SQ(config.CKMT.Q0);
-        }
-
-        if ( (config.SF.mass_scheme != "parton") && (mode == 0)) {
-            Set_Q_APFEL(std::sqrt(Q2eval));
+        if ( (config.SF.mass_scheme != "parton") && (mode == 1)) {
+            Set_Q_APFEL(std::sqrt(Q2));
         }
 
         for (unsigned int j = 0; j < Nx; j++) {

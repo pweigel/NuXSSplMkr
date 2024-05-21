@@ -1,7 +1,7 @@
 {
   "general": {
     "unique_name": "nCTEQ15_H",
-    "debug": false
+    "debug": true
   },
 
   "PDF": {
@@ -26,7 +26,7 @@
     "enable_CKMT": false,
     "enable_PCAC": false,
 
-    "Nx": 100,
+    "Nx": 200,
     "NQ2": 100,
     "xmin": 5e-6,
     "xmax": 1.0,
@@ -56,7 +56,8 @@
   },
 
   "PCAC": {
-
+    "A": 0.147,
+    "B": 0.265
   },
 
   "XS": {
@@ -67,7 +68,9 @@
       "xmax": 1.0,
       "Q2min": 1.69,
       "Q2max": 1e5
-    }
+    },
+
+    "dynamic_W2_min": false
   },
 
   "constants": {
