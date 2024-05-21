@@ -1,37 +1,37 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_complete",
+    "unique_name": "CKMT_Test",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO",
+    "pdfset": "HERAPDF15NLO_EIG",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-C",
+    "mass_scheme": "ZM-VFNS",
     "disable_top": false,
-    "perturbative_order": 2,
+    "perturbative_order": 1,
     "DIS_process": "CC",
 
-    "enable_FONLL_damping": true,
-    "FONLL_damping_factor": 2.0,
+    "enable_FONLL_damping": false,
+    "FONLL_damping_factor": 1.0,
     "evolve_pdf": false,
 
     "small_x_resummation": false,
     "small_x_order": "NLL",
 
-    "enable_TMC": false,
+    "enable_TMC": true,
     "enable_CKMT": true,
     "enable_PCAC": true,
 
-    "Nx": 400,
-    "NQ2": 500,
-    "xmin": 1e-9,
+    "Nx": 100,
+    "NQ2": 100,
+    "xmin": 1e-6,
     "xmax": 1.0,
     "Q2min": 1e-2,
-    "Q2max": 1e10
+    "Q2max": 1e4
   },
 
   "CKMT": {
@@ -56,19 +56,17 @@
   },
 
   "PCAC": {
-    "A": 0.147,
-    "B": 0.265
+
   },
 
   "XS": {
     "enable_mass_terms": true,
-    "enable_shallow_region": true,
 
     "integration": { 
-      "xmin": 1e-9,
+      "xmin": 1e-6,
       "xmax": 1.0,
-      "Q2min": 1e-1,
-      "Q2max": 1e10
+      "Q2min": 1.0,
+      "Q2max": 1e4
     }
   },
 
@@ -78,14 +76,14 @@
     "Rho": 0.00940161,
     "Sin2ThW": 0.0,
 
-    "Vud": 0.97427,
-    "Vus": 0.22536,
-    "Vub": 0.00355,
-    "Vcd": 0.22522,
-    "Vcs": 0.97343,
-    "Vcb": 0.04140, 
-    "Vtd": 0.00886,
-    "Vts": 0.04050,
-    "Vtb": 0.99914
+    "Vud": 0.97467,
+    "Vus": 0.22361,
+    "Vub": 0.00000,
+    "Vcd": 0.22361,
+    "Vcs": 0.97467,
+    "Vcb": 0.00000, 
+    "Vtd": 0.00000,
+    "Vts": 0.00000,
+    "Vtb": 1.00000
   }
 }

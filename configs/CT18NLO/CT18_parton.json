@@ -1,18 +1,18 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_complete",
-    "debug": false
+    "unique_name": "CT18_NLO_parton",
+    "debug": true
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO",
+    "pdfset": "CT18NLO",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-C",
+    "mass_scheme": "parton",
     "disable_top": false,
-    "perturbative_order": 2,
+    "perturbative_order": 0,
     "DIS_process": "CC",
 
     "enable_FONLL_damping": true,
@@ -23,15 +23,15 @@
     "small_x_order": "NLL",
 
     "enable_TMC": false,
-    "enable_CKMT": true,
-    "enable_PCAC": true,
+    "enable_CKMT": false,
+    "enable_PCAC": false,
 
     "Nx": 400,
-    "NQ2": 500,
+    "NQ2": 50,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 1e-2,
-    "Q2max": 1e10
+    "Q2min": 1.69,
+    "Q2max": 1e3
   },
 
   "CKMT": {
@@ -56,18 +56,16 @@
   },
 
   "PCAC": {
-    "A": 0.147,
-    "B": 0.265
+
   },
 
   "XS": {
     "enable_mass_terms": true,
-    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
-      "Q2min": 1e-1,
+      "Q2min": 1.69,
       "Q2max": 1e10
     }
   },

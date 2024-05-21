@@ -1,6 +1,6 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_complete",
+    "unique_name": "CT18A_NNLO_ZMVFNS",
     "debug": false
   },
 
@@ -10,12 +10,12 @@
   },
 
   "SF": {
-    "mass_scheme": "FONLL-C",
+    "mass_scheme": "ZM-VFNS",
     "disable_top": false,
     "perturbative_order": 2,
     "DIS_process": "CC",
 
-    "enable_FONLL_damping": true,
+    "enable_FONLL_damping": false,
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
@@ -23,14 +23,14 @@
     "small_x_order": "NLL",
 
     "enable_TMC": false,
-    "enable_CKMT": true,
-    "enable_PCAC": true,
+    "enable_CKMT": false,
+    "enable_PCAC": false,
 
     "Nx": 400,
     "NQ2": 500,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 1e-2,
+    "Q2min": 1.69,
     "Q2max": 1e10
   },
 
@@ -56,18 +56,16 @@
   },
 
   "PCAC": {
-    "A": 0.147,
-    "B": 0.265
+
   },
 
   "XS": {
     "enable_mass_terms": true,
-    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
-      "Q2min": 1e-1,
+      "Q2min": 1.69,
       "Q2max": 1e10
     }
   },
