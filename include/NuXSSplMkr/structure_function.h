@@ -23,6 +23,12 @@ double HK(double x, void* param){
   return ((double)m)*((p->*f)(x,p->_kernel_Q2))/pow(x,(double)n);
 }
 
+template<class T,double (T::*f)(double)>
+double KernelWrapper(double x, void* param) {
+    T* p = (T*) param;
+    return (p->*f)(x);
+}
+
 class StructureFunction {
     private:
         double s_w, Lu2, Ld2, Ru2, Rd2;
@@ -35,14 +41,9 @@ class StructureFunction {
         Configuration config;
 
         bool has_LO_coefficients = false;
+        bool splines_loaded = false;
         std::map<int,double> F2coef;
         std::map<int,double> F3coef;
-        // Grids
-        // std::vector<std::vector<double>> grid_F1;
-        // std::vector<std::vector<double>> grid_F2;
-        // std::vector<std::vector<double>> grid_xF3;
-        // LHAPDF::GridPDF* grid_central;
-
 
         // PCAC constants (cite reno paper)
         double pion_mass = 135.0; // TODO: exact value
@@ -51,6 +52,17 @@ class StructureFunction {
         bool use_AlbrightJarlskog;
 
         double _Q2_cached = -1.0;
+
+        photospline::splinetable<> spline_F1;
+        photospline::splinetable<> spline_F2;
+        photospline::splinetable<> spline_F3;
+
+        // Mode 0 = APFEL structure functions
+        // Mode 1 = Load SFs, do TMC
+        // Mode 2 = Load TMC-SFs, do CKMT/PCAC
+        int mode = 0;
+        string insuffix = "";
+        string outsuffix = "";
 
     public:
         StructureFunction(Configuration& _config);
@@ -61,11 +73,7 @@ class StructureFunction {
 
         double _kernel_Q2;
         double _kernel_x;
-
-        // Mode 0 = APFEL structure functions
-        // Mode 1 = Load SFs, do TMC
-        // Mode 2 = Load TMC-SFs, do CKMT/PCAC
-        int mode = 0;
+        double _kernel_xi;
 
         // ~ APFEL stuff ~
         void InitializeAPFEL();
@@ -90,6 +98,10 @@ class StructureFunction {
 
         template<class T,double (T::*f)(double,double),int n,int m>
         double HGeneric(double x, double Q2);
+
+        double H2_kernel(double u);
+        double H3_kernel(double u);
+        double G2_kernel(double v);
 
         double H2(double xi, double Q2);
         double H3(double xi, double Q2);
@@ -120,11 +132,13 @@ class StructureFunction {
 
         void LoadGrids(string inpath);
         void LoadSplines(string inpath);
+        
         void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         
         // ~ Settings ~
+        void Set_Mode(int mode);
         void Set_Target(string target_string);
         void Set_Projectile(string projectile_string);
         void Set_Lepton_Mass(double m);

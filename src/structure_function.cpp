@@ -11,6 +11,17 @@ StructureFunction::StructureFunction(Configuration &_config)
     M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
 }
 
+void StructureFunction::Set_Mode(int _mode) {
+    mode = _mode;
+
+    switch (mode) {
+        case 0: {insuffix = ""; outsuffix = ""; break;}
+        case 1: {insuffix = ""; outsuffix = ""; break;}
+        case 2: {insuffix = ""; outsuffix = "_TMC"; break;}
+        case 3: {insuffix = "_TMC_"; outsuffix = "_PCAC"; break;}
+    }
+}
+
 void StructureFunction::Set_Lepton_Mass(double m) {
     M_lepton = m;
 }
@@ -269,7 +280,7 @@ double StructureFunction::NachtmannXibar(double x, double Q2){
 template<class T,double (T::*f)(double,double), int n, int m>
 double StructureFunction::HGeneric(double xi, double Q2){
     // Integrate T::f from xi to 1 at Q2
-    if (xi > 1.0) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
         return 0.0;
     }
     gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    
@@ -282,57 +293,158 @@ double StructureFunction::HGeneric(double xi, double Q2){
     F.params = this;
     size_t neval;
     // double _integrate_xmax = 1.0;
-    int status = gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-3, w, &result, &error, &neval);
+    gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-3, w, &result, &error, &neval);
     gsl_integration_cquad_workspace_free(w);
 
     return result;
 }
 
-double StructureFunction::H2(double xi, double Q2){
-    return HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+// double StructureFunction::H2(double xi, double Q2){
+//     return HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+// }
+
+// double StructureFunction::H3(double xi, double Q2){
+//     return HGeneric<StructureFunction,&StructureFunction::F3,1,1>(xi, Q2);
+// }
+
+// double StructureFunction::G2(double xi, double Q2){
+//     return HGeneric<StructureFunction,&StructureFunction::F2,1,1>(xi, Q2) - xi*HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+// }
+
+double StructureFunction::H2_kernel(double u) {
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
+    spline_F2.searchcenters(pt.data(), spline_centers.data());
+    double F2_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+
+    return F2_val / SQ(u);
 }
 
-double StructureFunction::H3(double xi, double Q2){
-    return HGeneric<StructureFunction,&StructureFunction::F3,1,1>(xi, Q2);
+double StructureFunction::H3_kernel(double u) {
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
+    spline_F3.searchcenters(pt.data(), spline_centers.data());
+    double F3_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+
+    return F3_val / u;
 }
 
-double StructureFunction::G2(double xi, double Q2){
-    return HGeneric<StructureFunction,&StructureFunction::F2,1,1>(xi, Q2) - xi*HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
+double StructureFunction::G2_kernel(double v) {
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(v)}};
+    spline_F2.searchcenters(pt.data(), spline_centers.data());
+    double F2_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+
+    return (v - _kernel_xi) * F2_val / SQ(v);
 }
 
+double StructureFunction::H2(double xi, double Q2) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
+        return 0.0;
+    }
 
-double StructureFunction::F1_TMC(double x, double Q2) { // slow rescale?
-    //todo: fix
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    
+    double result, error;
+    
+    gsl_function F;
+    _kernel_Q2 = Q2;
+
+    F.function = &KernelWrapper<StructureFunction, &StructureFunction::H2_kernel>;
+    F.params = this;
+    size_t neval;
+
+    gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-5, w, &result, &error, &neval);
+    gsl_integration_cquad_workspace_free(w);
+
+    return result;
+}
+
+double StructureFunction::H3(double xi, double Q2) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
+        return 0.0;
+    }
+
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    
+    double result, error;
+    
+    gsl_function F;
+    _kernel_Q2 = Q2;
+
+    F.function = &KernelWrapper<StructureFunction, &StructureFunction::H3_kernel>;
+    F.params = this;
+    size_t neval;
+
+    gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-5, w, &result, &error, &neval);
+    gsl_integration_cquad_workspace_free(w);
+
+    return result;
+}
+
+double StructureFunction::G2(double xi, double Q2) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
+        return 0.0;
+    }
+
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    
+    double result, error;
+    
+    gsl_function F;
+    _kernel_Q2 = Q2;
+    _kernel_xi = xi;
+
+    F.function = &KernelWrapper<StructureFunction, &StructureFunction::G2_kernel>;
+    F.params = this;
+    size_t neval;
+
+    gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-5, w, &result, &error, &neval);
+    gsl_integration_cquad_workspace_free(w);
+
+    return result;
+}
+
+double StructureFunction::F1_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
-    // double xibar = NachtmannXibar(x, Q2);
-    if (xi > 1.0) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
         return 0.0;
     }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
-    double term1 = (x / (xi * r)) * F1(xi, Q2);
-    double term2 = SQ(m * x / r) / Q2 * H2(xi, Q2);
-    double term3 = 2.0 * SQ(SQ(m) * x / (Q2 * r)) * (x / r) * G2(xi, Q2);
+
+    // Get the value from the F1 spline at Q2, xi
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
+    spline_F1.searchcenters(pt.data(), spline_centers.data());
+    std::cout << pt[0] << "," << pt[1] << std::endl;
+    double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+    double h2 = H2(xi, Q2);
+    double g2 = G2(xi, Q2);
+
+    double term1 = (x / (xi * r)) * f1;
+    double term2 = SQ(m * x / r) / Q2 * h2;
+    double term3 = 2.0 * SQ(SQ(m) * x / (Q2 * r)) * (x / r) * g2;
+    std::cout << (term1 + term2 + term3) / f1 << std::endl;
     return (term1 + term2 + term3);
 }
 
 double StructureFunction::F2_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
     // double xibar = NachtmannXibar(x, Q2);
-    if (xi > 1.0) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
         return 0.0;
     }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
+    // Get the value from the F2 spline at Q2, xi
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
+    spline_F2.searchcenters(pt.data(), spline_centers.data());
+
+    double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double g2 = G2(xi, Q2);
     double h2 = H2(xi, Q2);
-    
-    // double term1 = SQ(x / (xi * r)) / r * F2(xi, Q2);
-    // double term2 = 6.0 * SQ(m * x / SQ(r)) * (x / Q2) * H2(xi, Q2);
-    // double term3 = 12.0 * SQ(SQ(m * x / r) / (Q2 * r)) * G2(xi, Q2);
 
-    double term1 = x*x/(SQ(xi) * r*r*r) * F2(xi, Q2);
+    double term1 = x*x/(SQ(xi) * r*r*r) * f2;
     double term2 = 6.*m*m* x*x*x  * h2 / (Q2 * r*r*r*r);
     double term3 = 12.*SQ(SQ(m*x)) * g2 / (SQ(Q2) * r*r*r*r*r );
 
@@ -342,18 +454,21 @@ double StructureFunction::F2_TMC(double x, double Q2) {
 double StructureFunction::F3_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
     // double xibar = NachtmannXibar(x, Q2);
-    if (xi > 1.0) {
+    if ( (xi > 1.0) || (xi < config.SF.xmin)) {
       return 0.0;
     }
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
-    // double term1 = (x / (xi * SQ(r))) * F3(xi, Q2);
-    // double term2 = 2.0 * SQ(m * x / r) / (Q2 * r) * H3(xi, Q2)
-    // double g2 = G2(xi, Q2);
+    // Get the value from the F2 spline at Q2, xi
+    std::array<int, 2> spline_centers;
+    std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
+    spline_F3.searchcenters(pt.data(), spline_centers.data());
+
+    double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double h3 = H3(xi, Q2);
 
-    double term1 = x/(xi * r*r) * F3(xi, Q2);
+    double term1 = x/(xi * r*r) * f3;
     double term2 = 2.*m*m* x*x  * h3 / (Q2 * r*r*r);
     
     return (term1 + term2);
@@ -435,74 +550,122 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 }
 
 std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
-    double _FL, _F1, _F2, _F3;
+    double _F1, _F2, _F3;
 
-    double Q2_eval = Q2;  // Q2 that the SFs are evaluated at
-    if ( (config.SF.enable_CKMT) ) {
-        Q2_eval = SQ(config.CKMT.Q0); // get CKMT reference Q0
-    }
-
-    if ((config.SF.mass_scheme != "parton") || (Q2_eval != _Q2_cached)) {
-        Set_Q_APFEL(std::sqrt(Q2_eval));
-        _Q2_cached = Q2_eval;  // We cache this so we don't keep running the APFEL function
-    }
-
-    // Get F1/F2/F3
-    if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
-        _F1 = F1_TMC(x, Q2_eval);
-        _F2 = F2_TMC(x, Q2_eval);
-        _F3 = F3_TMC(x, Q2_eval);
-    } else {
-        _FL = FL(x, Q2_eval);
-        _F2 = F2(x, Q2_eval);
-        _F1 = (_F2 - _FL) / (2. * x);
-        _F3 = F3(x, Q2_eval);
-    }
-
-    if (config.SF.enable_CKMT) {
-        /* 
-        When using CKMT, we evaluate the APFEL-based SFs using the threshold
-        value of Q0 and use the parameterized SFs below the threshold.
-        */
-        double CKMT_Q2 = SQ(config.CKMT.Q0);
-        // std::cout << "Q2_eval = " << Q2_eval << ", Q2 = " << Q2 << ", CKMT_Q2 = " << CKMT_Q2 << std::endl;
-
-        if (Q2 < CKMT_Q2) {
-            double _F2_CKMT    = F2_CKMT(x, Q2);
-            double _F3_CKMT    = F3_CKMT(x, Q2);
-            double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
-            
-            double _F1_Q0      = _F1;
-            double _F2_Q0      = _F2;
-            double _F3_Q0      = _F3;
-            double _F2_CKMT_Q0 = F2_CKMT(x, Q2_eval);
-            double _F3_CKMT_Q0 = F3_CKMT(x, Q2_eval);
-            double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, Q2_eval);
-
-            double _F2_PCAC;
-            double _F2_PCAC_Q0;
-            if (config.SF.enable_PCAC) {
-                _F2_PCAC = F2_PCAC(x, Q2);
-                _F2_PCAC_Q0 = F2_PCAC(x, Q2_eval);
-                _F2_CKMT += _F2_PCAC;
-                _F2_CKMT_Q0 += _F2_PCAC_Q0;
+    switch (mode) {
+        case 0:  // Parton
+            break;
+        case 1: // Plain ol' APFEL structure functions
+        {  
+            double _FL = FL(x, Q2);
+            _F2 = F2(x, Q2);
+            _F1 = (_F2 - _FL) / (2. * x);
+            _F3 = F3(x, Q2);
+            break;
+        }
+        case 2: // TMC
+        {
+            if (!splines_loaded){
+                throw std::runtime_error("Splines have not been loaded!");
             }
-
-            _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
-            _F1 = _F1_CKMT * (_F1_Q0 / _F1_CKMT_Q0);
-            _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
-        } else {
-            // if Q^2 > Q0^2, then we use the regular SFs (do nothing)
+            _F1 = F1_TMC(x, Q2);
+            _F2 = F2_TMC(x, Q2);
+            _F3 = F3_TMC(x, Q2);
+            break;
+        }
+        case 3: // CKMT+PCAC
+        {
+            break;
         }
     }
+
+    // double Q2_eval = Q2;  // Q2 that the SFs are evaluated at
+    // if ( (config.SF.enable_CKMT) ) {
+    //     Q2_eval = SQ(config.CKMT.Q0); // get CKMT reference Q0
+    // }
+
+    // if ((config.SF.mass_scheme != "parton") || (Q2_eval != _Q2_cached)) {
+    //     Set_Q_APFEL(std::sqrt(Q2_eval));
+    //     _Q2_cached = Q2_eval;  // We cache this so we don't keep running the APFEL function
+    // }
+
+    // // Get F1/F2/F3
+    // if ( (config.SF.enable_TMC ) && (Q2 < config.SF.TMC_Q2max)) {
+    //     _F1 = F1_TMC(x, Q2_eval);
+    //     _F2 = F2_TMC(x, Q2_eval);
+    //     _F3 = F3_TMC(x, Q2_eval);
+    // } else {
+
+    // }
+
+    // if (config.SF.enable_CKMT) {
+    //     /* 
+    //     When using CKMT, we evaluate the APFEL-based SFs using the threshold
+    //     value of Q0 and use the parameterized SFs below the threshold.
+    //     */
+    //     double CKMT_Q2 = SQ(config.CKMT.Q0);
+    //     // std::cout << "Q2_eval = " << Q2_eval << ", Q2 = " << Q2 << ", CKMT_Q2 = " << CKMT_Q2 << std::endl;
+
+    //     if (Q2 < CKMT_Q2) {
+    //         double _F2_CKMT    = F2_CKMT(x, Q2);
+    //         double _F3_CKMT    = F3_CKMT(x, Q2);
+    //         double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+            
+    //         double _F1_Q0      = _F1;
+    //         double _F2_Q0      = _F2;
+    //         double _F3_Q0      = _F3;
+    //         double _F2_CKMT_Q0 = F2_CKMT(x, Q2_eval);
+    //         double _F3_CKMT_Q0 = F3_CKMT(x, Q2_eval);
+    //         double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, Q2_eval);
+
+    //         double _F2_PCAC;
+    //         double _F2_PCAC_Q0;
+    //         if (config.SF.enable_PCAC) {
+    //             _F2_PCAC = F2_PCAC(x, Q2);
+    //             _F2_PCAC_Q0 = F2_PCAC(x, Q2_eval);
+    //             _F2_CKMT += _F2_PCAC;
+    //             _F2_CKMT_Q0 += _F2_PCAC_Q0;
+    //         }
+
+    //         _F2 = _F2_CKMT * (_F2_Q0 / _F2_CKMT_Q0);
+    //         _F1 = _F1_CKMT * (_F1_Q0 / _F1_CKMT_Q0);
+    //         _F3 = _F3_CKMT * (_F3_Q0 / _F3_CKMT_Q0);
+    //     } else {
+    //         // if Q^2 > Q0^2, then we use the regular SFs (do nothing)
+    //     }
+    // }
 
     return {_F1, _F2, _F3};
 }
 
+void StructureFunction::LoadSplines(string inpath) {
+    if (splines_loaded) {
+        throw std::runtime_error("Splines have already been loaded!!");
+    }
+
+    string f1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+    string f2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+    string f3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+
+    std::cout << "Loading the following splines: " << std::endl;
+    std::cout << f1_path << std::endl;
+    std::cout << f2_path << std::endl;
+    std::cout << f3_path << std::endl;
+
+    spline_F1 = photospline::splinetable<>();
+    spline_F2 = photospline::splinetable<>();
+    spline_F3 = photospline::splinetable<>();
+
+    spline_F1.read_fits(f1_path);
+    spline_F2.read_fits(f2_path);
+    spline_F3.read_fits(f3_path);
+
+    splines_loaded = true;
+}
 
 void StructureFunction::BuildGrids(string outpath) {
-    const unsigned int Nx = config.SF.Nx;
-    const unsigned int NQ2 = config.SF.NQ2;
+    const int Nx = config.SF.Nx;
+    const int NQ2 = config.SF.NQ2;
 
     std::vector<double> x_arr;
     std::vector<double> Q2_arr;
@@ -521,9 +684,9 @@ void StructureFunction::BuildGrids(string outpath) {
     std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
 
     // setup grid stuff
-    string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
-    string f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
-    string f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+    string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
+    string f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
+    string f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
 
     std::ofstream f1_outfile;
     f1_outfile.open(f1_grid_fn);
@@ -533,7 +696,7 @@ void StructureFunction::BuildGrids(string outpath) {
     f3_outfile.open(f3_grid_fn);
 
     // Get the Q2 and x values
-    size_t N_samples = Nx * NQ2;
+    // size_t N_samples = Nx * NQ2;
     for (int i = 0; i < NQ2; i++) {
         double log_Q2 = std::log10(config.SF.Q2min) + i * d_log_Q2;
         Q2_arr.push_back(log_Q2);
@@ -561,7 +724,7 @@ void StructureFunction::BuildGrids(string outpath) {
             Q2eval = SQ(config.CKMT.Q0);
         }
 
-        if (config.SF.mass_scheme != "parton") {
+        if ( (config.SF.mass_scheme != "parton") && (mode == 0)) {
             Set_Q_APFEL(std::sqrt(Q2eval));
         }
 
@@ -569,7 +732,7 @@ void StructureFunction::BuildGrids(string outpath) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
 
-            double _FL, _F1, _F2, _F3;
+            double _F1, _F2, _F3;
             std::tie(_F1, _F2, _F3) = EvaluateSFs(x, Q2);
 
             if(!std::isfinite(_F1)) {

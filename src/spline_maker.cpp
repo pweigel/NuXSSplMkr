@@ -48,12 +48,12 @@ void SplineMaker::MakeSpline(string infile, string outfile) {
 
     // Need to make some assumptions here
     // ### Testing new knots ###
-    for ( double log_Q2 = 0; log_Q2 <= 1; log_Q2 += 0.01 ) {
+    for ( double log_Q2 = log_Q2_min - 1.0; log_Q2 <= log_Q2_min; log_Q2 += 0.1 ) {
         double knot = log_Q2;
         Q2_knots.push_back(knot);
     }
 
-    for ( double log_Q2 = 1 + d_log_Q2_knot; log_Q2 <= log_Q2_max + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
+    for ( double log_Q2 = log_Q2_min + d_log_Q2_knot; log_Q2 <= log_Q2_max + d_log_Q2_knot; log_Q2 += d_log_Q2_knot ) {
         double knot = log_Q2;
         Q2_knots.push_back(knot);
     }

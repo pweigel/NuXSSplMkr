@@ -5,18 +5,20 @@
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
-    if (argc < 5) {
-        std::cout << "Not enough inputs!" << std::endl;
-        return 1;
-    } else if (argc > 5) {
-        std::cout << "Too many inputs!" << std::endl;
-        return 1;
-    }
+    // if (argc < 5) {
+    //     std::cout << "Not enough inputs!" << std::endl;
+    //     return 1;
+    // } else if (argc > 5) {
+    //     std::cout << "Too many inputs!" << std::endl;
+    //     return 1;
+    // }
 
     const std::string config_path = argv[1];
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string sf_type = argv[4]; // total, light, charm, ..
+
+    const unsigned int mode = std::stoi(argv[5]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -24,6 +26,7 @@ int main(int argc, char* argv[]){
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
     std::cout << "SF Type: " << sf_type << std::endl;
+    std::cout << "Mode: " << mode << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     int replica = 0;
@@ -48,12 +51,17 @@ int main(int argc, char* argv[]){
 
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
+    sf.Set_Mode(mode); // TODO: setter -PW
 
     sf.Set_Lepton_Mass(pc->muon_mass);
 
-    sf.InitializeAPFEL();
+    if (mode == 2) {
+        sf.LoadSplines(data_folder);
+    } else {
+        sf.InitializeAPFEL();
+    }
     // sf.BuildSplines(out_folder.string()); // Photospline
-    sf.BuildGrids(out_folder.string()); // Grid file
+    sf.BuildGrids(data_folder); // Grid file
 
     // nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker(config);
     // string gridinfile = data_folder + "/F1_neutrino_proton_light.grid";
