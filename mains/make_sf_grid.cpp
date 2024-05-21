@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
 
     sf.InitializeAPFEL();
     // sf.BuildSplines(out_folder.string()); // Photospline
-    sf.BuildGrids_v2(out_folder.string()); // Grid file
+    sf.BuildGrids(out_folder.string()); // Grid file
 
     // nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker(config);
     // string gridinfile = data_folder + "/F1_neutrino_proton_light.grid";

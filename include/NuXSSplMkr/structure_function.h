@@ -49,9 +49,8 @@ class StructureFunction {
         double fpi = 0.93 * pion_mass;
 
         bool use_AlbrightJarlskog;
-        bool save_splines = true;
 
-        double _Q2_cached = -1;
+        double _Q2_cached = -1.0;
 
     public:
         StructureFunction(Configuration& _config);
@@ -122,8 +121,6 @@ class StructureFunction {
         void LoadGrids(string inpath);
         void LoadSplines(string inpath);
         void BuildGrids(string outpath);
-        void BuildGrids_v2(string outpath);
-        void BuildSplines(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         

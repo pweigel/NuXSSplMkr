@@ -63,13 +63,13 @@ void SplineMaker::MakeSpline(string infile, string outfile) {
         x_knots.push_back(knot);
     }
 
-    for ( double log_x = -1.0; log_x <= 0.25; log_x += 0.01 ) {
+    for ( double log_x = -1.0; log_x <= 0.25; log_x += 0.05 ) {
         double knot = log_x;
         x_knots.push_back(knot);
     }
     // ####
 
-    double smooth = 1e-5;
+    double smooth = 1e-10;
     std::vector<uint32_t> orders(dim, 2);
 
     for (unsigned int i = 0; i < nQ2; i++){
