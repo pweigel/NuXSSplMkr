@@ -39,12 +39,12 @@ rcParams['legend.fontsize']       = 20
 
 if __name__ == '__main__':
     base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections'
-    spline_path = '/n/home06/pweigel/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
+    spline_path = '/n/home06/pweigel/utils/xs_iso/dsdxdy_nubar_CC_iso.fits'
     spline = photospline.SplineTable(spline_path)
-    rc_spline_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/dsdxdy_nu_CC_iso_corrected.fits'
+    rc_spline_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/FINAL/dsdxdy_nubar_CC_iso.fits'
     rc_spline = photospline.SplineTable(rc_spline_path)
     
-    rc_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/bin/dsdxdy_nu_CC_iso_corrected.out'
+    rc_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/FINAL/dsdxdy_nubar_CC_iso.out'
     xs_rc = np.loadtxt(rc_path, skiprows=3, delimiter=',')
     
     print(xs_rc.shape)
@@ -54,11 +54,14 @@ if __name__ == '__main__':
         x_values = np.array([float(x) for x in f.readline().rstrip('\n').split(',')[1:]])
     
     xs_rc = xs_rc.reshape(len(energies), len(y_values), len(x_values))
+    # Q = 2 m E x --> x = Q / (2 m e)
+    selected_energy = 3
+    xmin = np.log10(1.4 / (2.0 * 0.938 * 10**(selected_energy)))
+    ymin = np.log10(1.4 / (2.0 * 0.938 * 10**(selected_energy)))
     
-    x_values = 10**np.linspace(-5, 0, 101)
-    y_values = 10**np.linspace(-5, 0, 101)
+    x_values = 10**np.linspace(xmin, 0, 101)
+    y_values = 10**np.linspace(ymin, 0, 101)
     
-    selected_energy = 4.0
     print('ENERGY = {} GeV'.format(10**selected_energy))
     xs_rc = xs_rc[30, :, :]
     
@@ -97,9 +100,10 @@ if __name__ == '__main__':
     # ax.plot(y_values, (dsdy_rc - dsdy_rc) / total_xs, color='k', linewidth=3, label=r'$\frac{d\sigma^{(0)}}{dy}+\frac{d\sigma^{(1)}}{dy}$')
     
     ax.plot([0, 1], [0, 0], color='k', alpha=0.33, linestyle='--')
-    ax.set_xlim([0, 1])
+    ax.set_xlim([10**xmin, 1])
+    ax.set_xscale('log')
     ax.set_xlabel(r'$y$')
     ax.set_ylabel(r'$\frac{1}{\sigma}\frac{d\sigma}{dy}$')
     ax.legend()
     plt.tight_layout()
-    plt.savefig('7_dsdy_rc_spline.pdf')
+    plt.savefig('7_dsdy_rc_spline_nubar.pdf')

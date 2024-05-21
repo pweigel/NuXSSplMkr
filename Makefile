@@ -60,7 +60,7 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 # replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
 all: bin/calculate_xs bin/calculate_dsdy bin/calculate_dsdxdy
 test: bin/test_quick_eval
-structure_functions: bin/make_sf_grid bin/make_all_sf_splines
+structure_functions: bin/make_sf_grid bin/make_sf_splines bin/make_all_sf_splines
 cross_sections: bin/calculate_xs bin/calculate_all_xs bin/calculate_all_dsdy
 
 # bin/calculate_LO_xs: src/configuration.o src/structure_function.o src/physconst.o mains/calculate_LO_xs.o

@@ -61,7 +61,7 @@ ax.plot(x_values, W2_min * x_values / (1 - x_values), color='k')
 ax.text(1e-2, s * 1e-2 + 4, s=r'$Q^2 = s$', rotation=30, fontsize=20)
 ax.plot(x_values, s * x_values, color='k')
 
-ax.plot([x_values[0], x_values[-1]], [4, 4], color='gray', linestyle='--')
+# ax.plot([x_values[0], x_values[-1]], [4, 4], color='gray', linestyle='--')
 
 ax.set_xlabel(r'$x$')
 ax.set_ylabel(r'$Q^2~[\textrm{GeV}]$')

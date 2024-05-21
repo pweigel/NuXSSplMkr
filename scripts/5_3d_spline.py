@@ -56,8 +56,8 @@ def load_file(fname):
 
 
 if __name__ == '__main__':
-    base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections'
-    filename = base_path + '/dsdxdy_nu_CC_iso_corrected_logspaced.out'
+    base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CSMS/cross_sections/FINAL'
+    filename = base_path + '/dsdxdy_nubar_CC_iso.out'
         
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -78,12 +78,12 @@ if __name__ == '__main__':
     x_values = x_values[:-1]
     xs = xs[:, :-1, :-1]
     
-    spline_path = base_path + '/dsdxdy_nu_CC_iso_corrected_logspaced.fits'
+    spline_path = base_path + '/dsdxdy_nubar_CC_iso.fits'
     spline = photospline.SplineTable(spline_path)
-    csms_path = '~/utils/xs_iso/dsdxdy_nu_CC_iso.fits'
+    csms_path = '~/utils/xs_iso/dsdxdy_nubar_CC_iso.fits'
     csms_spline = photospline.SplineTable(csms_path)
     
-    nE = 50
+    nE = 10
     nx = -25
     ny = -25
     
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_ylim([1e-40, 1e-32])
-    plt.savefig('5_3d_spline_rc_E.pdf')
+    plt.savefig('5_3d_spline_rc_nubar_E.pdf')
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_ylim([1e-40, 1e-32])
-    plt.savefig('5_3d_spline_rc_x.pdf')
+    plt.savefig('5_3d_spline_rc_nubar_x.pdf')
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_ylim([1e-40, 1e-32])
-    plt.savefig('5_3d_spline_rc_y.pdf')
+    plt.savefig('5_3d_spline_rc_nubar_y.pdf')
     # exit()
     
     
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.colorbar(ax_img, ax=ax)
-    plt.savefig('test.pdf')
+    plt.savefig('test_nubar.pdf')
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.colorbar(ax_img, ax=ax)
-    plt.savefig('test2.pdf')
+    plt.savefig('test2_nubar.pdf')
     
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.colorbar(ax_img, ax=ax)
-    plt.savefig('test3.pdf')
+    plt.savefig('test3_nubar.pdf')
     
     # E = 3.0
     # y_values = np.linspace(-5, -1, 100)

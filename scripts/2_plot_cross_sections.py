@@ -45,7 +45,7 @@ def load_cross_section(fname):
                 log_xs.append(float(y))
         
     return np.array(energy)/1e9, 10**np.array(log_xs)
-xs_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections/'
+xs_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/reference_data/CT18A_NNLO/replica_0/cross_sections/'
 # xs_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/EPPS21_NLO_O16/replica_0/cross_sections/'
 
 energy, total = load_cross_section(xs_path+'total_neutrino_proton_total.out')
@@ -59,35 +59,37 @@ total_new[(len(total)-len(top)):] += top
 
 fig = plt.figure(figsize=(12,9))
 ax = fig.add_subplot(111)
-ax.plot(energy, total, linewidth=3)
-ax.plot(energy, total_new, linewidth=1, color='k')
-ax.plot(energy, light, linewidth=3)
-ax.plot(energy, charm, linewidth=3)
-ax.plot(energy, bottom, linewidth=3)
-ax.plot(energy_top, top, linewidth=3)
+# ax.plot(energy, total, linewidth=3, label='total')
+ax.plot(energy, total_new, linewidth=3, label='Total')
+ax.plot(energy, light, linewidth=3, label='Light')
+ax.plot(energy, charm, linewidth=3, label='Charm')
+ax.plot(energy, bottom, linewidth=3, label='Bottom')
+ax.plot(energy_top, top, linewidth=3, label='Top')
 ax.set_xscale('log')
 ax.set_yscale('log')
 ax.set_xlim([1e2, 1e9])
 ax.set_ylim([1e-38, 2e-32])
 ax.set_xlabel(r'Energy [GeV]')
 ax.set_ylabel(r'$\sigma~[\textrm{cm}^{2}]$')
-
+ax.legend()
 plt.tight_layout()
 plt.savefig('2_cross_sections.png')
 
 fig = plt.figure(figsize=(12,9))
 ax = fig.add_subplot(111)
 ax.plot(energy, total/total, linewidth=3)
-ax.plot(energy, light/total, linewidth=3)
-ax.plot(energy, charm/total, linewidth=3)
-ax.plot(energy, bottom/total, linewidth=3)
-ax.plot(energy_top, top/total[(len(total)-len(top)):], linewidth=3)
+ax.plot(energy, light/total, linewidth=3, label='Light')
+ax.plot(energy, charm/total, linewidth=3, label='Charm')
+ax.plot(energy, bottom/total, linewidth=3, label='Bottom')
+ax.plot(energy_top, top/total[(len(total)-len(top)):], linewidth=3, label='Top')
 
 ax.set_xscale('log')
 ax.set_yscale('log')
 ax.set_ylim([1e-6, 1])
 ax.set_xlim([1e2, 1e9])
 ax.set_xlabel(r'Energy [GeV]')
-ax.set_ylabel(r'$\sigma~[\textrm{cm}^{2}]$')
+ax.set_ylabel(r'$\textrm{Flavor Fraction}$')
+ax.legend()
+
 plt.tight_layout()
-plt.savefig('2_cross_sections_fraction.png')
+plt.savefig('2_cross_sections_fraction.png',)
