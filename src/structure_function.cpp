@@ -315,7 +315,7 @@ double StructureFunction::H2_kernel(double u) {
     std::array<int, 2> spline_centers;
     std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
     spline_F2.searchcenters(pt.data(), spline_centers.data());
-    double F2_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+    double F2_val = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
 
     return F2_val / SQ(u);
 }
@@ -324,7 +324,7 @@ double StructureFunction::H3_kernel(double u) {
     std::array<int, 2> spline_centers;
     std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
     spline_F3.searchcenters(pt.data(), spline_centers.data());
-    double F3_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+    double F3_val = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
 
     return F3_val / u;
 }
@@ -333,7 +333,7 @@ double StructureFunction::G2_kernel(double v) {
     std::array<int, 2> spline_centers;
     std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(v)}};
     spline_F2.searchcenters(pt.data(), spline_centers.data());
-    double F2_val = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+    double F2_val = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
 
     return (v - _kernel_xi) * F2_val / SQ(v);
 }
@@ -414,7 +414,7 @@ double StructureFunction::F1_TMC(double x, double Q2) {
     std::array<int, 2> spline_centers;
     std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
     spline_F1.searchcenters(pt.data(), spline_centers.data());
-    std::cout << pt[0] << "," << pt[1] << std::endl;
+    // std::cout << pt[0] << "," << pt[1] << std::endl;
     double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double h2 = H2(xi, Q2);
     double g2 = G2(xi, Q2);
@@ -422,7 +422,7 @@ double StructureFunction::F1_TMC(double x, double Q2) {
     double term1 = (x / (xi * r)) * f1;
     double term2 = SQ(m * x / r) / Q2 * h2;
     double term3 = 2.0 * SQ(SQ(m) * x / (Q2 * r)) * (x / r) * g2;
-    std::cout << (term1 + term2 + term3) / f1 << std::endl;
+
     return (term1 + term2 + term3);
 }
 
@@ -573,9 +573,27 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
             _F3 = F3_TMC(x, Q2);
             break;
         }
-        case 3: // CKMT+PCAC
+        case 3: // CKMT
         {
-            break;
+            // // Check if we're below Q0
+            // double Q2_eval = Q2;
+            // if (Q2 < config.CKMT.Q0) {
+            //     Q2_eval = config.CKMT.Q0;
+            // }
+
+            // std::array<int, 2> spline_centers;
+            // std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
+            // spline_F1.searchcenters(pt.data(), spline_centers.data());
+            // spline_F2.searchcenters(pt.data(), spline_centers.data());
+            // spline_F3.searchcenters(pt.data(), spline_centers.data());
+
+            // double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            // double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            // double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
+
+            // double _F1_CKMT = F1_CKMT(f1, x, Q2);
+            // double _F2_CKMT = F2_CKMT(f2, x, Q2);
+            // double _F3_CKMT = F3_CKMT(f3, x, Q2);
         }
     }
 
