@@ -26,12 +26,12 @@
     "enable_CKMT": false,
     "enable_PCAC": false,
 
-    "Nx": 50,
-    "NQ2": 50,
+    "Nx": 100,
+    "NQ2": 100,
     "xmin": 1e-7,
     "xmax": 1.0,
     "Q2min": 1.0,
-    "Q2max": 1e10
+    "Q2max": 1e6
   },
 
   "CKMT": {

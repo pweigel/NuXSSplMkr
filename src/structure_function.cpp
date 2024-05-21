@@ -791,8 +791,8 @@ void StructureFunction::BuildGrids_v2(string outpath) {
     }
 
     // Step sizes in log space
-    double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / NQ2;
-    double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / Nx;
+    double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2-1);
+    double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / (Nx-1);
 
     std::cout << "log_Q2min = " << std::log10(config.SF.Q2min) << ", log_Q2max = " << std::log10(config.SF.Q2max) << std::endl;
     std::cout << "log_xmin = " << std::log10(config.SF.xmin) << ", log_xmax = " << std::log10(config.SF.xmax) << std::endl;
@@ -812,25 +812,34 @@ void StructureFunction::BuildGrids_v2(string outpath) {
 
     // Get the Q2 and x values
     size_t N_samples = Nx * NQ2;
-    for ( double log_Q2 = std::log10(config.SF.Q2min); log_Q2<std::log10(config.SF.Q2max); log_Q2 += d_log_Q2 ) {
-        double powQ2 = std::pow( 10, log_Q2);
-        double Q2 = log_Q2;
-        Q2_arr.push_back(Q2);
-        f1_outfile << Q2 << " ";
-        f2_outfile << Q2 << " ";
-        f3_outfile << Q2 << " ";
+    for (int i = 0; i < NQ2; i++) {
+        double log_Q2 = std::log10(config.SF.Q2min) + i * d_log_Q2;
+        Q2_arr.push_back(log_Q2);
+        f1_outfile << log_Q2 << " "; f2_outfile << log_Q2 << " "; f3_outfile << log_Q2 << " ";
     }
     f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
 
-    for ( double log_x = std::log10(config.SF.xmin); log_x<std::log10(config.SF.xmax); log_x += d_log_x ) {
-        double powx = std::pow( 10, log_x);
-        double x = log_x ;
-        x_arr.push_back(x);
-        f1_outfile << x << " ";
-        f2_outfile << x << " ";
-        f3_outfile << x << " ";
+    for (int j = 0; j < Nx; j++) {
+        double log_x = std::log10(config.SF.xmin) + j * d_log_x;
+        x_arr.push_back(log_x);
+        f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " ";
     }
     f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+
+    // for ( double log_Q2 = std::log10(config.SF.Q2min); log_Q2<=std::log10(config.SF.Q2max); log_Q2 += d_log_Q2 ) {
+    //     double powQ2 = std::pow( 10, log_Q2);
+    //     double Q2 = log_Q2;
+    //     Q2_arr.push_back(Q2);
+    //     f1_outfile << Q2 << " "; f2_outfile << Q2 << " "; f3_outfile << Q2 << " ";
+    // }
+
+    // for ( double log_x = std::log10(config.SF.xmin); log_x<=std::log10(config.SF.xmax); log_x += d_log_x ) {
+    //     double powx = std::pow( 10, log_x);
+    //     double x = log_x ;
+    //     x_arr.push_back(x);
+    //     f1_outfile << x << " "; f2_outfile << x << " "; f3_outfile << x << " ";
+    // }
+    // f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
 
     // Collect SF values and write grids
     for (unsigned int i = 0; i < NQ2; i++) {

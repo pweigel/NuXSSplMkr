@@ -75,10 +75,12 @@ void SplineMaker::MakeSpline(string infile, string outfile) {
     for (unsigned int i = 0; i < nQ2; i++){
         std::getline(gridfile, line);
         std::istringstream linestream(line);
-        for (unsigned int j = 0; j < nx; j++) {
-            double val;
-            linestream >> val;
-            data.push_back(std::make_pair(val, std::array<unsigned int, 2>{i, j}));
+        std::string val;
+        unsigned int j = 0;
+        while (std::getline(linestream, val, ',')) {
+            data.push_back(std::make_pair(std::stod(val), std::array<unsigned int, 2>{i, j}));
+            std::cout << logQ2_values.at(i) << "," << logx_values.at(j) << ": " << val << std::endl;
+            j += 1;
         }
     }
     for(auto& entry : data) {
