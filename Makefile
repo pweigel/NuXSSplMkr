@@ -4,10 +4,6 @@ PREFIX=/usr/local/
 endif
 
 CURRENT_DIR 	= $(shell pwd)
-# LHAPDF      	= $(PREFIX)
-# BOOST       	= $(PREFIX)
-# PHOTOSPLINE 	= $(PREFIX)
-
 SOURCES 	= $(wildcard src/*.cpp)
 
 OBJECTS 	= $(SOURCES:.cpp=.o)
@@ -19,18 +15,14 @@ INCLUDE_PATH    += -I$(SROOT)/include
 INCLUDE_PATH    += -I$(PREFIX)/include/suitesparse  # TODO: Try to figure this out, needed for -
 
 #Compiler
-# CC 		= clang
-# CXX 		= clang++
 CC 		= gcc
 CXX 		= g++
 
 #Dynamic Library
 
 #Flags
-# CXX_FLAGS       =  $(INCLUDE_PATH) -I. -O3 -fPIC -std=c++17 -g -Wall
 CXX_FLAGS       =  $(INCLUDE_PATH) -I. -fPIC -std=c++17 -g -Wall
 
-# LD 		= clang++
 LD 		= g++
 LD_FLAGS 	= -L/usr/local/lib/ -L/usr/lib  -L/usr/local/lib64 -L/usr/lib64 -L$(PREFIX)/lib -L$(PREFIX)/lib64
 LD_FLAGS  += -L$(SROOT)/lib
@@ -51,13 +43,6 @@ CXX_FLAGS += -DPHOTOSPLINE_INCLUDES_SPGLAM
 
 .PHONY: all clean
 
-# CT_OBJ = $(CT)src/CT12Pdf.o $(CURRENT_DIR)src/ct10_xs.o
-
-# all: bin/make_sf_splines bin/make_all_sf_splines bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy
-# all: bin/make_sf_splines bin/make_all_sf_splines bin/make_all_sf_splines_replicas bin/calculate_xs bin/calculate_all_xs bin/calculate_dsdy bin/construct_fonll bin/calculate_dsdxdy bin/calculate_dsdxdQ2 bin/calculate_all_dsdy bin/calculate_all_dsdy_replicas
-# test: bin/test_CKMT bin/test_TMC
-# test: bin/test_TMC bin/test_CKMT
-# replicas: bin/make_all_sf_splines_replicas bin/calculate_all_dsdy_replicas bin/calculate_all_xs_replicas
 all: bin/calculate_xs bin/calculate_dsdy bin/calculate_dsdxdy
 test: bin/test_quick_eval
 structure_functions: bin/make_sf_grid bin/make_sf_splines bin/make_all_sf_splines

@@ -17,23 +17,6 @@
 
 namespace nuxssplmkr {
 
-// template<class T,double (T::*f)(double*)>
-// double KernelHelper(double* x,size_t dim, void* param){
-//   T* p = (T*) param;
-//   return (p->*f)(x);
-// }
-
-// template<class T,double (T::*f)(double)>
-// double KernelHelper(double x, void* param){
-//   T* p = (T*) param;
-//   return (p->*f)(x);
-// }
-
-// template<class T,double (T::*f)(double,double),int n,int m>
-// double HK(double x, void* param){
-//   T* p = (T*) param;
-//   return ((double)m)*((p->*f)(x,p->Q2))/pow(x,(double)n);
-// }
 template<class T,double (T::*f)(double,double),int n,int m>
 double HK(double x, void* param){
   T* p = (T*) param;
@@ -62,13 +45,13 @@ class StructureFunction {
 
 
         // PCAC constants (cite reno paper)
-        double PCAC_AL = 0.147;
-        double PCAC_BL = 0.265;
         double pion_mass = 135.0; // TODO: exact value
         double fpi = 0.93 * pion_mass;
 
         bool use_AlbrightJarlskog;
         bool save_splines = true;
+
+        double _Q2_cached = -1;
 
     public:
         StructureFunction(Configuration& _config);
@@ -79,6 +62,11 @@ class StructureFunction {
 
         double _kernel_Q2;
         double _kernel_x;
+
+        // Mode 0 = APFEL structure functions
+        // Mode 1 = Load SFs, do TMC
+        // Mode 2 = Load TMC-SFs, do CKMT/PCAC
+        int mode = 0;
 
         // ~ APFEL stuff ~
         void InitializeAPFEL();
@@ -130,21 +118,15 @@ class StructureFunction {
         void ConstructFONLL();
         std::tuple<double,double,double> EvaluateSFs(double x, double Q2);
         void Compute();
+
+        void LoadGrids(string inpath);
+        void LoadSplines(string inpath);
         void BuildGrids(string outpath);
+        void BuildGrids_v2(string outpath);
         void BuildSplines(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         
-        // TODO: Move to cross section class
-        double CrossSection(double x, double Q2);
-        double ds_dxdy(double x, double y, double Q2);
-        double ds_dxdy_LO(double x, double y, double E);
-        // double ds_dy(double x, double y, double Q2);
-        double Evaluate(double Q2, double x, double y);
-        double SigR_Nu_LO(double x, double y, map<int, double> dis);
-        double KernelXS(double * k);
-        // double TotalXS();
-
         // ~ Settings ~
         void Set_Target(string target_string);
         void Set_Projectile(string projectile_string);

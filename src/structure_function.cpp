@@ -272,7 +272,8 @@ double StructureFunction::HGeneric(double xi, double Q2){
     if (xi > 1.0) {
         return 0.0;
     }
-    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    double result, error;
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);    
+    double result, error;
     
     gsl_function F;
     Set_Q_APFEL(std::sqrt(Q2));
@@ -441,8 +442,9 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
         Q2_eval = SQ(config.CKMT.Q0); // get CKMT reference Q0
     }
 
-    if (config.SF.mass_scheme != "parton") {
+    if ((config.SF.mass_scheme != "parton") || (Q2_eval != _Q2_cached)) {
         Set_Q_APFEL(std::sqrt(Q2_eval));
+        _Q2_cached = Q2_eval;  // We cache this so we don't keep running the APFEL function
     }
 
     // Get F1/F2/F3
@@ -544,6 +546,10 @@ void StructureFunction::Compute() {
             sfs = EvaluateSFs(x, Q2);
         }
     }
+}
+
+void StructureFunction::LoadGrids(string inpath) {
+
 }
 
 void StructureFunction::BuildGrids(string outpath) {
@@ -768,6 +774,115 @@ void StructureFunction::BuildSplines(string outpath) {
         F1_spline.write_fits(outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
         F2_spline.write_fits(outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
         F3_spline.write_fits(outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".fits");
+    }
+}
+
+
+void StructureFunction::BuildGrids_v2(string outpath) {
+    const unsigned int Nx = config.SF.Nx;
+    const unsigned int NQ2 = config.SF.NQ2;
+
+    std::vector<double> x_arr;
+    std::vector<double> Q2_arr;
+
+    // Get the coefficients for parton calculation
+    if (config.SF.mass_scheme == "parton") {
+        GetCoefficients();
+    }
+
+    // Step sizes in log space
+    double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / NQ2;
+    double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / Nx;
+
+    std::cout << "log_Q2min = " << std::log10(config.SF.Q2min) << ", log_Q2max = " << std::log10(config.SF.Q2max) << std::endl;
+    std::cout << "log_xmin = " << std::log10(config.SF.xmin) << ", log_xmax = " << std::log10(config.SF.xmax) << std::endl;
+    std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
+
+    // setup grid stuff
+    string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+    string f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+    string f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+".grid";
+
+    std::ofstream f1_outfile;
+    f1_outfile.open(f1_grid_fn);
+    std::ofstream f2_outfile;
+    f2_outfile.open(f2_grid_fn);
+    std::ofstream f3_outfile;
+    f3_outfile.open(f3_grid_fn);
+
+    // Get the Q2 and x values
+    size_t N_samples = Nx * NQ2;
+    for ( double log_Q2 = std::log10(config.SF.Q2min); log_Q2<std::log10(config.SF.Q2max); log_Q2 += d_log_Q2 ) {
+        double powQ2 = std::pow( 10, log_Q2);
+        double Q2 = log_Q2;
+        Q2_arr.push_back(Q2);
+        f1_outfile << Q2 << " ";
+        f2_outfile << Q2 << " ";
+        f3_outfile << Q2 << " ";
+    }
+    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+
+    for ( double log_x = std::log10(config.SF.xmin); log_x<std::log10(config.SF.xmax); log_x += d_log_x ) {
+        double powx = std::pow( 10, log_x);
+        double x = log_x ;
+        x_arr.push_back(x);
+        f1_outfile << x << " ";
+        f2_outfile << x << " ";
+        f3_outfile << x << " ";
+    }
+    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+
+    // Collect SF values and write grids
+    for (unsigned int i = 0; i < NQ2; i++) {
+        double log_Q2 = Q2_arr.at(i);
+        double Q2 = std::pow(10.0, log_Q2);
+        if (config.general.debug) {
+            std::cout << "Q2 = " << Q2 << std::endl;
+        }
+
+        double Q2eval = Q2;
+        if ( (config.SF.enable_CKMT) && (Q2 < SQ(config.CKMT.Q0))) {
+            Q2eval = SQ(config.CKMT.Q0);
+        }
+
+        if (config.SF.mass_scheme != "parton") {
+            Set_Q_APFEL(std::sqrt(Q2eval));
+        }
+
+        for (unsigned int j = 0; j < Nx; j++) {
+            double log_x = x_arr.at(j);
+            double x = std::pow(10.0, log_x);
+
+            double _FL, _F1, _F2, _F3;
+            std::tie(_F1, _F2, _F3) = EvaluateSFs(x, Q2);
+
+            if(!std::isfinite(_F1)) {
+                std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F1 = 0.0;
+            }
+            if(!std::isfinite(_F2)) {
+                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F2 = 0.0;
+            }
+            if(!std::isfinite(_F3)) {
+                std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                _F3 = 0.0;
+            }
+
+            // Write grid data
+            f1_outfile << _F1;
+            f2_outfile << _F2;
+            f3_outfile << _F3;
+            if (j < Nx-1) {
+              f1_outfile << ",";
+              f2_outfile << ",";
+              f3_outfile << ",";
+            } else {
+              f1_outfile << "\n";
+              f2_outfile << "\n";
+              f3_outfile << "\n";
+            }
+        }
     }
 }
 

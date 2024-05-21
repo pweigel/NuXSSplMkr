@@ -1,7 +1,7 @@
 {
   "general": {
     "unique_name": "CSMS",
-    "debug": false
+    "debug": true
   },
 
   "PDF": {
@@ -26,12 +26,12 @@
     "enable_CKMT": false,
     "enable_PCAC": false,
 
-    "Nx": 400,
-    "NQ2": 500,
-    "xmin": 1e-9,
+    "Nx": 50,
+    "NQ2": 50,
+    "xmin": 1e-7,
     "xmax": 1.0,
     "Q2min": 1.0,
-    "Q2max": 1e12
+    "Q2max": 1e10
   },
 
   "CKMT": {

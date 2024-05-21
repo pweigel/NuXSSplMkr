@@ -1,6 +1,7 @@
 #include "NuXSSplMkr/configuration.h"
 #include "NuXSSplMkr/physconst.h"
 #include "NuXSSplMkr/structure_function.h"
+#include "NuXSSplMkr/spline_maker.h"
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
@@ -52,7 +53,12 @@ int main(int argc, char* argv[]){
 
     sf.InitializeAPFEL();
     // sf.BuildSplines(out_folder.string()); // Photospline
-    sf.BuildGrids(out_folder.string()); // Grid file
+    sf.BuildGrids_v2(out_folder.string()); // Grid file
+
+    // nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker(config);
+    // string gridinfile = data_folder + "/F1_neutrino_proton_light.grid";
+    // string fitsoutfile = data_folder + "/F1_neutrino_proton_light.fits";
+    // splmkr.MakeSpline(gridinfile, fitsoutfile);
 
     return 0;
 }
