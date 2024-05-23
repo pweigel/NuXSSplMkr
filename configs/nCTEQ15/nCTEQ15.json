@@ -1,7 +1,7 @@
 {
   "general": {
     "unique_name": "nCTEQ15_H",
-    "debug": true
+    "debug": false
   },
 
   "PDF": {
@@ -26,12 +26,12 @@
     "enable_CKMT": false,
     "enable_PCAC": false,
 
-    "Nx": 200,
+    "Nx": 300,
     "NQ2": 100,
-    "xmin": 5e-6,
+    "xmin": 1e-4,
     "xmax": 1.0,
-    "Q2min": 1.69,
-    "Q2max": 1e5
+    "Q2min": 0.1,
+    "Q2max": 1e6
   },
 
   "CKMT": {
@@ -61,13 +61,14 @@
   },
 
   "XS": {
+    "mode": 1,
     "enable_mass_terms": true,
 
     "integration": { 
       "xmin": 5e-6,
       "xmax": 1.0,
       "Q2min": 1.69,
-      "Q2max": 1e5
+      "Q2max": 1e6
     },
 
     "dynamic_W2_min": false
