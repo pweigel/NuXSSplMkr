@@ -4,7 +4,7 @@ LIST (APPEND MAIN_SOURCES
     ${PROJECT_SOURCE_DIR}/mains/grid2spline.cpp
     #${PROJECT_SOURCE_DIR}/mains/make_all_sf_splines.cpp
     #${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy.cpp
-    #${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
+    ${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_xs.cpp
 )
 

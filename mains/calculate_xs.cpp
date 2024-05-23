@@ -31,8 +31,8 @@ int main(int argc, char* argv[]){
     std::cout << "=============================================" << std::endl << std::endl;
 
     double logemin = 1;
-    double logemax = 3;
-    int NE = 50;
+    double logemax = 9;
+    int NE = 200;
     double dE = (logemax - logemin) / (NE-1);
 
     PhysConst* pc = new PhysConst();
@@ -78,13 +78,14 @@ int main(int argc, char* argv[]){
     for (int ei = 0; ei < NE; ei++) {
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         double _xs;
-        std::cout << "E [GeV] = " << std::pow(10, logemin + ei * dE) << std::endl;
+        std::cout << "E [GeV] = " << E / pc->GeV << std::endl;
         if (E / pc->GeV > 0) {
               _xs = xs->TotalXS(E);
         }
         else {
             _xs = -99;
         }
+        // std::cout << ", sigma/E =  " << _xs * 1e38 / (E / pc->GeV) << std::endl;
         outfile << E << "," << _xs << "\n";
     }
     outfile.close();

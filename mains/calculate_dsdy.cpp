@@ -48,23 +48,23 @@ int main(int argc, char* argv[]){
     CrossSection* xs = new CrossSection(config, ps);
 
     // load the three structure function fit files
-    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
+    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
     int NE = 200;
     int Ny = 100;
 
     double logemin = 1;
-    double logemax = 9;
+    double logemax = 3;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -6;
+    double logymin = -4;
     double logymax = 0;
     double dy = (logymax - logymin) / Ny;
 
     xs->Set_Lepton_Mass(pc->muon_mass);
-    xs->Load_Structure_Functions(f1, f2, f3);
+    xs->Load_Structure_Functions(data_folder);
 
     // ds/dy
     std::ofstream dsdy_outfile;
