@@ -11,12 +11,12 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     Set_Mode(_config.XS.mode);
 
     // TODO: Get this from the phase space
-    integral_min_x = config.XS.xmin;
-    integral_max_x = config.XS.xmax;
-    integral_min_Q2 = config.XS.Q2min * SQ(pc->GeV);
-    integral_max_Q2 = config.XS.Q2max * SQ(pc->GeV);
+    // integral_min_x = config.XS.xmin;
+    // integral_max_x = config.XS.xmax;
+    // integral_min_Q2 = config.XS.Q2min * SQ(pc->GeV);
+    // integral_max_Q2 = config.XS.Q2max * SQ(pc->GeV);
 
-    SetThresholdW2();
+    // SetThresholdW2();
 }
 
 void CrossSection::Set_Mode(int _mode) {
@@ -162,11 +162,7 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     double y = std::exp(k[1]);
 
     bool ps_valid = ps.Validate(ENU, x, y);
-    bool native_valid = PhaseSpaceIsGood(x, y, ENU);
-
-    if (use_phase_space && !ps_valid) {
-        return 0;
-    } else if (!use_phase_space && !native_valid) {
+    if (!ps_valid) {
         return 0;
     }
 
@@ -241,8 +237,6 @@ double CrossSection::ds_dxdy(double x, double y) {
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
-    // std::cout << ENU/ pc->GeV << " " << Q2/ SQ(pc->GeV) << " " << x << " " << y << std::endl;
-
     std::array<int, 2> F1_splc;
     std::array<int, 2> F2_splc;
     std::array<int, 2> F3_splc;
@@ -277,37 +271,6 @@ double CrossSection::ds_dxdy(double x, double y) {
     // }
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
-
-// double CrossSection::ds_dxdy(double x, double y) {
-//     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
-
-//     double s = 2.0 * M_iso * ENU + SQ(M_iso);
-//     double Q2 = (s - SQ(M_iso)) * x * y;
-
-//     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
-//     double propagator = SQ( MW2 / (Q2 + MW2) );
-//     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-
-//     double logQ2 = std::log10(Q2 / SQ(pc->GeV));
-//     double logx = std::log10(x);
-    
-//     double F1_val = F1_interpolator.interpolate(logQ2, logx);
-//     double F2_val = F2_interpolator.interpolate(logQ2, logx);
-//     double F3_val = F3_interpolator.interpolate(logQ2, logx);
-
-//     double term1, term2, term3;
-//     if (config.XS.enable_mass_terms) {
-//         term1 = y*y*x + SQ(M_l) * y / (2 * ENU * M_iso) * F1_val;
-//         term2 = ((1.0 - SQ(M_l/ENU)/4.0) - (1.0 + M_iso * x / (2.0 * ENU)*y)) * F2_val;
-//         term3 = config.cp_factor * ( x*y*(1-y/2) - SQ(M_l) * y / (4.0 * ENU * M_iso) ) * F3_val;
-//     } else {
-//         term1 = y*y*x * F1_val;
-//         term2 = ( 1 - y ) * F2_val;
-//         term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
-//     }
-//     double xs = prefactor * jacobian * propagator * (term1 + term2 + term3);
-//     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
-// }
 
 double CrossSection::_ds_dxdy_partonic(double* k) {
     double x = std::exp(k[0]);
@@ -400,11 +363,7 @@ double CrossSection::ds_dy_kernel(double k) {
     double x = std::exp(k);
 
     bool ps_valid = ps.Validate(ENU, x, kernel_y);
-    bool native_valid = PhaseSpaceIsGood(x, kernel_y, ENU);
-
-    if (use_phase_space && !ps_valid) {
-        return 0;
-    } else if (!use_phase_space && !native_valid) {
+    if (!ps_valid) {
         return 0;
     }
 
@@ -463,13 +422,6 @@ double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
     double s = 2.0 * M_iso * E + SQ(M_iso);
     
-    // if (s < integral_min_Q2){
-    //     return 0;
-    // }
-
-    // if (s < min_W2) {
-    //     return 0;
-    // }
     double xmin = ps.x_min;
     double xmax = ps.x_max;
     if (!ps.Validate(E)) {
@@ -494,13 +446,13 @@ double CrossSection::TotalXS(double E){
         F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdy_kernel>, dim, this};
     }
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-
-    // Is 1k good enough for warmup? -- Let's try 10k! (04/15/24)
     gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
 
     do
     {
-        gsl_monte_vegas_integrate (&F, xl, xu, dim, calls, r, s_vegas, &res, &err);
+        gsl_monte_vegas_integrate (&F, xl, xu, dim, calls/5, r, s_vegas, &res, &err);
+        // printf ("result = % .6e sigma = % .6e "
+        //         "chisq/dof = %.2f\n", res, err, gsl_monte_vegas_chisq (s_vegas));
     }
     while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
 
@@ -510,93 +462,32 @@ double CrossSection::TotalXS(double E){
     return res;
 }
 
-std::tuple<double, double> CrossSection::dsdy_xlims(double s, double y) {
-    double xmin = 0.0;
-    double xmax = 1.0;
+// std::tuple<double, double> CrossSection::dsdy_xlims(double s, double y) {
+//     double xmin = 0.0;
+//     double xmax = 1.0;
 
-    // Q^2 = s x y > Qmin^2 --> x > Qmin^2 / s y
-    xmin = max(xmin, integral_min_Q2 / (s * y));
-    // W^2 = s y (1 - x) --> x < 1 - Wmin^2 / (2 m E y)
-    xmax = min(xmax, 1.0 - min_W2 / (s * y));
-    // Q^2 = s x y < Qmax^2 --> x < Qmax^2 / s y
-    xmax = min(xmax, integral_max_Q2 / (s * y));
+//     // Q^2 = s x y > Qmin^2 --> x > Qmin^2 / s y
+//     xmin = max(xmin, integral_min_Q2 / (s * y));
+//     // W^2 = s y (1 - x) --> x < 1 - Wmin^2 / (2 m E y)
+//     xmax = min(xmax, 1.0 - min_W2 / (s * y));
+//     // Q^2 = s x y < Qmax^2 --> x < Qmax^2 / s y
+//     xmax = min(xmax, integral_max_Q2 / (s * y));
 
-    return std::make_tuple(xmin, xmax);
-}
+//     return std::make_tuple(xmin, xmax);
+// }
 
-void CrossSection::SetThresholdW2() {
+// void CrossSection::SetThresholdW2() {
 
-    double lowest_W2;
-    // If we enable the shallow region, we include the low W^2 region!
-    if (config.XS.enable_shallow_region) {
-        lowest_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
-    } else {
-        lowest_W2 = 2.0 * SQ(pc->GeV);
-    }
+//     double lowest_W2;
+//     // If we enable the shallow region, we include the low W^2 region!
+//     if (config.XS.enable_shallow_region) {
+//         lowest_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
+//     } else {
+//         lowest_W2 = 2.0 * SQ(pc->GeV);
+//     }
 
-    min_W2 = lowest_W2;
-    // Need to think this one through -PW
-    // switch(config.sf_type) {
-    //     case SFType::total:  min_W2 = lowest_W2; break; // TODO
-    //     case SFType::light:  min_W2 = lowest_W2; break; // (m_N + m_pi)^2
-    //     // case SFType::light:  min_W2 = SQ(0.938 + 0.13957) * SQ(pc->GeV); break; // (m_N + m_pi)^2
-    //     // case SFType::charm:  min_W2 = SQ( (0.938 + 1.3) * pc->GeV); break; // (m_N + m_c)^2
-    //     // case SFType::bottom: min_W2 = SQ( (0.938 + 4.5) * pc->GeV); break; // (m_N + m_b)^2
-    //     // case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-    //     case SFType::charm:  min_W2 = SQ( (0.938 + 1.870) * pc->GeV); break; // (m_N + m_D)^2
-    //     case SFType::bottom: min_W2 = SQ( (0.938 + 5.279) * pc->GeV); break; // (m_N + m_B)^2
-    //     case SFType::top:    min_W2 = SQ( (0.938 + 173.0) * pc->GeV); break; // (m_N + m_t)^2, TODO: get right val
-    //     default:             min_W2 = lowest_W2; break; // TODO
-    // }
-}
-
-bool CrossSection::PhaseSpaceIsGood_Q2(double x, double Q2, double E) {
-    Set_Neutrino_Energy(E);
-    double s = 2.0 * M_iso * E + SQ(M_iso);
-
-    // First check that the x is within the bounds of the SF grids  
-    if ((x < config.SF.xmin) || (x > config.SF.xmax)) {
-        return false;
-    }
-
-    // Check that the Q2 is within the bounds of the SF grids
-    if ( (Q2 < (config.SF.Q2min * SQ(pc->GeV))) || (Q2 > (config.SF.Q2max * SQ(pc->GeV))) ) {
-        return false;
-    }
-    
-    // integral_max_Q2 = s;
-    // Check that the Q2 is within the integration bounds
-    if ( ( Q2 < integral_min_Q2 ) || (Q2 > integral_max_Q2) ) {
-        return false;
-    }
-
-    // Make sure y is less than 1
-    double y = Q2 / (s * x);
-    if (y > 1) {
-        return false;
-    }
-    
-    // Calculate W^2 = Q^2 (1/x - 1) + M_N^2
-    double W2 =  Q2 * (1.0 - x) / (x + 1e-15) + SQ(M_iso); // TODO: target mass
-
-    // try to fix top? this is the fake threshold from the pdfs
-    if ( (config.sf_type == SFType::top) && ( Q2 < 34 * SQ(pc->GeV))) {
-        return false;
-    }
-
-    // Check W^2 threshold
-    if ( W2 < min_W2 ) {
-        return false;
-    }
-
-    return true;
-}
-
-bool CrossSection::PhaseSpaceIsGood(double x, double y, double E) {
-    double s = 2.0 * M_iso * E + SQ(M_iso);
-    double Q2 = (s - SQ(M_iso)) * x * y; 
-    return PhaseSpaceIsGood_Q2(x, Q2, E);
-}
+//     min_W2 = lowest_W2;
+// }
 
 /*
 Radiative Corrections

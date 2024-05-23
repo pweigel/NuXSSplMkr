@@ -519,19 +519,14 @@ double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
     double _R = R_CKMT(x, Q2);
     // Eq. 2 from Whitlow et al:
     // R = (F2 / (2xF1)) ( 1 + 4 M^2 x^2/Q^2) - 1
-    // R + 1 = 
     return _F2 * (1.0 + 4.0 * SQ(m * x) / (Q2 * SQ(pc->GeV))) / (2.0 * x * (_R + 1.0));
 }
-
-// double StructureFunction::FL_PCAC(double x, double Q2) {
-//     return 0.0;
-// }
 
 double StructureFunction::F2_PCAC(double x, double Q2) {
     // Jeong/Reno Paper: https://arxiv.org/pdf/2307.09241.pdf
     double delta = CKMT_Delta(Q2);
     double n = CKMT_n(Q2);
-    double M_PCAC = 0.8;
+    double M_PCAC = 0.8; // GeV
     double f_PCAC = 1.0 / SQ(1 + Q2 / SQ(M_PCAC));
     double term1 = config.PCAC.A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), delta);
     double term2 = config.PCAC.B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0-x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR - 1.0) * (1.0 + config.CKMT.F2f * (1.0 - x));
@@ -569,9 +564,23 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
             if (!splines_loaded){
                 throw std::runtime_error("Splines have not been loaded!");
             }
-            _F1 = F1_TMC(x, Q2);
-            _F2 = F2_TMC(x, Q2);
-            _F3 = F3_TMC(x, Q2);
+
+            if (x > 1e-3) {
+                _F1 = F1_TMC(x, Q2);
+                _F2 = F2_TMC(x, Q2);
+                _F3 = F3_TMC(x, Q2);
+            } else {
+                std::array<int, 2> spline_centers;
+                std::array<double, 2> pt{{std::log10(Q2), std::log10(x)}};
+                spline_F1.searchcenters(pt.data(), spline_centers.data());
+                spline_F2.searchcenters(pt.data(), spline_centers.data());
+                spline_F3.searchcenters(pt.data(), spline_centers.data());
+
+                _F1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
+                _F2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
+                _F3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
+            }
+
             break;
         }
         case 3: // CKMT
@@ -606,7 +615,7 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
                 _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
 
-                std::cout << "(" << Q2 << ", " << x << "): " << _F1 / f1 << std::endl;
+                // std::cout << "(" << Q2 << ", " << x << "): " << _F1 / f1 << std::endl;
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -644,12 +653,13 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
 
                 double _F2_PCAC = F2_PCAC(x, Q2);
                 double _F2_PCAC_Q0 = F2_PCAC(x, SQ(config.CKMT.Q0));
-                _F2_CKMT += _F2_PCAC;
+                // _F2_CKMT += _F2_PCAC;
                 // _F2_CKMT_Q0 += _F2_PCAC_Q0;
 
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
-                _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
+                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+                // std::cout << _F2_PCAC / (_F2_CKMT * (f2 / _F2_CKMT_Q0)) << std::endl;
             } else {
                 _F1 = f1;
                 _F2 = f2;

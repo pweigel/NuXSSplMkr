@@ -57,9 +57,6 @@ class StructureFunction {
         photospline::splinetable<> spline_F2;
         photospline::splinetable<> spline_F3;
 
-        // Mode 0 = APFEL structure functions
-        // Mode 1 = Load SFs, do TMC
-        // Mode 2 = Load TMC-SFs, do CKMT/PCAC
         int mode = 0;
         string insuffix = "";
         string outsuffix = "";

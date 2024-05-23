@@ -4,6 +4,7 @@
 #include "configuration.h"
 #include "physconst.h"
 #include "tools.h"
+#include "math.h"
 
 namespace nuxssplmkr {
 
