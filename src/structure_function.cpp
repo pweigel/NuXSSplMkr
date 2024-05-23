@@ -562,7 +562,6 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
             _F2 = F2(x, Q2);
             _F1 = (_F2 - _FL) / (2. * x);
             _F3 = F3(x, Q2);
-            std::cout << _F1 << std::endl;
             break;
         }
         case 2: // TMC
@@ -589,14 +588,15 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
             spline_F2.searchcenters(pt.data(), spline_centers.data());
             spline_F3.searchcenters(pt.data(), spline_centers.data());
 
+            // values of the TMC structure functions
             double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
             double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
             double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
 
-            if (Q2 <= SQ(config.CKMT.Q0)) {
-                double _F2_CKMT    = F2_CKMT(x, Q2);
-                double _F3_CKMT    = F3_CKMT(x, Q2);
-                double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+            if (Q2 <= SQ(config.CKMT.Q0)) {  // if below Q0, apply CKMT
+                double _F2_CKMT = F2_CKMT(x, Q2);
+                double _F3_CKMT = F3_CKMT(x, Q2);
+                double _F1_CKMT = F1_CKMT(_F2_CKMT, x, Q2);
 
                 double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
                 double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0));
@@ -606,7 +606,7 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
                 _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
 
-                std::cout << _F2_CKMT << ", " << _F2_CKMT_Q0 << ", " << f2 << std::endl;
+                std::cout << "(" << Q2 << ", " << x << "): " << _F1 / f1 << std::endl;
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -645,7 +645,7 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
                 double _F2_PCAC = F2_PCAC(x, Q2);
                 double _F2_PCAC_Q0 = F2_PCAC(x, SQ(config.CKMT.Q0));
                 _F2_CKMT += _F2_PCAC;
-                _F2_CKMT_Q0 += _F2_PCAC_Q0;
+                // _F2_CKMT_Q0 += _F2_PCAC_Q0;
 
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
                 _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);

@@ -91,6 +91,10 @@ class CrossSection {
 
         void SetThresholdW2();
 
+        int mode;
+        string insuffix;
+        string outsuffix;
+
     public:
         CrossSection(Configuration& _config, PhaseSpace& _ps);
         ~CrossSection() {};
@@ -136,6 +140,7 @@ class CrossSection {
         Grid Load_Grid(string path);
 
         void Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path);
+        void Load_Structure_Functions(string inpath);
         void Load_F1(string path);
         void Load_F2(string path);
         void Load_F3(string path);
@@ -165,6 +170,7 @@ class CrossSection {
         // photospline::splinetable<> F3cM0, F3bM0, F3tM0;
 
         // ~ Settings ~
+        void Set_Mode(int _mode);
         void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
 };

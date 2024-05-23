@@ -8,6 +8,7 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     pc = new nuxssplmkr::PhysConst();
     M_iso = pc->isoscalar_mass;
     rc_prefactor = (pc->alpha / (2.0 * M_PI));
+    Set_Mode(_config.XS.mode);
 
     // TODO: Get this from the phase space
     integral_min_x = config.XS.xmin;
@@ -18,7 +19,29 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     SetThresholdW2();
 }
 
+void CrossSection::Set_Mode(int _mode) {
+    mode = _mode;
+
+    switch (mode) {
+        case 0: {insuffix = ""; outsuffix = ""; break;}
+        case 1: {insuffix = ""; outsuffix = ""; break;}
+        case 2: {insuffix = ""; outsuffix = "_TMC"; break;}
+        case 3: {insuffix = "_TMC"; outsuffix = "_CKMT"; break;}
+        case 4: {insuffix = "_TMC"; outsuffix = "_PCAC"; break;}
+    }
+}
+
 void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
+    Load_F1(sf1_path);
+    Load_F2(sf2_path);
+    Load_F3(sf3_path);
+}
+
+void CrossSection::Load_Structure_Functions(string inpath) {
+    string sf1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+    string sf2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+    string sf3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+
     Load_F1(sf1_path);
     Load_F2(sf2_path);
     Load_F3(sf3_path);
