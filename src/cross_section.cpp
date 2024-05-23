@@ -25,9 +25,9 @@ void CrossSection::Set_Mode(int _mode) {
     switch (mode) {
         case 0: {insuffix = ""; outsuffix = ""; break;}
         case 1: {insuffix = ""; outsuffix = ""; break;}
-        case 2: {insuffix = ""; outsuffix = "_TMC"; break;}
-        case 3: {insuffix = "_TMC"; outsuffix = "_CKMT"; break;}
-        case 4: {insuffix = "_TMC"; outsuffix = "_PCAC"; break;}
+        case 2: {insuffix = "_TMC"; outsuffix = "_TMC"; break;}
+        case 3: {insuffix = "_CKMT"; outsuffix = "_CKMT"; break;}
+        case 4: {insuffix = "_PCAC"; outsuffix = "_PCAC"; break;}
     }
 }
 
@@ -41,7 +41,9 @@ void CrossSection::Load_Structure_Functions(string inpath) {
     string sf1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
     string sf2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
     string sf3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-
+    std::cout << sf1_path << std::endl;
+    std::cout << sf2_path << std::endl;
+    std::cout << sf3_path << std::endl;
     Load_F1(sf1_path);
     Load_F2(sf2_path);
     Load_F3(sf3_path);

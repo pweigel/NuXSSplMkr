@@ -27,8 +27,8 @@
     "enable_PCAC": false,
 
     "Nx": 300,
-    "NQ2": 100,
-    "xmin": 1e-4,
+    "NQ2": 200,
+    "xmin": 5e-6,
     "xmax": 1.0,
     "Q2min": 0.1,
     "Q2max": 1e6
@@ -61,13 +61,14 @@
   },
 
   "XS": {
-    "mode": 1,
+    "mode": 4,
     "enable_mass_terms": true,
+    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 5e-6,
       "xmax": 1.0,
-      "Q2min": 1.69,
+      "Q2min": 0.1,
       "Q2max": 1e6
     },
 
