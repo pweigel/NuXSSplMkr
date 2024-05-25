@@ -11,7 +11,7 @@
 using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
-    if (argc < 2) {
+    if (argc < 6) {
         std::cout << "Not enough inputs." << std::endl;
         return 0;
     }
@@ -19,15 +19,14 @@ int main(int argc, char* argv[]){
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
-
-    const int replica = 0; // TODO: make this an input
+    const unsigned int replica = std::stoi(argv[5]);
 
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
     Configuration config = Configuration(config_path);
     config.Populate();
     config.Set_Replica(replica);
-    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
 
     // Make the cross sections folder if it doesn't exist

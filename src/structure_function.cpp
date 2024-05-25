@@ -718,16 +718,16 @@ void StructureFunction::BuildGrids(string outpath) {
     std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
 
     // setup grid stuff
-    string f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
-    string f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
-    string f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix+".grid";
+    f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
 
     std::ofstream f1_outfile;
-    f1_outfile.open(f1_grid_fn);
+    f1_outfile.open(f1_grid_fn + ".grid");
     std::ofstream f2_outfile;
-    f2_outfile.open(f2_grid_fn);
+    f2_outfile.open(f2_grid_fn + ".grid");
     std::ofstream f3_outfile;
-    f3_outfile.open(f3_grid_fn);
+    f3_outfile.open(f3_grid_fn + ".grid");
 
     // Get the Q2 and x values
     // size_t N_samples = Nx * NQ2;

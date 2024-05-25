@@ -72,6 +72,10 @@ class StructureFunction {
         double _kernel_x;
         double _kernel_xi;
 
+        string f1_grid_fn;
+        string f2_grid_fn;
+        string f3_grid_fn;
+
         // ~ APFEL stuff ~
         void InitializeAPFEL();
 

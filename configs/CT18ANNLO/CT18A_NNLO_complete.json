@@ -1,6 +1,7 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_complete",
+    "unique_name": "CT18A_NNLO",
+    "data_path": "/data/submit/pweigel/cross_sections",
     "debug": false
   },
 
@@ -23,14 +24,14 @@
     "small_x_order": "NLL",
 
     "enable_TMC": false,
-    "enable_CKMT": true,
-    "enable_PCAC": true,
+    "enable_CKMT": false,
+    "enable_PCAC": false,
 
     "Nx": 400,
     "NQ2": 500,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 1e-2,
+    "Q2min": 0.01,
     "Q2max": 1e10
   },
 
@@ -61,13 +62,14 @@
   },
 
   "XS": {
+    "mode": 4,
     "enable_mass_terms": true,
     "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
-      "Q2min": 1e-1,
+      "Q2min": 0.01,
       "Q2max": 1e10
     }
   },

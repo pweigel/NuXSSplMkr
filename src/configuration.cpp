@@ -12,6 +12,7 @@ Configuration::Configuration(string config_path) {
 
 void Configuration::Populate() {
     general.unique_name = j["general"].at("unique_name");
+    general.data_path = j["general"].value("data_path", "../data");
     general.debug = j["general"].value("debug", false);
 
     SF.mass_scheme = j["SF"].at("mass_scheme");

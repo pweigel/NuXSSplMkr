@@ -36,6 +36,7 @@ static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"ligh
 
 struct General_settings {
     string unique_name;
+    string data_path;
     bool debug;
 };
 

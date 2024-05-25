@@ -10,10 +10,10 @@
 using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
-    if (argc < 5) {
+    if (argc < 6) {
         std::cout << "Not enough inputs!" << std::endl;
         return 1;
-    } else if (argc > 5) {
+    } else if (argc > 6) {
         std::cout << "Too many inputs!" << std::endl;
         return 1;
     }
@@ -21,6 +21,7 @@ int main(int argc, char* argv[]){
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string sf_type = argv[4]; // Which SFs to use total, light, charm, ..
+    const unsigned int replica = std::stoi(argv[5]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -28,6 +29,7 @@ int main(int argc, char* argv[]){
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
     std::cout << "SF Type: " << sf_type << std::endl;
+    std::cout << "Replica: " << replica << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     double logemin = 1;
@@ -40,7 +42,7 @@ int main(int argc, char* argv[]){
     Configuration config = Configuration(config_path);
     config.Populate();
     config.Set_Replica(config.pdf.replica);
-    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
 
     // Make the cross sections folder if it doesn't exist
@@ -60,10 +62,6 @@ int main(int argc, char* argv[]){
 
     PhaseSpace ps(config);
     ps.Print();
-
-    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + sf_type + ".fits";
-    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + sf_type + ".fits";
-    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + sf_type + ".fits";
 
     CrossSection* xs = new CrossSection(config, ps);
     if (config.SF.mass_scheme != "parton") {
@@ -85,7 +83,6 @@ int main(int argc, char* argv[]){
         else {
             _xs = -99;
         }
-        // std::cout << ", sigma/E =  " << _xs * 1e38 / (E / pc->GeV) << std::endl;
         outfile << E << "," << _xs << "\n";
     }
     outfile.close();

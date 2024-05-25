@@ -1,6 +1,7 @@
 {
   "general": {
     "unique_name": "CT18A_NNLO",
+    "data_path": "/data/submit/pweigel/cross_sections",
     "debug": false
   },
 
@@ -61,8 +62,9 @@
   },
 
   "XS": {
+    "mode": 4,
     "enable_mass_terms": true,
-    "enable_shallow_region": false,
+    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,

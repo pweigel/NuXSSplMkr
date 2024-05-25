@@ -19,6 +19,7 @@ int main(int argc, char* argv[]){
     const std::string sf_type = argv[4]; // total, light, charm, ..
 
     const unsigned int mode = std::stoi(argv[5]);
+    const unsigned int replica = std::stoi(argv[6]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -27,16 +28,15 @@ int main(int argc, char* argv[]){
     std::cout << "Target: " << target << std::endl;
     std::cout << "SF Type: " << sf_type << std::endl;
     std::cout << "Mode: " << mode << std::endl;
+    std::cout << "Replica: " << replica << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
-
-    int replica = 0;
 
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
     config.Populate();
     config.Set_Replica(replica);
-    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
     
     // Make the sf folder if it doesn't exist
@@ -61,6 +61,12 @@ int main(int argc, char* argv[]){
         sf.InitializeAPFEL();
     }
     sf.BuildGrids(data_folder); // Grid file
+
+    // Spline the structure functions
+    nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker();
+    splmkr.MakeSpline(sf.f1_grid_fn+".grid", sf.f1_grid_fn+".fits");
+    splmkr.MakeSpline(sf.f2_grid_fn+".grid", sf.f2_grid_fn+".fits");
+    splmkr.MakeSpline(sf.f3_grid_fn+".grid", sf.f3_grid_fn+".fits");
 
     return 0;
 }
