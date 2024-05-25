@@ -13,7 +13,7 @@ rcParams['grid.color']            = 'black'
 rcParams['grid.alpha']            = 0.10
 rcParams['grid.linestyle']        = '-'
 
-rcParams['axes.grid']             = False
+rcParams['axes.grid']             = True
 rcParams['axes.linewidth']        = 1.5
 rcParams['axes.labelpad']         = 14.0
 rcParams['axes.labelsize']        = 30.0
@@ -60,9 +60,11 @@ def n_CKMT(Q2):
 def Delta_CKMT(Q2):
     return CKMT_Delta0 * (1.0 + 2.0 * Q2 / (Q2 + CKMT_d))
 
-## nu F2
-CKMT_A = 0.5967
-CKMT_B = 2.7145
+# CKMT_A = 0.5967
+# CKMT_B = 2.7145
+# CKMT_f = 0.5962
+CKMT_A = 9.3995e-3
+CKMT_B = 2.4677
 CKMT_f = 0.5962
 def CKMT_SF(x, Q2):
     _delta = Delta_CKMT(Q2)
@@ -86,42 +88,61 @@ def CKMT_F1(x, Q2):
     _f2 = CKMT_SF(x, Q2)
     _r = CKMT_R(x, Q2)
     return _f2 * (1 + 4*(0.938**2 * x / Q2)) / (2 * x * (_r + 1))
-    
-    
+  
+x_values = np.logspace(np.log10(1e-3), np.log10(5e-1), 101)
+
 fig = plt.figure(figsize=(12,9))
 ax = fig.add_subplot(111)
-
-Q2 = 2.0
-x_values = np.logspace(np.log10(5e-3), np.log10(5e-1), 101)
-
-f2 = CKMT_SF(x_values, Q2)
-f1 = CKMT_F1(x_values, Q2)
-
-## nu xF3
-CKMT_A = 9.3995e-3
-CKMT_B = 2.4677
-CKMT_f = 0.5962
-def CKMT_SF(x, Q2):
-    _delta = Delta_CKMT(Q2)
-    _n = n_CKMT(Q2)
-    term1 = CKMT_A * x**(-_delta) * (1.0 - x)**(_n + 4.0)
-    term2 = (Q2 / (Q2 + CKMT_a))**(1+_delta)
-    
-    term3 = CKMT_B * x**(1.0 - CKMT_AlphaR) * (1.0 - x)**(_n)
-    term4 = (Q2 / (Q2 + CKMT_b))**(CKMT_AlphaR) * (1.0 + CKMT_f*(1.0 - x))
-
-    return term1*term2 + term3*term4
-
-f3 = CKMT_SF(x_values, Q2)
-
-ax.plot(x_values,2* x_values * f1, linewidth=3, label='2xF1')
-# ax.plot(x_values, f2 / (2*x_values), linewidth=3, label='F2/2x')
-ax.plot(x_values, f2, linewidth=3, label='F2')
-ax.plot(x_values, f3, linewidth=3, label='F3')
-ax.set_xlim([5e-3, 5e-1])
-ax.set_ylim([0, 2.5])
+print(CKMT_SF(x_values, 4.0))
+# ax.plot(x_values, CKMT_SF(x_values, 4.0), label=r'$Q^2=4.0~\textrm{GeV}^2$', linewidth=3)
+ax.plot(x_values, CKMT_SF(x_values, 2.0), label=r'$Q^2=2.0~\textrm{GeV}^2$', linewidth=3)
+ax.plot(x_values, CKMT_SF(x_values, 1.0), label=r'$Q^2=1.0~\textrm{GeV}^2$', linewidth=3)
+ax.plot(x_values, CKMT_SF(x_values, 0.1), label=r'$Q^2=0.1~\textrm{GeV}^2$', linewidth=3)
+ax.plot([5e-3, 5e-3], [0, 10], color='k', alpha=0.33, linestyle='--')
+ax.set_xlabel(r'$x$')
+ax.set_ylabel(r'$F_{2}^{\rm{CKMT}}(x,Q^2)$')
 ax.set_xscale('log')
-
+ax.set_xlim([5e-3, 5e-1])
+ax.set_ylim([0, 1.2])
+# ax.set_ylim([1e-1, 10])
+# ax.set_yscale('log')
 ax.legend()
-
+plt.tight_layout()
 plt.savefig('9_ckmt_test.pdf')
+    
+# fig = plt.figure(figsize=(12,9))
+# ax = fig.add_subplot(111)
+
+# Q2 = 1.0
+
+# f2 = CKMT_SF(x_values, Q2)
+# f1 = CKMT_F1(x_values, Q2)
+
+# ## nu xF3
+# CKMT_A = 9.3995e-3
+# CKMT_B = 2.4677
+# CKMT_f = 0.5962
+# def CKMT_SF(x, Q2):
+#     _delta = Delta_CKMT(Q2)
+#     _n = n_CKMT(Q2)
+#     term1 = CKMT_A * x**(-_delta) * (1.0 - x)**(_n + 4.0)
+#     term2 = (Q2 / (Q2 + CKMT_a))**(1+_delta)
+    
+#     term3 = CKMT_B * x**(1.0 - CKMT_AlphaR) * (1.0 - x)**(_n)
+#     term4 = (Q2 / (Q2 + CKMT_b))**(CKMT_AlphaR) * (1.0 + CKMT_f*(1.0 - x))
+
+#     return term1*term2 + term3*term4
+
+# f3 = CKMT_SF(x_values, Q2)
+
+# ax.plot(x_values,2* x_values * f1, linewidth=3, label='2xF1')
+# # ax.plot(x_values, f2 / (2*x_values), linewidth=3, label='F2/2x')
+# ax.plot(x_values, f2, linewidth=3, label='F2')
+# ax.plot(x_values, f3, linewidth=3, label='F3')
+# ax.set_xlim([5e-3, 5e-1])
+# ax.set_ylim([0, 2.5])
+# ax.set_xscale('log')
+
+# ax.legend()
+
+# plt.savefig('9_ckmt_test.pdf')

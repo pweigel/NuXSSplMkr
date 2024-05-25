@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
+import scipy.integrate
 
 rcParams['font.family']           = 'serif'
 rcParams['font.serif']            = 'Computer Modern Roman'
@@ -36,30 +37,44 @@ rcParams['legend.title_fontsize'] = 20
 rcParams['legend.fontsize']       = 20
 
 def load_file(fname):
-    energies = []
+    # energies = []
     dsdy = []
     with open(fname, 'r') as f:
-        for line in f.readlines():
+        lines = f.readlines()
+        energies = np.array([float(x) for x in lines[0].rstrip('\n').split(',')[1:]]) / 1e9
+        yvals = np.array([float(x) for x in lines[1].rstrip('\n').split(',')[1:]])
+        for line in lines[2:]:
             d = [float(x) for x in line.rstrip('\n').split(',')]
-            energies.append(d[0])
-            dsdy.append(np.array(d[1:]))
-    return np.array(energies), 10**np.array(dsdy)
+            # energies.append(d[0])
+            dsdy.append(np.array(d))
+    return np.array(energies), np.array(yvals), np.array(dsdy)
 
 
 if __name__ == '__main__':
-    base_path = '/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections'
+    base_path = '/work/submit/pweigel/icecube/src/NuXSSplMkr/data/CT18A_NNLO/replica_0/cross_sections'
     
-    energies, dsdy = load_file(base_path + '/dsdy_neutrino_proton_light.out')
-    print(energies.shape)
-    print(dsdy.shape)
+    energies, y_values, dsdy = load_file(base_path + '/dsdy_neutrino_proton_total.out')
+    # print(energies.shape)
+    # print(dsdy.shape)
     
-    y_values = np.logspace(-6, 0, 100)
     fig = plt.figure(figsize=(12,9))
     ax = fig.add_subplot(111)
     
-    print(energies[50])
-    ax.plot(y_values, dsdy[50, :])
-    ax.plot(y_values, dsdy[60, :])
-    ax.plot(y_values, dsdy[70, :])
+    print(energies[-1])
+    energies, y_values, dsdy = load_file(base_path + '/dsdy_antineutrino_proton_total.out')
+    proton = scipy.integrate.simpson(dsdy[0, :], x=y_values)
+    # print(proton)
+
+    ax.plot(y_values, dsdy[0, :])
+    ax.plot(y_values, dsdy[10, :])
+    ax.plot(y_values, dsdy[20, :])
+    energies, y_values, dsdy = load_file(base_path + '/dsdy_antineutrino_neutron_total.out')
+    neutron = scipy.integrate.simpson(dsdy[0, :], x=y_values)
+    
+    ax.plot(y_values, dsdy[0, :], linestyle='--')
+    ax.plot(y_values, dsdy[10, :], linestyle='--')
+    ax.plot(y_values, dsdy[20, :], linestyle='--')
+    
+    print(0.5 * (proton + neutron))
     
     plt.savefig('4_plot.png')
