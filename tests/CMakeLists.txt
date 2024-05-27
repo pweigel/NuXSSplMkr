@@ -1,14 +1,8 @@
-LIST (APPEND MAIN_SOURCES
-    #${PROJECT_SOURCE_DIR}/mains/make_sf_splines.cpp
-    ${PROJECT_SOURCE_DIR}/mains/make_sf_grid.cpp
-    ${PROJECT_SOURCE_DIR}/mains/grid2spline.cpp
-    #${PROJECT_SOURCE_DIR}/mains/make_all_sf_splines.cpp
-    ${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy.cpp
-    ${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
-    ${PROJECT_SOURCE_DIR}/mains/calculate_xs.cpp
+LIST (APPEND TEST_SOURCES
+    ${PROJECT_SOURCE_DIR}/tests/test_evolution.cpp
 )
 
-foreach(SOURCE ${MAIN_SOURCES})
+foreach(SOURCE ${TEST_SOURCES})
     # Get the file name without the extension
     get_filename_component(EXE_NAME ${SOURCE} NAME_WE)
 

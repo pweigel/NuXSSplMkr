@@ -109,5 +109,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wunused")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 add_subdirectory(mains)
+add_subdirectory(tests)
 
 install(TARGETS NuXSSplMkr RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
