@@ -1,7 +1,7 @@
 {
   "general": {
     "unique_name": "CT18A_NNLO",
-    "data_path": "/data/submit/pweigel/cross_sections",
+    "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
@@ -20,7 +20,7 @@
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "small_x_resummation": false,
+    "enable_small_x": true,
     "small_x_order": "NLL",
 
     "enable_TMC": false,
@@ -31,8 +31,8 @@
     "NQ2": 500,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 1.69,
-    "Q2max": 1e10
+    "Q2min": 3.0,
+    "Q2max": 1e13
   },
 
   "CKMT": {
@@ -70,7 +70,7 @@
       "xmin": 1e-9,
       "xmax": 1.0,
       "Q2min": 1.69,
-      "Q2max": 1e10
+      "Q2max": 1e13
     }
   },
 

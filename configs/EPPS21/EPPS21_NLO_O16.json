@@ -19,7 +19,7 @@
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "small_x_resummation": false,
+    "enable_small_x": true,
     "small_x_order": "NLL",
 
     "enable_TMC": false,
@@ -31,7 +31,7 @@
     "xmin": 1e-9,
     "xmax": 1.0,
     "Q2min": 1.69,
-    "Q2max": 1e10
+    "Q2max": 1e13
   },
 
   "CKMT": {
@@ -56,17 +56,20 @@
   },
 
   "PCAC": {
-
+    "A": 0.147,
+    "B": 0.265
   },
 
   "XS": {
+    "mode": 4,
     "enable_mass_terms": true,
+    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
-      "Q2min": 1.69,
-      "Q2max": 1e10
+      "Q2min": 0.01,
+      "Q2max": 1e13
     }
   },
 

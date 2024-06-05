@@ -1,25 +1,26 @@
 {
   "general": {
-    "unique_name": "EPPS21_NLO_O16_nocharm",
+    "unique_name": "CT18_NNLO_nf6_sx",
+    "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "EPPS21nlo_CT18Anlo_O16_nocharm",
+    "pdfset": "CT18NNLO_nf6_sx",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-B",
+    "mass_scheme": "FONLL-C",
     "disable_top": false,
-    "perturbative_order": 1,
+    "perturbative_order": 2,
     "DIS_process": "CC",
 
     "enable_FONLL_damping": true,
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "small_x_resummation": false,
+    "enable_small_x": true,
     "small_x_order": "NLL",
 
     "enable_TMC": false,
@@ -30,8 +31,8 @@
     "NQ2": 500,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 1.69,
-    "Q2max": 1e10
+    "Q2min": 3.0,
+    "Q2max": 1e13
   },
 
   "CKMT": {
@@ -56,17 +57,20 @@
   },
 
   "PCAC": {
-
+    "A": 0.147,
+    "B": 0.265
   },
 
   "XS": {
+    "mode": 4,
     "enable_mass_terms": true,
+    "enable_shallow_region": true,
 
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
       "Q2min": 1.69,
-      "Q2max": 1e10
+      "Q2max": 1e13
     }
   },
 
