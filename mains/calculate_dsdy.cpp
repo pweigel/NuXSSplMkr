@@ -51,14 +51,14 @@ int main(int argc, char* argv[]){
     // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
     // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
 
-    int NE = 200;
+    int NE = 110;
     int Ny = 100;
 
     double logemin = 1;
-    double logemax = 3;
+    double logemax = 12;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -4;
+    double logymin = -9;
     double logymax = 0;
     double dy = (logymax - logymin) / Ny;
 

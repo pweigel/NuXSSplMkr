@@ -14,10 +14,14 @@ using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
+    const std::string xs_in_path = argv[2]; // Path to .json file containing configuration info
+    const std::string xs_out_path = argv[3]; // Path to .json file containing configuration info
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
+    std::cout << "Inpath: " << xs_in_path << std::endl;
+    std::cout << "Outpath: " << xs_out_path << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     PhysConst* pc = new PhysConst();
@@ -53,25 +57,25 @@ int main(int argc, char* argv[]){
     double logemax = 9;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -7;
+    double logymin = -9;
     double logymax = 0;
     double dy = (logymax - logymin) / (Ny-1);
 
-    double logxmin = -7;
+    double logxmin = -9;
     double logxmax = 0;
     double dx = (logxmax - logxmin) / (Nx-1);
 
     std::ofstream outfile;
     // outfile.open(data_folder + "/cross_sections/rc_dsdxdy_" + projectile + "_" + target + "_" + sf_type + ".out");
-    outfile.open("dsdxdy_nu_CC_iso_corrected_logspaced.out");
+    outfile.open(xs_out_path);
     // std::ofstream norc_outfile;
     // norc_outfile.open(data_folder + "/cross_sections/no_rc_dsdxdy_" + projectile + "_" + target + "_" + sf_type + ".out");
 
     // xs->Load_Structure_Functions(f1, f2, f3);
     xs->Set_Lepton_Mass(pc->muon_mass);
     // std::string base_spline_path = "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/scripts/3d_spline_light.fits";
-    std::string base_spline_path = "/n/home06/pweigel/utils/xs_iso/dsdxdy_nu_CC_iso.fits";
-    xs->rc_load_dsdxdy(base_spline_path);
+    // std::string base_spline_path = "/n/home06/pweigel/utils/xs_iso/dsdxdy_nu_CC_iso.fits";
+    xs->rc_load_dsdxdy(xs_in_path);
 
     // Get the energy, inelasticity values and put them in the header
     std::vector<double> energy_values;

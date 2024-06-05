@@ -33,8 +33,8 @@ int main(int argc, char* argv[]){
     std::cout << "=============================================" << std::endl << std::endl;
 
     double logemin = 1;
-    double logemax = 9;
-    int NE = 200;
+    double logemax = 12;
+    int NE = 110;
     double dE = (logemax - logemin) / (NE-1);
 
     PhysConst* pc = new PhysConst();

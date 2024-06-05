@@ -14,7 +14,7 @@ namespace po = boost::program_options;
 
 int main(int argc, char* argv[]){
 
-   if (argc < 2) {
+   if (argc < 6) {
         std::cout << "Not enough inputs." << std::endl;
         return 0;
     }
@@ -22,15 +22,21 @@ int main(int argc, char* argv[]){
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
+    const unsigned int replica = std::stoi(argv[5]);
 
-    const int replica = 0; // TODO: make this an input
+    std::cout << std::endl;
+    std::cout << "=============================================" << std::endl;
+    std::cout << "Config Path: " << config_path << std::endl;
+    std::cout << "Projectile: " << projectile << std::endl;
+    std::cout << "Target: " << target << std::endl;
+    std::cout << "XS Type: " << xs_type << std::endl;
+    std::cout << "Replica: " << replica << std::endl;
+    std::cout << "=============================================" << std::endl << std::endl;
 
-    // Create a new config w/ the filename
-    std::cout << config_path << std::endl;
     Configuration config = Configuration(config_path);
     config.Populate();
     config.Set_Replica(replica);
-    std::string data_folder = "../data/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
     
     // Make the cross sections folder if it doesn't exist
@@ -49,31 +55,27 @@ int main(int argc, char* argv[]){
 
     CrossSection* xs = new CrossSection(config, ps);
 
-    // load the three structure function fit files
-    string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
-
-    int NE = 200;
+    int NE = 110;
     int Ny = 100;
     int Nx = 100;
 
-    double logemin = 2;
-    double logemax = 9;
+    double logemin = 1;
+    double logemax = 12;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -7;
+    double logymin = -9;
     double logymax = 0;
     double dy = (logymax - logymin) / (Ny-1);
 
-    double logxmin = -7;
+    double logxmin = -9;
     double logxmax = 0;
     double dx = (logxmax - logxmin) / (Nx-1);
 
     std::ofstream outfile;
     outfile.open(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
 
-    xs->Load_Structure_Functions(f1, f2, f3);
+    // xs->Load_Structure_Functions(f1, f2, f3);
+    xs->Load_Structure_Functions(data_folder);
     xs->Set_Lepton_Mass(pc->muon_mass);
     
     // Get the energy, inelasticity values and put them in the header
@@ -106,24 +108,20 @@ int main(int argc, char* argv[]){
 
     for (int ei = 0; ei < NE; ei++) {
         double E = energy_values[ei];
+        xs->Set_Neutrino_Energy(E);
         for (int yi = 0; yi < Ny; yi++) { // loop over y
             double y = inelasticity_values[yi];
             for (int xi = 0; xi < Nx; xi++) { // loop over x
                 double x = x_values[xi];
                 double _dsdxdy;
+                bool ps_valid = ps.Validate(E, x, y);
 
-                bool valid = ps.Validate(E, x, y);
-                if (!valid) {
+                if (!ps_valid) {
                     _dsdxdy = 0.0;
                 } else {
-                    _dsdxdy = xs->rc_integrate(E, x, y);
-                    // if (_dsdxdy == 0.0) {
-                    //     _dsdxdy = 0.0;
-                    // } else {
-                    //     _dsdxdy = std::log10(_dsdxdy);
-                    // }
+                    _dsdxdy = xs->ds_dxdy(x, y);
                 }
-
+                
                 outfile << _dsdxdy;
                 if ( !(xi == Nx - 1) ) {
                     outfile << ",";
@@ -131,7 +129,6 @@ int main(int argc, char* argv[]){
             }
             outfile << std::endl;
         }
-        // outfile << std::endl;
     }
 
     outfile.close();

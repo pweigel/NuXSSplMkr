@@ -1,5 +1,6 @@
 LIST (APPEND TEST_SOURCES
-    ${PROJECT_SOURCE_DIR}/tests/test_evolution.cpp
+${PROJECT_SOURCE_DIR}/tests/test_evolution.cpp
+${PROJECT_SOURCE_DIR}/tests/test_evolution_sx.cpp
 )
 
 foreach(SOURCE ${TEST_SOURCES})
