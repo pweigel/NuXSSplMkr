@@ -1,6 +1,6 @@
 {
   "general": {
-    "unique_name": "CT18A_NNLO_nf6_sx_off",
+    "unique_name": "CT18A_NNLO_nf6_sx",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },

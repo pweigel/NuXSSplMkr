@@ -20,7 +20,7 @@
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "enable_small_x": true,
+    "enable_small_x": false,
     "small_x_order": "NLL",
 
     "enable_TMC": false,

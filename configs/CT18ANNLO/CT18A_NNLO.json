@@ -20,7 +20,7 @@
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "enable_small_x": true,
+    "enable_small_x": false,
     "small_x_order": "NLL",
 
     "enable_TMC": false,
@@ -31,7 +31,7 @@
     "NQ2": 500,
     "xmin": 1e-9,
     "xmax": 1.0,
-    "Q2min": 3.0,
+    "Q2min": 1.68,
     "Q2max": 1e13
   },
 
@@ -69,7 +69,7 @@
     "integration": { 
       "xmin": 1e-9,
       "xmax": 1.0,
-      "Q2min": 1.69,
+      "Q2min": 1.68,
       "Q2max": 1e13
     }
   },
