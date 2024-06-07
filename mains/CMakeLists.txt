@@ -6,6 +6,7 @@ LIST (APPEND MAIN_SOURCES
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_xs.cpp
+    ${PROJECT_SOURCE_DIR}/mains/evolve_pdfs.cpp
 )
 
 foreach(SOURCE ${MAIN_SOURCES})
