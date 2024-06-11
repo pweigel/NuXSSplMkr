@@ -61,6 +61,7 @@ struct SF_settings {
     double FONLL_damping_factor;
 
     bool disable_top;
+    int nf;
     bool enable_small_x;
     string small_x_order;
     bool evolve_pdf;

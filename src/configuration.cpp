@@ -27,6 +27,7 @@ void Configuration::Populate() {
 
 
     SF.disable_top = j["SF"].value("disable_top", false);
+    SF.nf = j["SF"].value("nf", 6);
     SF.enable_small_x = j["SF"].value("enable_small_x", false);
     SF.small_x_order = j["SF"].value("small_x_order", "NLL");
     SF.evolve_pdf = j["SF"].value("evolve_pdf", false);

@@ -13,6 +13,7 @@
   "SF": {
     "mass_scheme": "FONLL-C",
     "disable_top": false,
+    "nf": 5,
     "perturbative_order": 2,
     "DIS_process": "CC",
 

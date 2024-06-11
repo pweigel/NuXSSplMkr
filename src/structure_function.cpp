@@ -58,27 +58,17 @@ void StructureFunction::InitializeAPFEL() {
         APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[6]);
     }
 
-    // APFEL::SetQLimits(std::sqrt(1e-2), std::sqrt(config.SF.Q2max));
     APFEL::SetQLimits(std::sqrt(config.SF.Q2min), std::sqrt(config.SF.Q2max));
-    // std::cout << "Evolution Q limits: [" << std::sqrt(config.Q2min) << ", " << std::sqrt(config.Q2max) << "] GeV." << std::endl;
-    //APFEL::SetPolarizationDIS(0);
-    // APFEL::EnableTargetMassCorrections(false); // Don't use this!
+    
     std::cout << "FONLL Damping: " << config.SF.enable_FONLL_damping << ", " << config.SF.FONLL_damping_factor << std::endl;
     APFEL::EnableDampingFONLL(config.SF.enable_FONLL_damping);
     APFEL::SetDampingPowerFONLL(config.SF.FONLL_damping_factor, config.SF.FONLL_damping_factor, config.SF.FONLL_damping_factor);
-    //APFEL::SetFastEvolution(true);
-    //APFEL::LockGrids(true);
-    //APFEL::EnableEvolutionOperator(true);
+
     if (config.SF.FFNS > 0) {
         APFEL::SetFFNS(config.SF.FFNS);
+        // APFEL::SetVFNS();
     }
 
-    //APFEL::SetFFNS(3);
-    //APFEL::SetTheory("QUniD");
-    //APFEL::SetTheory("QED");
-    //APFEL::EnableLeptonEvolution(true);
-    //APFEL::SetTauMass(1e10);
-    //APFEL::SetPDFEvolution("exactalpha");
     APFEL::SetNumberOfGrids(3);
     APFEL::SetGridParameters(1, 90, 3, config.SF.xmin);
     APFEL::SetGridParameters(2, 50, 5, 1e-1);
@@ -86,11 +76,9 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetPerturbativeOrder(config.SF.perturbative_order);
     APFEL::SetSmallxResummation(config.SF.enable_small_x, config.SF.small_x_order);
     APFEL::SetAlphaQCDRef(config.pdf.pdf->alphasQ(config.constants.MassZ), config.constants.MassZ);
-    //APFEL::SetAlphaEvolution("expanded");
-    //APFEL::SetPDFEvolution("expandalpha");
 
-    APFEL::SetMaxFlavourPDFs(6);
-    APFEL::SetMaxFlavourAlpha(6);
+    APFEL::SetMaxFlavourPDFs(config.SF.nf);
+    APFEL::SetMaxFlavourAlpha(config.SF.nf);
     APFEL::SetCKM(config.constants.Vud, config.constants.Vus, config.constants.Vub,
                   config.constants.Vcd, config.constants.Vcs, config.constants.Vcb,
                   config.constants.Vtd, config.constants.Vts, config.constants.Vtb);
