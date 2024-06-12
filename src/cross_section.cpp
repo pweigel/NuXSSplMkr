@@ -214,7 +214,7 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
         term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
         term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
         term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (2 * M_iso * ENU) * F5_val;
+        term5 = -1.0 * SQ(M_l) / (M_iso * ENU) * F5_val;
     } else {
         term1 = y*y*x * F1_val;
         term2 = ( 1 - y ) * F2_val;
@@ -257,11 +257,14 @@ double CrossSection::ds_dxdy(double x, double y) {
         term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
         term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
         term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (2 * M_iso * ENU) * F5_val;
+        term5 = -1.0 * SQ(M_l) / (M_iso * ENU) * F5_val;
     } else {
+        prefactor = SQ(pc->GF) * M_iso * ENU / (M_PI * SQ(1.0 + Q2/MW2));
+        jacobian = 0.0;
+        propagator = 0.0;
         term1 = y*y*x * F1_val;
-        term2 = ( 1 - y ) * F2_val;
-        term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
+        term2 = ( 1 - y - M_iso * x * y / (2 * ENU) ) * F2_val; // modified to match the cteq paper
+        term3 = config.cp_factor * y*(1-y/2) * x*F3_val;
         term4 = 0.0;
         term5 = 0.0;
     }
@@ -422,17 +425,20 @@ double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
     double s = 2.0 * M_iso * E + SQ(M_iso);
     
-    double xmin = ps.x_min;
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
     double xmax = ps.x_max;
+    // double ymin = 
+    // double ymax = 
+
     if (!ps.Validate(E)) {
         return 0;
     }
 
     double res,err;
-    const unsigned long dim = 2; int calls = 100000; // bump it
+    const unsigned long dim = 2; int calls = 250000; // bump it
 
     // integrating on the log of x and y
-    double xl[dim] = { log(xmin), log(1.e-9) };
+    double xl[dim] = { log(xmin), log(1.e-12) };
     double xu[dim] = { log(xmax), log(1.)    };
 
     gsl_rng_env_setup ();

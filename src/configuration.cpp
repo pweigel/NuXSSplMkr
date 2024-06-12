@@ -62,6 +62,8 @@ void Configuration::Populate() {
     XS.enable_shallow_region = j["XS"].value("enable_shallow_region", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
     XS.xmax = j["XS"]["integration"].at("xmax");
+    XS.ymin = j["XS"]["integration"].value("ymin", 1e-20);
+    XS.ymax = j["XS"]["integration"].value("ymax", 1.0);
     XS.Q2min = j["XS"]["integration"].at("Q2min");
     XS.Q2max = j["XS"]["integration"].at("Q2max");
 
@@ -138,7 +140,7 @@ void Configuration::Set_SF_Type(string _sf_type_string) {
             case SFType::charm : SF.FFNS = 3 ; break;
             case SFType::bottom: SF.FFNS = 4 ; break;
             case SFType::top   : SF.FFNS = 5 ; break;
-            default            : SF.FFNS = -1; break;
+            default            : SF.FFNS = 3; break;
         }
         if (SF.FFNS > 0) {
             std::cout << "WARNING: FFNS is set to " << SF.FFNS << " to properly match FONLL calculation!" << std::endl;

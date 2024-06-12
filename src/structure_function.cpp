@@ -52,8 +52,10 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetMassScheme(config.SF.mass_scheme);
     std::cout << "PDF Masses: " << config.pdf.pdf_quark_masses[4] << " " << config.pdf.pdf_quark_masses[5] << " " << config.pdf.pdf_quark_masses[6] << std::endl;;
     if (config.SF.disable_top == true) { // TODO: a better way of doing this. This should only be used for CSMS I think.
-        std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
-        APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[5]+0.1);
+        // std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
+        std::cout << "WARNING: Top mass changed to disable it!" << std::endl;
+        // APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[5]+0.1);
+        APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], 1e12);
     } else {
         APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[6]);
     }
@@ -477,6 +479,7 @@ double StructureFunction::CKMT_Delta(double Q2) {
 
 double StructureFunction::F_CKMT(double x, double Q2, double A, double B, double f) {
     // Jeong/Reno Paper: https://arxiv.org/pdf/2307.09241.pdf
+    // Note: The value of alphaR in this paper may be a type, the old paper (hep-ph 0605295) uses 0.4250 instead of 0.4150
     double delta = CKMT_Delta(Q2);
     double n = CKMT_n(Q2);
     double term1 = A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), 1.0 + delta);
@@ -504,10 +507,16 @@ double StructureFunction::R_CKMT(double x, double Q2){
 
 double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
     double m = M_iso / pc->GeV;
-    double _R = R_CKMT(x, Q2);
+    double _R;
+    if (Q2 < 0.3) {
+        _R = R_CKMT(x, 0.3) * Q2 / 0.3;
+    } else {
+        _R = R_CKMT(x, Q2);
+    }
     // Eq. 2 from Whitlow et al:
     // R = (F2 / (2xF1)) ( 1 + 4 M^2 x^2/Q^2) - 1
-    return _F2 * (1.0 + 4.0 * SQ(m * x) / (Q2 * SQ(pc->GeV))) / (2.0 * x * (_R + 1.0));
+    // return _F2 * (1.0 + 4.0 * SQ(m * x) / (Q2 * SQ(pc->GeV))) / (2.0 * x * (_R + 1.0));
+    return _F2 * (1.0 + 4.0 * SQ(m * x) / (Q2)) / (2.0 * x * (_R + 1.0));
 }
 
 double StructureFunction::F2_PCAC(double x, double Q2) {
@@ -592,11 +601,11 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
 
             if (Q2 <= SQ(config.CKMT.Q0)) {  // if below Q0, apply CKMT
                 double _F2_CKMT = F2_CKMT(x, Q2);
-                double _F3_CKMT = F3_CKMT(x, Q2);
+                double _F3_CKMT = F3_CKMT(x, Q2)/x;
                 double _F1_CKMT = F1_CKMT(_F2_CKMT, x, Q2);
 
                 double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
-                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0));
+                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0))/x;
                 double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
 
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
@@ -631,11 +640,11 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
 
             if (Q2 <= SQ(config.CKMT.Q0)) {
                 double _F2_CKMT    = F2_CKMT(x, Q2);
-                double _F3_CKMT    = F3_CKMT(x, Q2);
+                double _F3_CKMT    = F3_CKMT(x, Q2)/x;
                 double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
 
                 double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
-                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0));
+                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0))/x;
                 double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
 
 
@@ -645,7 +654,8 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
                 // _F2_CKMT_Q0 += _F2_PCAC_Q0;
 
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
-                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
+                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0));
+                // _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
                 // std::cout << _F2_PCAC / (_F2_CKMT * (f2 / _F2_CKMT_Q0)) << std::endl;
             } else {
@@ -753,15 +763,15 @@ void StructureFunction::BuildGrids(string outpath) {
             std::tie(_F1, _F2, _F3) = EvaluateSFs(x, Q2);
 
             if(!std::isfinite(_F1)) {
-                std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                // std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F1 = 0.0;
             }
             if(!std::isfinite(_F2)) {
-                std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                // std::cerr << "F2 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F2 = 0.0;
             }
             if(!std::isfinite(_F3)) {
-                std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
+                // std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F3 = 0.0;
             }
 

@@ -10,15 +10,15 @@ void PhaseSpace::Initialize() {
     pc = new nuxssplmkr::PhysConst();
     x_min = config.XS.xmin;
     x_max = config.XS.xmax;
-    y_min = 1e-9;
-    y_max = 1.0;
+    y_min = config.XS.ymin;
+    y_max = config.XS.ymax;
     Q2_min = config.XS.Q2min * SQ(pc->GeV); // config
     Q2_max = config.XS.Q2max * SQ(pc->GeV); // config
     
     if (config.XS.enable_shallow_region) {
         W2_min = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
     } else {
-        W2_min = 2.0  * SQ(pc->GeV);
+        W2_min = 4.0  * SQ(pc->GeV);
     }
     W2_max = 1e20 * SQ(pc->GeV);
 }
@@ -64,8 +64,8 @@ bool PhaseSpace::Validate(double E, double x, double y) {
 
     // use other ps check
     double M_l = 0.1057 * pc->GeV;
-    double _xmin = SQ(M_l) / (2.0 * pc->m_N * (E - M_l));
-    double _xmax = 1.0;
+    double _xmin = max(x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    double _xmax = min(x_max, 1.0);
 
     double a = (1.0 - SQ(M_l) * (1.0 / (2.0 * pc->m_N * E * x) + 1.0 / (2 * SQ(E)))) / (2.0 + pc->m_N * x / E);
     double b = sqrt(SQ(1.0 - SQ(M_l) / (2.0 * pc->m_N * E * x)) - SQ(M_l / E)) / (2.0 + pc->m_N * x / E);
@@ -79,7 +79,8 @@ bool PhaseSpace::Validate(double E, double x, double y) {
 
     double s = 2 * pc->m_N * E + pow(pc->m_N, 2);
     double Q2 = (s - pow(pc->m_N, 2)) * x * y;
-    double W2 = s * y * (1.0 - x);
+    // double W2 = s * y * (1.0 - x);
+    double W2 = Q2 * (1.0 - x) / x + pow(pc->m_N, 2);
 
     if (debug) {
         std::cout << "s = " << s / SQ(pc->GeV) << std::endl;

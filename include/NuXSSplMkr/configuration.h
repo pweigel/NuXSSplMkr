@@ -20,7 +20,7 @@ namespace nuxssplmkr {
 enum QCDOrder {LO, NLO, NNLO};
 enum Current {CC, NC};
 enum NeutrinoType {neutrino, antineutrino};
-enum TargetType {proton, neutron};
+enum TargetType {proton, neutron, isoscalar};
 enum Flavor {electron, muon, tau};
 enum PDFVar {central, minus, plus};
 enum SFType {total, light, charm, bottom, top};
@@ -29,7 +29,7 @@ enum SFType {total, light, charm, bottom, top};
 static unordered_map<string, QCDOrder> const QCDOrderMap = { {"LO",QCDOrder::LO}, {"NLO",QCDOrder::NLO}, {"NNLO",QCDOrder::NNLO} };
 static unordered_map<string, Current> const CurrentMap = { {"CC",Current::CC}, {"NC",Current::NC} };
 static unordered_map<string, NeutrinoType> const NeutrinoTypeMap = { {"neutrino",NeutrinoType::neutrino}, {"antineutrino",NeutrinoType::antineutrino} };
-static unordered_map<string, TargetType> const TargetTypeMap = { {"proton",TargetType::proton}, {"neutron",TargetType::neutron} };
+static unordered_map<string, TargetType> const TargetTypeMap = { {"proton",TargetType::proton}, {"neutron",TargetType::neutron}, {"isoscalar",TargetType::isoscalar}};
 static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::electron},{"muon",Flavor::muon},{"tau",Flavor::tau} };
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1.} };
 static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"light", SFType::light},{"charm",SFType::charm},{"bottom",SFType::bottom},{"top",SFType::top} };
@@ -93,7 +93,7 @@ struct xs_settings {
     bool enable_mass_terms;
     bool enable_shallow_region;
     int mode;
-    double xmin, xmax, Q2min, Q2max; // integration limits
+    double xmin, xmax, ymin, ymax, Q2min, Q2max; // integration limits
 };
 
 struct fundamental_constants {
