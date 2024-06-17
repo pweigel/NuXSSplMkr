@@ -67,6 +67,7 @@ int main(int argc, char* argv[]){
     splmkr.MakeSpline(sf.f1_grid_fn+".grid", sf.f1_grid_fn+".fits");
     splmkr.MakeSpline(sf.f2_grid_fn+".grid", sf.f2_grid_fn+".fits");
     splmkr.MakeSpline(sf.f3_grid_fn+".grid", sf.f3_grid_fn+".fits");
+    splmkr.MakeSpline(sf.fL_grid_fn+".grid", sf.fL_grid_fn+".fits");
 
     return 0;
 }
