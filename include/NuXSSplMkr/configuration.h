@@ -57,6 +57,7 @@ struct SF_settings {
     Current current;
     int FFNS;
 
+    bool dynamic_fixed_flavor;
     bool enable_FONLL_damping;
     double FONLL_damping_factor;
 

@@ -21,6 +21,7 @@
 #include "LHAPDF/LHAPDF.h"
 #include "LHAPDF/GridPDF.h"
 // using boost::math::interpolators::bilinear_uniform;
+#include <apfel/apfelxx.h>
 
 namespace nuxssplmkr {
 
@@ -117,6 +118,8 @@ class CrossSection {
         double ds_dy_TMC();   // TODO
 
         double TotalXS(double E);
+        double TotalXS_xQ2(double E);
+        double AlternativeTotalXS(double E);
         std::tuple<double, double> dsdy_xlims(double s, double y);
         bool PhaseSpaceIsGood(double x, double y, double E);
         bool PhaseSpaceIsGood_Q2(double x, double Q2, double E);
@@ -124,6 +127,7 @@ class CrossSection {
         // ~ Kernel Functions ~
         double ds_dy_kernel(double k);
         double ds_dxdy_kernel(double* k);
+        double ds_dxdQ2_kernel(double* k);
         double _ds_dy_partonic(double k);
         double _ds_dxdy_partonic(double* k);
 

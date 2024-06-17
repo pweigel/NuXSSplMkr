@@ -542,15 +542,18 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
     return xq_arr;
 }
 
-std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
+std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
     double _F1, _F2, _F3;
+    double _FL = 0;
 
     switch (mode) {
         case 0:  // Parton
             break;
         case 1: // Plain ol' APFEL structure functions
-        {  
-            double _FL = FL(x, Q2);
+        {
+            // computing_FL = true;
+
+            _FL = FL(x, Q2);
             _F2 = F2(x, Q2);
             _F1 = (_F2 - _FL) / (2. * x);
             _F3 = F3(x, Q2);
@@ -667,7 +670,7 @@ std::tuple<double,double,double> StructureFunction::EvaluateSFs(double x, double
         }
     }
 
-    return {_F1, _F2, _F3};
+    return {_F1, _F2, _F3, _FL};
 }
 
 void StructureFunction::LoadSplines(string inpath) {
@@ -719,6 +722,7 @@ void StructureFunction::BuildGrids(string outpath) {
     f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
     f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
     f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    fL_grid_fn = outpath + "/FL_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
 
     std::ofstream f1_outfile;
     f1_outfile.open(f1_grid_fn + ".grid");
@@ -726,22 +730,24 @@ void StructureFunction::BuildGrids(string outpath) {
     f2_outfile.open(f2_grid_fn + ".grid");
     std::ofstream f3_outfile;
     f3_outfile.open(f3_grid_fn + ".grid");
+    std::ofstream fL_outfile;
+    fL_outfile.open(fL_grid_fn + ".grid");
 
     // Get the Q2 and x values
     // size_t N_samples = Nx * NQ2;
     for (int i = 0; i < NQ2; i++) {
         double log_Q2 = std::log10(config.SF.Q2min) + i * d_log_Q2;
         Q2_arr.push_back(log_Q2);
-        f1_outfile << log_Q2 << " "; f2_outfile << log_Q2 << " "; f3_outfile << log_Q2 << " ";
+        f1_outfile << log_Q2 << " "; f2_outfile << log_Q2 << " "; f3_outfile << log_Q2 << " "; fL_outfile << log_Q2 << " ";
     }
-    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
 
     for (int j = 0; j < Nx; j++) {
         double log_x = std::log10(config.SF.xmin) + j * d_log_x;
         x_arr.push_back(log_x);
-        f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " ";
+        f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " "; fL_outfile << log_x << " ";
     }
-    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+    f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
 
     // Collect SF values and write grids
     for (unsigned int i = 0; i < NQ2; i++) {
@@ -759,8 +765,8 @@ void StructureFunction::BuildGrids(string outpath) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
 
-            double _F1, _F2, _F3;
-            std::tie(_F1, _F2, _F3) = EvaluateSFs(x, Q2);
+            double _F1, _F2, _F3, _FL;
+            std::tie(_F1, _F2, _F3, _FL) = EvaluateSFs(x, Q2);
 
             if(!std::isfinite(_F1)) {
                 // std::cerr << "F1 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
@@ -774,13 +780,16 @@ void StructureFunction::BuildGrids(string outpath) {
                 // std::cerr << "F3 Infinite! Q2 = " << Q2 << ", x = " << x << ". Setting to zero." << std::endl;
                 _F3 = 0.0;
             }
+            if(!std::isfinite(_FL)) {
+                _FL = 0.0;
+            }
 
             // Write grid data
-            f1_outfile << _F1; f2_outfile << _F2; f3_outfile << _F3;
+            f1_outfile << _F1; f2_outfile << _F2; f3_outfile << _F3; fL_outfile << _FL;
             if (j < Nx-1) {
-              f1_outfile << ","; f2_outfile << ","; f3_outfile << ",";
+              f1_outfile << ","; f2_outfile << ","; f3_outfile << ","; fL_outfile << ",";
             } else {
-              f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n";
+              f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
             }
         }
     }

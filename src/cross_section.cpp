@@ -10,6 +10,9 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     rc_prefactor = (pc->alpha / (2.0 * M_PI));
     Set_Mode(_config.XS.mode);
 
+    double coef = pc->GF * pow(172.0 * pc->GeV, 2) / 8 / sqrt(2) / pow(M_PI, 2);
+    double rho  = 1 + 3 * coef * ( 1 + coef * ( 19 - 2 * pow(M_PI, 2) ) );
+
     // TODO: Get this from the phase space
     // integral_min_x = config.XS.xmin;
     // integral_max_x = config.XS.xmax;
@@ -175,6 +178,20 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
     return ds_dxdy(x, y);
 }
 
+
+double CrossSection::ds_dxdQ2_kernel(double* k) {
+    double x = std::exp(k[0]);
+    double Q2 = std::exp(k[1]);
+
+    bool ps_valid = ps.Validate_xQ2(ENU, x, Q2);
+    if (!ps_valid) {
+        return 0;
+    }
+
+    // Jacobian = x * Q2, needed because we're integrating over log space
+    return x * Q2 * ds_dxdQ2(x, Q2);
+}
+
 double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
     Set_Neutrino_Energy(E);
     return ds_dxdQ2(x, Q2);
@@ -183,16 +200,13 @@ double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
 double CrossSection::ds_dxdQ2(double x, double Q2) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
 
-    double s = 2.0 * M_iso * ENU + SQ(M_iso);// - SQ(top_mass*pc->GeV);
-    // double Q2 = (s - SQ(M_iso)) * x * y;
+    double s = 2.0 * M_iso * ENU + SQ(M_iso);
     double y = Q2 / ( (s - SQ(M_iso)) * x);
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = 1; //s * x; // from d2s/dxdQ2 --> d2s/dxdy    
     std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
-
-    // std::cout << ENU/ pc->GeV << " " << Q2/ SQ(pc->GeV) << " " << x << " " << y << std::endl;
 
     std::array<int, 2> F1_splc;
     std::array<int, 2> F2_splc;
@@ -259,9 +273,9 @@ double CrossSection::ds_dxdy(double x, double y) {
         term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
         term5 = -1.0 * SQ(M_l) / (M_iso * ENU) * F5_val;
     } else {
-        prefactor = SQ(pc->GF) * M_iso * ENU / (M_PI * SQ(1.0 + Q2/MW2));
-        jacobian = 0.0;
-        propagator = 0.0;
+        // prefactor = SQ(pc->GF) * M_iso * ENU / (M_PI * SQ(1.0 + Q2/MW2));
+        // jacobian = 0.0;
+        // propagator = 0.0;
         term1 = y*y*x * F1_val;
         term2 = ( 1 - y - M_iso * x * y / (2 * ENU) ) * F2_val; // modified to match the cteq paper
         term3 = config.cp_factor * y*(1-y/2) * x*F3_val;
@@ -390,22 +404,17 @@ double CrossSection::ds_dy_TMC() {
 double CrossSection::ds_dy(double E, double y) {
     Set_Neutrino_Energy(E);
     kernel_y = y;
-    double s = 2.0 * M_iso * E ;
-
-    // double xmin, xmax;
-    // std::tie(xmin, xmax) = dsdy_xlims(s, kernel_y);
-    // if (xmin > xmax) {
-    //     return 1e-99;
-    // }
-
-    double xmin = ps.x_min;
+    double s = 2.0 * M_iso * E + SQ(pc->m_N); // TODO: VERIFY THIS ENTIRE SECTION
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
     double xmax = ps.x_max;
+
     if (!ps.Validate(E)) {
         return 0;
     }
 
-    gsl_integration_workspace * w = gsl_integration_workspace_alloc(10000);
+    gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);
     double result, error;
+    size_t neval;
 
     gsl_function F;
     if (config.SF.mass_scheme == "parton") { 
@@ -415,10 +424,119 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    gsl_integration_qag ( &F, log(xmin), log(xmax), 0, 1.e-4, 10000, 6, w, &result, &error);
-    gsl_integration_workspace_free(w);
+    int status = gsl_integration_cquad(&F, log(xmin), log(xmax), 0, 1.e-3, w, &result, &error, &neval);
+    if (status != 0) {
+        std::cout << "ERR: " << status << std::endl;
+    }
+    gsl_integration_cquad_workspace_free(w);
 
     return result;
+}
+
+double CrossSection::TotalXS_xQ2(double E) {
+    // integrate over x-Q2
+    Set_Neutrino_Energy(E);
+    double s = 2.0 * pc->m_N * E + SQ(pc->m_N);
+    
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    double xmax = 1.0-1e-9;
+
+    double Q2min = ps.Q2_min;
+    double Q2max = s - SQ(pc->m_N);
+
+    double res,err;
+    const unsigned long dim = 2; int calls = 250000; // bump it
+
+    // integrating on the log of x and Q2
+    double xl[dim] = { log(xmin), log(Q2min) };
+    double xu[dim] = { log(xmax), log(Q2max) };
+
+    gsl_rng_env_setup ();
+    const gsl_rng_type *T = gsl_rng_default;
+    gsl_rng *r = gsl_rng_alloc (T);
+
+    gsl_monte_function F;
+    F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdQ2_kernel>, dim, this};
+
+    gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
+
+    do
+    {
+        gsl_monte_vegas_integrate (&F, xl, xu, dim, calls/5, r, s_vegas, &res, &err);
+        // printf ("result = % .6e sigma = % .6e "
+        //         "chisq/dof = %.2f\n", res, err, gsl_monte_vegas_chisq (s_vegas));
+    }
+    while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
+
+    gsl_monte_vegas_free (s_vegas);
+    gsl_rng_free (r);
+
+    return res;
+}
+
+double CrossSection::AlternativeTotalXS(double E) {
+    // this is a method using apfelxx/bgr method of integrating (this is their code!)
+    double xl = 1e-9;
+    double xu = 1.0 - 1e-9;
+    double Ql = sqrt(3.0) * pc->GeV;
+    double Qu = 1e7 * pc->GeV;
+    double GF2 = pc->GF2;
+
+    double MW2 = config.constants.Mboson2 * SQ(pc->GeV);
+    const double s_tot = SQ(M_iso) + 2 * M_iso * E;
+    // Integration bounds in ln(Q2)
+    const double log_Q2min = 2 * log(Ql);
+    const double log_Q2max = min(log(s_tot - SQ(M_iso)), 2 * log(500 * MW2));
+    // const double conv = 0.3894e9;
+
+    std::cout << s_tot << " " << log_Q2min << " " << log_Q2max << std::endl;
+
+    const auto dsigmadlnQ2 = [=] (double const& log_Q2) -> double
+    {
+        const double log_xmin = log_Q2 - log(s_tot - SQ(M_iso));
+        const double log_xmax = 0 - 1e-9;
+
+        // Helpers
+        const double Q2 = exp(log_Q2);
+        const double Q  = sqrt(Q2);
+
+        const auto dsigmadlnxdlnQ2 = [=] (double const& log_x) -> double
+        {
+            const double x      = max(exp(log_x), xl);
+            const double y      = Q2 / x / ( s_tot - SQ(M_iso) );
+            const double omy2   = pow(1 - y, 2);
+            const double Yplus  = 1 + omy2;
+            const double Yminus = 1 - omy2;
+            double fact = GF2 / 4 / M_PI / x * pow(MW2 / ( MW2 + Q2 ), 2);
+
+            std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+
+            std::array<int, 2> F1_splc;
+            std::array<int, 2> F2_splc;
+            std::array<int, 2> F3_splc;
+
+            F1.searchcenters(pt.data(), F1_splc.data());
+            F2.searchcenters(pt.data(), F2_splc.data());
+            F3.searchcenters(pt.data(), F3_splc.data());
+
+            double f1 = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+            double f2 = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+            double xf3 = x * F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+            double fL = f2 - 2*x*f1;
+
+            return x * fact * ( Yplus * f2
+                                - y * y * fL
+                                + config.cp_factor * Yminus * xf3 );
+        };
+        const apfel::Integrator Ixq{dsigmadlnxdlnQ2};
+		return Q2 * Ixq.integrate(log_xmin, log_xmax, 1e-3);
+    };
+
+    const apfel::Integrator Iq{dsigmadlnQ2};
+    const double xsec = Iq.integrate(log_Q2min, log_Q2max, 1e-3);
+
+    return xsec / SQ(pc->cm);
 }
 
 double CrossSection::TotalXS(double E){
@@ -427,8 +545,6 @@ double CrossSection::TotalXS(double E){
     
     double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
     double xmax = ps.x_max;
-    // double ymin = 
-    // double ymax = 
 
     if (!ps.Validate(E)) {
         return 0;

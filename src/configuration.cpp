@@ -22,6 +22,7 @@ void Configuration::Populate() {
     SF.current = CurrentMap.at(SF.DIS_process);
     SF.FFNS = -1; // TODO: Figure out how I want to handle this
 
+    SF.dynamic_fixed_flavor = j["SF"].value("dynamic_fixed_flavor", true);
     SF.enable_FONLL_damping = j["SF"].value("enable_FONLL_damping", true);
     SF.FONLL_damping_factor = j["SF"].value("FONLL_damping_factor", 2.0); // APFEL default is 2
 
@@ -46,7 +47,7 @@ void Configuration::Populate() {
 
     CKMT.Q0 = j["CKMT"].value("Q0", 2.0); // Matching scale
     CKMT.Delta0 = j["CKMT"].value("Delta0", 0.07684);
-    CKMT.AlphaR = j["CKMT"].value("AlphaR", 0.4150);
+    CKMT.AlphaR = j["CKMT"].value("AlphaR", 0.4250);
     CKMT.a = j["CKMT"].value("a", 0.2631);
     CKMT.b = j["CKMT"].value("b", 0.6452);
     CKMT.c = j["CKMT"].value("c", 3.5489);
@@ -135,16 +136,20 @@ void Configuration::Set_SF_Type(string _sf_type_string) {
     sf_type = SFTypeMap.at(_sf_type_string);
     // If we use FONLL, we want it to use the right threshold behavior
     // For example, for Fc we want to do M3 -> M3 - D(ZM4 - M03) at m_c^2
-    if (SF.mass_scheme == "FONLL-A" || SF.mass_scheme == "FONLL-B" || SF.mass_scheme == "FONLL-C") {
+    if (SF.dynamic_fixed_flavor == true && (SF.mass_scheme == "FONLL-A" || SF.mass_scheme == "FONLL-B" || SF.mass_scheme == "FONLL-C")) {
         switch (sf_type) {
+            case SFType::light : SF.FFNS = 3 ; break;
             case SFType::charm : SF.FFNS = 3 ; break;
             case SFType::bottom: SF.FFNS = 4 ; break;
             case SFType::top   : SF.FFNS = 5 ; break;
+            case SFType::total : SF.FFNS = -1; break;
             default            : SF.FFNS = 3; break;
         }
         if (SF.FFNS > 0) {
             std::cout << "WARNING: FFNS is set to " << SF.FFNS << " to properly match FONLL calculation!" << std::endl;
         }
+    } else {
+        SF.FFNS = -1;
     }
     flag_set_flavor = true;
 }

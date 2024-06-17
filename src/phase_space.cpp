@@ -54,6 +54,24 @@ bool PhaseSpace::Validate(double E, double y) {
     return true;
 }
 
+bool PhaseSpace::Validate_xQ2(double E, double x, double Q2) {
+    // E and Q^2 are given in units of eV and eV^2
+    // std::cout << E << ", " << x << ", " << Q2 << std::endl;
+    if ((Q2 < Q2_min) || (Q2 > 2.0 * pc->m_N * E)) {
+        return false;
+    }
+    double _xmin = max(x_min, Q2 / (2*pc->m_N*E));
+    if ((x < _xmin) || (x >= 1)) {
+        return false;
+    }
+    double W2 = Q2 * (1 - x) / x + pow(pc->m_N, 2);
+    double _W2min = 4.0 * pow(pc->GeV, 2);
+    if (W2 < _W2min) {
+        return false;
+    }
+    return true;
+}
+
 bool PhaseSpace::Validate(double E, double x, double y) {
     /* 
     Check that the point (E, x, y) is valid given the constraints

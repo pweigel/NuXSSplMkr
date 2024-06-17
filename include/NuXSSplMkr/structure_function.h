@@ -75,6 +75,7 @@ class StructureFunction {
         string f1_grid_fn;
         string f2_grid_fn;
         string f3_grid_fn;
+        string fL_grid_fn;
 
         // ~ APFEL stuff ~
         void InitializeAPFEL();
@@ -128,7 +129,7 @@ class StructureFunction {
         double F3_PCAC(double x, double Q2);
 
         void ConstructFONLL();
-        std::tuple<double,double,double> EvaluateSFs(double x, double Q2);
+        std::tuple<double,double,double,double> EvaluateSFs(double x, double Q2);
         void Compute();
 
         void LoadGrids(string inpath);

@@ -22,6 +22,7 @@ class PhaseSpace {
         bool Validate(double E);
         bool Validate(double E, double y);
         bool Validate(double E, double x, double y);
+        bool Validate_xQ2(double E, double x, double Q2);
 
         void Print();
 
