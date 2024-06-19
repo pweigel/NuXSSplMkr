@@ -34,6 +34,7 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/phase_space.cpp
     ${PROJECT_SOURCE_DIR}/src/physconst.cpp
     ${PROJECT_SOURCE_DIR}/src/spline_maker.cpp
+    ${PROJECT_SOURCE_DIR}/src/lhapdf_maker.cpp
     ${PROJECT_SOURCE_DIR}/src/structure_function.cpp
     ${PROJECT_SOURCE_DIR}/src/tools.cpp
 )
