@@ -43,7 +43,6 @@ struct General_settings {
 struct PDF_settings {
     string pdfset;
     int replica;
-    LHAPDF::PDF* pdf;
     std::map<int, double> pdf_quark_masses;
     double PDFxmin, PDFQ2min, PDFQ2max;
 };
@@ -94,7 +93,7 @@ struct xs_settings {
     bool enable_mass_terms;
     bool enable_shallow_region;
     int mode;
-    double xmin, xmax, ymin, ymax, Q2min, Q2max; // integration limits
+    double xmin, xmax, ymin, ymax, Q2min, Q2max, W2min, W2max; // integration limits
 };
 
 struct fundamental_constants {
@@ -124,13 +123,15 @@ class Configuration {
 
     // settings structs
     General_settings general;
-    PDF_settings pdf;
+    PDF_settings pdf_info;
     SF_settings SF;
     CKMT_settings CKMT;
     PCAC_settings PCAC;
     xs_settings XS;
     fundamental_constants constants;
     //
+
+    LHAPDF::PDF* pdf;
 
     string sf_type_string;
     SFType sf_type;

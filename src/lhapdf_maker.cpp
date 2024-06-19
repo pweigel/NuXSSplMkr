@@ -10,9 +10,14 @@ LHAPDFMaker::LHAPDFMaker(Configuration &_config)
 
 std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
 
-    std::string sfs[3] = {"F1", "F2", "F3"};
+    std::string sfs[3] = {"F2", "F1", "F3"};
     std::string flavors[4] = {"light", "charm", "bottom", "top"};
     std::string projectiles[2] = {"neutrino", "antineutrino"};
+
+    // std::string sfs[3] = {"F2", "F1", "F3"};
+    // std::string flavors[1] = {"light"};//, "charm", "bottom", "top"};
+    // std::string projectiles[1] = {"neutrino"};//, "antineutrino"};
+
     std::unordered_map<std::string, std::vector<std::vector<double>>> sf_data;
     std::vector<std::string> sf_codes;
 
@@ -48,6 +53,9 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
                     nx = logx_values.size();
 
                     initialized_xQ2 = true;
+                } else {
+                    std::getline(gridfile, line);
+                    std::getline(gridfile, line);
                 }
 
                 // create data
@@ -72,28 +80,28 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
     }
     std::ofstream outfile(config.general.unique_name+"_SF/"+config.general.unique_name+"_SF_0000.dat");
     outfile << "PdfType: central\nFormat: lhagrid1\n---\n";
-    outfile << std::scientific << std::setprecision(11) << "  ";
+    outfile << std::scientific << std::setprecision(11) << "   ";
     for (unsigned int i = 0; i < nx; i++) {
         double x = std::pow(10, logx_values.at(i));
-        outfile << x << " ";
+        outfile << x << "   ";
     }
-    outfile << std::endl << "  ";
+    outfile << std::endl << "   ";
     for (unsigned int i = 0; i < nQ2; i++) {
         double Q2 = std::pow(10, logQ2_values.at(i));
-        outfile << std::sqrt(Q2) << " ";
+        outfile << std::sqrt(Q2) << "   ";
     }
-    outfile << std::endl << "  " << std::setw(2);
+    outfile << std::endl << "   " << std::setw(2);
     for (auto &sf_code : sf_codes) {
-        outfile << sf_code << " ";
+        outfile << sf_code << "   ";
     }
     outfile << std::endl;
 
     outfile << std::scientific << std::setprecision(8);
     for (unsigned int j = 0; j < nx; j++) {
         for (unsigned int i = 0; i < nQ2; i++) {
-            outfile << " "; // << logQ2_values.at(i) << " " << logx_values.at(j) << " ";
+            outfile << "   "; // << logQ2_values.at(i) << " " << logx_values.at(j) << " ";
             for (auto &sf_code : sf_codes) {
-                outfile << sf_data[sf_code][i][j] << " ";
+                outfile << sf_data[sf_code][i][j] << "   ";
             }
             outfile << std::endl;
         }

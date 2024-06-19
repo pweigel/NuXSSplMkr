@@ -60,13 +60,13 @@ void Configuration::Populate() {
 
     XS.mode = j["XS"].value("mode", 1);
     XS.enable_mass_terms = j["XS"].value("enable_mass_terms", false);
-    XS.enable_shallow_region = j["XS"].value("enable_shallow_region", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
     XS.xmax = j["XS"]["integration"].at("xmax");
     XS.ymin = j["XS"]["integration"].value("ymin", 1e-20);
     XS.ymax = j["XS"]["integration"].value("ymax", 1.0);
     XS.Q2min = j["XS"]["integration"].at("Q2min");
     XS.Q2max = j["XS"]["integration"].at("Q2max");
+    XS.W2min = j["XS"]["integration"].value("W2min", 4.0);
 
     constants.MassZ = j["constants"].at("MassZ");
     constants.MassW = j["constants"].at("MassW");
@@ -77,15 +77,15 @@ void Configuration::Populate() {
     constants.Vtd = j["constants"].at("Vtd"); constants.Vts = j["constants"].at("Vts"); constants.Vtb = j["constants"].at("Vtb");
 
     // Make the pdf with LHAPDF and get its properties
-    pdf.pdfset = j["PDF"].at("pdfset");
-    pdf.replica = j["PDF"].at("replica");
-    pdf.pdf = LHAPDF::mkPDF(pdf.pdfset, pdf.replica);
+    pdf_info.pdfset = j["PDF"].at("pdfset");
+    pdf_info.replica = j["PDF"].at("replica");
+    pdf = LHAPDF::mkPDF(pdf_info.pdfset, pdf_info.replica);
     for (int i=1; i<7; i++){
-        pdf.pdf_quark_masses[i] = pdf.pdf->quarkMass(i);
+        pdf_info.pdf_quark_masses[i] = pdf->quarkMass(i);
     }
-    pdf.PDFxmin  = pdf.pdf->xMin();
-    pdf.PDFQ2min = pdf.pdf->q2Min();
-    pdf.PDFQ2max = pdf.pdf->q2Max();
+    pdf_info.PDFxmin  = pdf->xMin();
+    pdf_info.PDFQ2min = pdf->q2Min();
+    pdf_info.PDFQ2max = pdf->q2Max();
 
     if (SF.current == CC) {
         constants.Mboson2 = constants.MassW * constants.MassW;
@@ -98,14 +98,14 @@ void Configuration::Populate() {
 
 void Configuration::Set_Replica(int replica) {
     // Make the pdf with LHAPDF and get its properties
-    pdf.replica = replica;
-    pdf.pdf = LHAPDF::mkPDF(pdf.pdfset, pdf.replica);
+    pdf_info.replica = replica;
+    pdf = LHAPDF::mkPDF(pdf_info.pdfset, pdf_info.replica);
     for (int i=1; i<7; i++){
-        pdf.pdf_quark_masses[i] = pdf.pdf->quarkMass(i);
+        pdf_info.pdf_quark_masses[i] = pdf->quarkMass(i);
     }
-    pdf.PDFxmin  = pdf.pdf->xMin();
-    pdf.PDFQ2min = pdf.pdf->q2Min();
-    pdf.PDFQ2max = pdf.pdf->q2Max();
+    pdf_info.PDFxmin  = pdf->xMin();
+    pdf_info.PDFQ2min = pdf->q2Min();
+    pdf_info.PDFQ2max = pdf->q2Max();
 }
 
 void Configuration::Set_Target(string target_string) {

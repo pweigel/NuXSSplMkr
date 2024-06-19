@@ -12,14 +12,6 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
 
     double coef = pc->GF * pow(172.0 * pc->GeV, 2) / 8 / sqrt(2) / pow(M_PI, 2);
     double rho  = 1 + 3 * coef * ( 1 + coef * ( 19 - 2 * pow(M_PI, 2) ) );
-
-    // TODO: Get this from the phase space
-    // integral_min_x = config.XS.xmin;
-    // integral_max_x = config.XS.xmax;
-    // integral_min_Q2 = config.XS.Q2min * SQ(pc->GeV);
-    // integral_max_Q2 = config.XS.Q2max * SQ(pc->GeV);
-
-    // SetThresholdW2();
 }
 
 void CrossSection::Set_Mode(int _mode) {
@@ -319,28 +311,28 @@ double CrossSection::ds_dxdy_partonic(double x, double y) {
     double u;
     double ubar;
     if (config.target == "proton") {
-        d    = config.pdf.pdf -> xfxQ2(1, x, mQ2);
-        dbar = config.pdf.pdf -> xfxQ2(-1, x, mQ2);
-        u    = config.pdf.pdf -> xfxQ2(2, x, mQ2);
-        ubar = config.pdf.pdf -> xfxQ2(-2, x, mQ2);
+        d    = config.pdf -> xfxQ2(1, x, mQ2);
+        dbar = config.pdf -> xfxQ2(-1, x, mQ2);
+        u    = config.pdf -> xfxQ2(2, x, mQ2);
+        ubar = config.pdf -> xfxQ2(-2, x, mQ2);
     } else if (config.target == "neutron") {
-        d    = config.pdf.pdf -> xfxQ2(2, x, mQ2);
-        dbar = config.pdf.pdf -> xfxQ2(-2, x, mQ2);
-        u    = config.pdf.pdf -> xfxQ2(1, x, mQ2);
-        ubar = config.pdf.pdf -> xfxQ2(-1, x, mQ2);
+        d    = config.pdf -> xfxQ2(2, x, mQ2);
+        dbar = config.pdf -> xfxQ2(-2, x, mQ2);
+        u    = config.pdf -> xfxQ2(1, x, mQ2);
+        ubar = config.pdf -> xfxQ2(-1, x, mQ2);
     } else {
         throw std::runtime_error("Unrecognized target type!");
     }
 
-    double s    = config.pdf.pdf -> xfxQ2(3, x, mQ2);
-    double sbar = config.pdf.pdf -> xfxQ2(-3, x, mQ2);
-    double b    = config.pdf.pdf -> xfxQ2(5, x, mQ2);
-    double bbar = config.pdf.pdf -> xfxQ2(-5, x, mQ2);
+    double s    = config.pdf -> xfxQ2(3, x, mQ2);
+    double sbar = config.pdf -> xfxQ2(-3, x, mQ2);
+    double b    = config.pdf -> xfxQ2(5, x, mQ2);
+    double bbar = config.pdf -> xfxQ2(-5, x, mQ2);
 
-    double c    = config.pdf.pdf -> xfxQ2(4, x, mQ2);
-    double cbar = config.pdf.pdf -> xfxQ2(-4, x, mQ2);
-    double t    = config.pdf.pdf -> xfxQ2(6, x, mQ2);
-    double tbar = config.pdf.pdf -> xfxQ2(-6, x, mQ2);
+    double c    = config.pdf -> xfxQ2(4, x, mQ2);
+    double cbar = config.pdf -> xfxQ2(-4, x, mQ2);
+    double t    = config.pdf -> xfxQ2(6, x, mQ2);
+    double tbar = config.pdf -> xfxQ2(-6, x, mQ2);
 
     double F2_val;
     double xF3_val; // TODO:
@@ -478,8 +470,8 @@ double CrossSection::TotalXS_xQ2(double E) {
 double CrossSection::AlternativeTotalXS(double E) {
     // this is a method using apfelxx/bgr method of integrating (this is their code!)
     double xl = 1e-9;
-    double xu = 1.0 - 1e-9;
-    double Ql = sqrt(3.0) * pc->GeV;
+    double xu = 1.0 - 1e-3;
+    double Ql = sqrt(0.01) * pc->GeV;
     double Qu = 1e7 * pc->GeV;
     double GF2 = pc->GF2;
 
@@ -489,8 +481,6 @@ double CrossSection::AlternativeTotalXS(double E) {
     const double log_Q2min = 2 * log(Ql);
     const double log_Q2max = min(log(s_tot - SQ(M_iso)), 2 * log(500 * MW2));
     // const double conv = 0.3894e9;
-
-    std::cout << s_tot << " " << log_Q2min << " " << log_Q2max << std::endl;
 
     const auto dsigmadlnQ2 = [=] (double const& log_Q2) -> double
     {
@@ -508,6 +498,10 @@ double CrossSection::AlternativeTotalXS(double E) {
             const double omy2   = pow(1 - y, 2);
             const double Yplus  = 1 + omy2;
             const double Yminus = 1 - omy2;
+            const double W2     = Q2 * (1 - x) / x + SQ(M_iso);
+            if (W2 < 1.96 * SQ(pc->GeV)) {
+                return 0.0;
+            }
             double fact = GF2 / 4 / M_PI / x * pow(MW2 / ( MW2 + Q2 ), 2);
 
             std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
@@ -523,18 +517,18 @@ double CrossSection::AlternativeTotalXS(double E) {
             double f1 = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
             double f2 = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
             double xf3 = x * F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
-            double fL = f2 - 2*x*f1;
+            double fL = f2 - 2*x*f1; // (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
 
             return x * fact * ( Yplus * f2
                                 - y * y * fL
                                 + config.cp_factor * Yminus * xf3 );
         };
         const apfel::Integrator Ixq{dsigmadlnxdlnQ2};
-		return Q2 * Ixq.integrate(log_xmin, log_xmax, 1e-3);
+		return Q2 * Ixq.integrate(log_xmin, log_xmax, 1e-5);
     };
 
     const apfel::Integrator Iq{dsigmadlnQ2};
-    const double xsec = Iq.integrate(log_Q2min, log_Q2max, 1e-3);
+    const double xsec = Iq.integrate(log_Q2min, log_Q2max, 1e-5);
 
     return xsec / SQ(pc->cm);
 }

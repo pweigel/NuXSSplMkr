@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     Configuration config = Configuration(config_path);
     config.Populate();
     config.Set_Replica(replica);
-    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf_info.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
 
     // Make the cross sections folder if it doesn't exist
@@ -58,9 +58,24 @@ int main(int argc, char* argv[]){
     double logemax = 12;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -9;
-    double logymax = 0;
+    // const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4,
+    //   1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8,
+    //   5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11, 2e11, 5e11,
+    //   1e12, 2e12, 5e12};
+    const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4};
+
+    // const vector<double> yvals{
+    //     1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 
+    //     1e-2, 2e-2, 5e-2, 8e-2, 1e-1, 1.2e-1, 1.5e-1, 1.8e-1, 2e-1, 2.2e-1, 2.5e-1, 2.8e-1,
+    //     3e-1, 3.2e-1, 3.5e-1, 3.8e-1, 4e-1, 4.2e-1, 4.5e-1, 4.8e-1, 5e-1, 5.2e-1, 5.5e-1, 5.8e-1,
+    //     6e-1, 6.2e-1, 6.5e-1, 6.8e-1, 7e-1, 7.2e-1, 7.5e-1, 7.8e-1, 8e-1, 8.2e-1, 8.5e-1, 8.8e-1,
+    //     9e-1, 9.2e-1, 9.5e-1, 9.8e-1, 9.9e-1};
+
+    double logymin = -4;
+    double logymax = -1;
     double dy = (logymax - logymin) / Ny;
+
+    int Nylin = 100;
 
     xs->Set_Lepton_Mass(pc->muon_mass);
     xs->Load_Structure_Functions(data_folder);
@@ -72,33 +87,33 @@ int main(int argc, char* argv[]){
     // Get the energy, inelasticity values and put them in the header
     std::vector<double> energy_values;
     dsdy_outfile << "E";
-    for (int ei = 0; ei < NE; ei++) {
-        double E = pc->GeV * std::pow(10, logemin + ei * dE);
-        energy_values.push_back(E);
-        dsdy_outfile << "," << E;
+    for (const auto E : EnuTab) { // loop over E
+        dsdy_outfile << "," << E * pc->GeV;
     }
     dsdy_outfile << std::endl;
 
-    std::vector<double> inelasticity_values;
+    std::vector<double> yvals;
     dsdy_outfile << "y";
-    for (int yi = 0; yi < Ny; yi++) {
-        double y = std::pow(10, logymin + yi * dy);
-        inelasticity_values.push_back(y);
+    for (int i = 0; i < Ny; i++) {
+        double y = pow(10, logymin + i * dy);
         dsdy_outfile << "," << y;
+        yvals.push_back(y);
+    }
+    dy = (1.0 - pow(10, logymax))/Nylin;
+    for (int i = 0; i < Nylin; i++) {
+        double y = pow(10, logymax) + i*dy;
+        dsdy_outfile << "," << y;
+        yvals.push_back(y);
     }
     dsdy_outfile << std::endl;
 
-    for (int ei = 0; ei < NE; ei++) { // loop over E
-        double E = energy_values[ei];
-        std::cout << "E = " << E / (pc->GeV) << " GeV" << std::endl;
-        for (int yi = 0; yi < Ny; yi++) { // loop over y
-            double y = inelasticity_values[yi];
-            double _dxs = xs->ds_dy(E, y);
+    for (const auto E : EnuTab) { // loop over E
+        std::cout << "E = " << E << " GeV" << std::endl;
+        // for (int yi = 0; yi < Ny; yi++) { // loop over y
+        for (const auto y : yvals) {
+            double _dxs = xs->ds_dy(E*pc->GeV, y);
 
-            dsdy_outfile << _dxs;
-            if ( !(yi == Ny - 1) ) {
-                dsdy_outfile << ",";
-            }
+            dsdy_outfile << _dxs << " ";
         }
         dsdy_outfile << std::endl;
     }

@@ -58,13 +58,28 @@ void SplineMaker::MakeSpline(string infile, string outfile) {
         Q2_knots.push_back(knot);
     }
 
-    for ( double log_x = log_x_min - d_log_x_knot; log_x <= -1.0-d_log_x_knot; log_x += d_log_x_knot ) {
+    for ( double log_x = log_x_min - d_log_x_knot; log_x <= std::log10(0.5)-d_log_x_knot; log_x += d_log_x_knot ) {
         double knot = log_x;
         x_knots.push_back(knot);
     }
 
-    for ( double log_x = -1.0; log_x <= 0.25; log_x += 0.01 ) {
-        double knot = log_x;
+    // for ( double log_x = -1.0; log_x <= 0.25; log_x += 0.01 ) {
+    //     double knot = log_x;
+    //     x_knots.push_back(knot);
+    // }
+
+    for ( double x = 0.5; x < 0.9; x += 0.025 ) {
+        double knot = std::log10(x);
+        x_knots.push_back(knot);
+    }
+
+    for ( double x = 0.9; x < 1.2; x += 0.01 ) {
+        double knot = std::log10(x);
+        x_knots.push_back(knot);
+    }
+
+    for ( double x = 1.2; x <= 2.0; x += 0.05 ) {
+        double knot = std::log10(x);
         x_knots.push_back(knot);
     }
     // ####

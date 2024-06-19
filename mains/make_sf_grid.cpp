@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
     nuxssplmkr::Configuration config = nuxssplmkr::Configuration(config_path);
     config.Populate();
     config.Set_Replica(replica);
-    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf.replica);
+    std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf_info.replica);
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
     
     // Make the sf folder if it doesn't exist

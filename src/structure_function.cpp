@@ -35,7 +35,7 @@ void StructureFunction::Set_Q_APFEL(double Q) {
     if (config.SF.evolve_pdf) {
         APFEL::ComputeStructureFunctionsAPFEL(max(1.3, sqrt(config.SF.Q2min)), Q);
     } else {
-        APFEL::SetAlphaQCDRef(config.pdf.pdf->alphasQ(Q), Q);
+        APFEL::SetAlphaQCDRef(config.pdf->alphasQ(Q), Q);
         APFEL::ComputeStructureFunctionsAPFEL(Q, Q);
     }
 }
@@ -47,17 +47,16 @@ void StructureFunction::InitializeAPFEL() {
         return;
     }
 
-    APFEL::SetPDFSet(config.pdf.pdfset);
-    APFEL::SetReplica(config.pdf.replica);
+    APFEL::SetPDFSet(config.pdf_info.pdfset);
+    APFEL::SetReplica(config.pdf_info.replica);
     APFEL::SetMassScheme(config.SF.mass_scheme);
-    std::cout << "PDF Masses: " << config.pdf.pdf_quark_masses[4] << " " << config.pdf.pdf_quark_masses[5] << " " << config.pdf.pdf_quark_masses[6] << std::endl;;
+    std::cout << "PDF Masses: " << config.pdf_info.pdf_quark_masses[4] << " " << config.pdf_info.pdf_quark_masses[5] << " " << config.pdf_info.pdf_quark_masses[6] << std::endl;;
     if (config.SF.disable_top == true) { // TODO: a better way of doing this. This should only be used for CSMS I think.
         // std::cout << "WARNING: Top mass set to m_b + 0.1!" << std::endl;
         std::cout << "WARNING: Top mass changed to disable it!" << std::endl;
-        // APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[5]+0.1);
-        APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], 1e12);
+        APFEL::SetPoleMasses(config.pdf_info.pdf_quark_masses[4], config.pdf_info.pdf_quark_masses[5], 1e12);
     } else {
-        APFEL::SetPoleMasses(config.pdf.pdf_quark_masses[4], config.pdf.pdf_quark_masses[5], config.pdf.pdf_quark_masses[6]);
+        APFEL::SetPoleMasses(config.pdf_info.pdf_quark_masses[4], config.pdf_info.pdf_quark_masses[5], config.pdf_info.pdf_quark_masses[6]);
     }
 
     APFEL::SetQLimits(std::sqrt(config.SF.Q2min), std::sqrt(config.SF.Q2max));
@@ -71,13 +70,13 @@ void StructureFunction::InitializeAPFEL() {
         // APFEL::SetVFNS();
     }
 
-    APFEL::SetNumberOfGrids(3);
-    APFEL::SetGridParameters(1, 90, 3, config.SF.xmin);
-    APFEL::SetGridParameters(2, 50, 5, 1e-1);
-    APFEL::SetGridParameters(3, 40, 5, 8e-1);
+    APFEL::SetNumberOfGrids(1);
+    APFEL::SetGridParameters(1, 190, 3, config.SF.xmin);
+    // APFEL::SetGridParameters(2, 40, 5, 1e-1);
+    // APFEL::SetGridParameters(3, 20, 5, 8e-1);
     APFEL::SetPerturbativeOrder(config.SF.perturbative_order);
     APFEL::SetSmallxResummation(config.SF.enable_small_x, config.SF.small_x_order);
-    APFEL::SetAlphaQCDRef(config.pdf.pdf->alphasQ(config.constants.MassZ), config.constants.MassZ);
+    APFEL::SetAlphaQCDRef(config.pdf->alphasQ(config.constants.MassZ), config.constants.MassZ);
 
     APFEL::SetMaxFlavourPDFs(config.SF.nf);
     APFEL::SetMaxFlavourAlpha(config.SF.nf);
@@ -129,7 +128,8 @@ double StructureFunction::F1(double x, double Q2) {
     if ( (config.SF.perturbative_order == LO) && (config.SF.mass_scheme == "parton") ) {
         return F2(x, Q2) / (2. * x);
     } else {
-        return (F2(x, Q2) - FL(x, Q2)) / (2. * x);
+        double m = M_iso / (pc->GeV);
+        return (F2(x, Q2) * (1.0 + 4.0*SQ(x*m)/Q2)  - FL(x, Q2)) / (2. * x);
     }
 }
 
@@ -244,9 +244,9 @@ double StructureFunction::RescalingVariable(double Q2) {
     switch(config.sf_type) {
         case SFType::total:  m2 = 0; break;
         case SFType::light:  m2 = 0; break;
-        case SFType::charm:  m2 = SQ(config.pdf.pdf_quark_masses[4]); break;
-        case SFType::bottom: m2 = SQ(config.pdf.pdf_quark_masses[5]); break;
-        case SFType::top:    m2 = SQ(config.pdf.pdf_quark_masses[6]); break;
+        case SFType::charm:  m2 = SQ(config.pdf_info.pdf_quark_masses[4]); break;
+        case SFType::bottom: m2 = SQ(config.pdf_info.pdf_quark_masses[5]); break;
+        case SFType::top:    m2 = SQ(config.pdf_info.pdf_quark_masses[6]); break;
         default:             m2 = 0; break;
     }
     return 1.0 / (1 + m2 / Q2);
@@ -405,7 +405,6 @@ double StructureFunction::F1_TMC(double x, double Q2) {
     std::array<int, 2> spline_centers;
     std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
     spline_F1.searchcenters(pt.data(), spline_centers.data());
-    // std::cout << pt[0] << "," << pt[1] << std::endl;
     double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double h2 = H2(xi, Q2);
     double g2 = G2(xi, Q2);
@@ -419,10 +418,10 @@ double StructureFunction::F1_TMC(double x, double Q2) {
 
 double StructureFunction::F2_TMC(double x, double Q2) {
     double xi = NachtmannXi(x, Q2);
-    // double xibar = NachtmannXibar(x, Q2);
     if ( (xi > 1.0) || (xi < config.SF.xmin)) {
         return 0.0;
     }
+
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
@@ -531,7 +530,7 @@ double StructureFunction::F2_PCAC(double x, double Q2) {
 }
 
 std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
-    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf.pdf);
+    LHAPDF::GridPDF* grid_central = dynamic_cast<LHAPDF::GridPDF*>(config.pdf);
     string xt = "nearest";
     grid_central->setExtrapolator(xt);
 
@@ -545,17 +544,16 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
     double _F1, _F2, _F3;
     double _FL = 0;
-
     switch (mode) {
         case 0:  // Parton
             break;
         case 1: // Plain ol' APFEL structure functions
         {
-            // computing_FL = true;
-
+            double m = M_iso / (pc->GeV);
             _FL = FL(x, Q2);
             _F2 = F2(x, Q2);
-            _F1 = (_F2 - _FL) / (2. * x);
+            // _F1 = (_F2 - _FL) / (2. * x);
+            _F1 = (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
             _F3 = F3(x, Q2);
             break;
         }
@@ -614,8 +612,6 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
                 _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
-
-                // std::cout << "(" << Q2 << ", " << x << "): " << _F1 / f1 << std::endl;
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -653,14 +649,10 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
 
                 double _F2_PCAC = F2_PCAC(x, Q2);
                 double _F2_PCAC_Q0 = F2_PCAC(x, SQ(config.CKMT.Q0));
-                // _F2_CKMT += _F2_PCAC;
-                // _F2_CKMT_Q0 += _F2_PCAC_Q0;
 
                 _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
-                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0));
-                // _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
+                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
                 _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
-                // std::cout << _F2_PCAC / (_F2_CKMT * (f2 / _F2_CKMT_Q0)) << std::endl;
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -713,6 +705,7 @@ void StructureFunction::BuildGrids(string outpath) {
     // Step sizes in log space
     double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2-1);
     double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / (Nx-1);
+    // double d_log_x  = std::abs( std::log10(config.SF.xmin) - std::log10(0.1)  ) / (Nx-60);
 
     std::cout << "log_Q2min = " << std::log10(config.SF.Q2min) << ", log_Q2max = " << std::log10(config.SF.Q2max) << std::endl;
     std::cout << "log_xmin = " << std::log10(config.SF.xmin) << ", log_xmax = " << std::log10(config.SF.xmax) << std::endl;
@@ -741,12 +734,33 @@ void StructureFunction::BuildGrids(string outpath) {
         f1_outfile << log_Q2 << " "; f2_outfile << log_Q2 << " "; f3_outfile << log_Q2 << " "; fL_outfile << log_Q2 << " ";
     }
     f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
-
     for (int j = 0; j < Nx; j++) {
         double log_x = std::log10(config.SF.xmin) + j * d_log_x;
         x_arr.push_back(log_x);
+        // std::cout << log_x << std::endl;
         f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " "; fL_outfile << log_x << " ";
     }
+
+    // for (int j = 0; j < Nx - 60; j++) {
+    //     double log_x = std::log10(config.SF.xmin) + j * d_log_x;
+    //     x_arr.push_back(log_x);
+    //     // std::cout << log_x << std::endl;
+    //     f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " "; fL_outfile << log_x << " ";
+    // }
+    // // std::cout << std::endl;
+    // for (int j = 0; j < 40; j++) {
+    //     double log_x =  std::log10(0.1 + j * (0.925 - 0.1)/(40));
+    //     x_arr.push_back(log_x);
+    //     // std::cout << log_x << std::endl;
+    //     f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " "; fL_outfile << log_x << " ";
+    // }
+    // // std::cout << std::endl;
+    // for (int j = 0; j < 20; j++) {
+    //     double log_x =  std::log10(0.925 + j * (1.0 - 0.925)/(20-1));
+    //     x_arr.push_back(log_x);
+    //     // std::cout << log_x << std::endl;
+    //     f1_outfile << log_x << " "; f2_outfile << log_x << " "; f3_outfile << log_x << " "; fL_outfile << log_x << " ";
+    // }
     f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
 
     // Collect SF values and write grids
@@ -764,6 +778,13 @@ void StructureFunction::BuildGrids(string outpath) {
         for (unsigned int j = 0; j < Nx; j++) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
+
+            // sometimes we get too close to the walls
+            // if (std::abs(x - config.SF.xmin) < 1e-6) {
+            //     x *= 1.001;
+            // } else if (std::abs(x - config.SF.xmax) < 1e-9) {
+            //     x = 1.0 - 1e-9;
+            // }
 
             double _F1, _F2, _F3, _FL;
             std::tie(_F1, _F2, _F3, _FL) = EvaluateSFs(x, Q2);

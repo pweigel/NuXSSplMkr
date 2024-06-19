@@ -12,27 +12,18 @@ void PhaseSpace::Initialize() {
     x_max = config.XS.xmax;
     y_min = config.XS.ymin;
     y_max = config.XS.ymax;
-    Q2_min = config.XS.Q2min * SQ(pc->GeV); // config
-    Q2_max = config.XS.Q2max * SQ(pc->GeV); // config
-    
-    if (config.XS.enable_shallow_region) {
-        W2_min = SQ(0.938 + 0.13957) * SQ(pc->GeV); // (m_N + m_pi)^2
-    } else {
-        W2_min = 4.0  * SQ(pc->GeV);
-    }
+    Q2_min = config.XS.Q2min * SQ(pc->GeV);
+    Q2_max = config.XS.Q2max * SQ(pc->GeV);
+    W2_min = config.XS.W2min * SQ(pc->GeV);
     W2_max = 1e20 * SQ(pc->GeV);
+
+    debug = config.general.debug;
 }
 
 void PhaseSpace::SetFinalStateMass(double m_fs) {
     /* Here, we compute the constraints on the phase space given
     the conditions specified in the configuration and final state
     constraints */
-
-    // Base constraints
-    // xmin = config[]
-
-    // Final state
-    // W2_min = pow(pc->m_N + m_fs, 2);
 }
 
 bool PhaseSpace::Validate(double E) {
@@ -80,9 +71,16 @@ bool PhaseSpace::Validate(double E, double x, double y) {
     */
     flag = 0; // No problem!
 
+    double s = 2 * pc->m_N * E + pow(pc->m_N, 2);
+    double Q2 = (s - pow(pc->m_N, 2)) * x * y;
+    // double W2 = s * y * (1.0 - x);
+    double W2 = Q2 * (1.0 - x) / x + pow(pc->m_N, 2);
+
     // use other ps check
     double M_l = 0.1057 * pc->GeV;
     double _xmin = max(x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    // double _xmin = max(x_min, Q2 / (2.0 * pc->m_N * E));
+    // double _xmin = max(x_min, Q2_min / (s * y));
     double _xmax = min(x_max, 1.0);
 
     double a = (1.0 - SQ(M_l) * (1.0 / (2.0 * pc->m_N * E * x) + 1.0 / (2 * SQ(E)))) / (2.0 + pc->m_N * x / E);
@@ -90,24 +88,26 @@ bool PhaseSpace::Validate(double E, double x, double y) {
     double _ymin = a - b;
     double _ymax = a + b;
 
+    if (debug) {
+        std::cout << "_xmin = " << _xmin << std::endl;
+        std::cout << "_xmax = " << _xmax << std::endl;
+        std::cout << "_ymin = " << _ymin << std::endl;
+        std::cout << "_ymax = " << _ymax << std::endl;
+    }
+
     if ((x < _xmin) || (x > _xmax) || (y < _ymin) || (y > _ymax)) {
         flag = 1;
         return false;
     }
 
-    double s = 2 * pc->m_N * E + pow(pc->m_N, 2);
-    double Q2 = (s - pow(pc->m_N, 2)) * x * y;
-    // double W2 = s * y * (1.0 - x);
-    double W2 = Q2 * (1.0 - x) / x + pow(pc->m_N, 2);
-
     if (debug) {
-        std::cout << "s = " << s / SQ(pc->GeV) << std::endl;
-        std::cout << "Q2 = " << Q2 / SQ(pc->GeV) << std::endl;
-        std::cout << "W2 = " << W2 / SQ(pc->GeV) << std::endl;
+        std::cout << "s = " << s << std::endl;
+        std::cout << "Q2 = " << Q2 << std::endl;
+        std::cout << "W2 = " << W2 << std::endl;
     }
     // double eta = 1.0; // Q^2 / m^2
 
-    if ((Q2 < Q2_min) || (Q2 > s)) {
+    if ((Q2 < Q2_min) || (Q2 > s) || (Q2_max > Q2_max)) {
         /* 
         Constraints from:
         PDF minimum/maximum Q^2
@@ -150,7 +150,7 @@ bool PhaseSpace::Validate(double E, double x, double y) {
 
 
 void PhaseSpace::Print() {
-    std::cout << "Phase space constraints: " << std::endl;
+    std::cout << "Phase space limits: " << std::endl;
     std::cout << "  (xmin, xmax) = " << x_min << ", " << x_max << std::endl;
     std::cout << "  (ymin, ymax) = " << y_min << ", " << y_max << std::endl;
     std::cout << "  (Q2min, Q2max) [GeV^2] = " << Q2_min / SQ(pc->GeV) << ", " << Q2_max / SQ(pc->GeV)<< std::endl;
