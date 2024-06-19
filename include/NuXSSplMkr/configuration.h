@@ -11,6 +11,7 @@
 #include "json.hpp"
 #include "APFEL/APFEL.h"
 #include "LHAPDF/LHAPDF.h"
+#include "LHAPDF/GridPDF.h"
 #include <unordered_map>
 using namespace std;
 
@@ -33,6 +34,12 @@ static unordered_map<string, TargetType> const TargetTypeMap = { {"proton",Targe
 static unordered_map<string, Flavor> const FlavorMap = { {"electron",Flavor::electron},{"muon",Flavor::muon},{"tau",Flavor::tau} };
 static unordered_map<NeutrinoType, double> CPFactorMap { {NeutrinoType::neutrino,1.},{NeutrinoType::antineutrino,-1.} };
 static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"light", SFType::light},{"charm",SFType::charm},{"bottom",SFType::bottom},{"top",SFType::top} };
+
+// codes
+static unordered_map<string, string> SF_INTERACTION_CODE { {"CC", "1"}, {"NC", "2"} };
+static unordered_map<string, string> SF_PARTICLE_CODE { {"neutrino", "0"}, {"antineutrino", "1"} };
+static unordered_map<string, string> SF_NUMBER_CODES { {"F2", "1"}, {"FL", "2"}, {"xF3", "3'"}, {"F1", "4"}, {"F3", "5"} };
+static unordered_map<string, string> SF_FLAVOR_CODES { {"total", "0"}, {"light", "1"}, {"charm", "2"}, {"bottom", "3"}, {"top", "4"} };
 
 struct General_settings {
     string unique_name;
@@ -119,7 +126,10 @@ class Configuration {
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
     void Set_Mass_Scheme(string mass_scheme);
+    void Set_Mode(int mode);
     void Set_Perturbative_Order(int pto);
+    string Get_SF_Code(string sf);
+    LHAPDF::GridPDF* Get_LHAPDF_SF(int mode);
 
     // settings structs
     General_settings general;
@@ -139,6 +149,8 @@ class Configuration {
     TargetType target_type;
     string projectile;
     NeutrinoType neutrino_type;
+
+    int mode;
 
     double cp_factor;
 

@@ -7,7 +7,7 @@ Configuration::Configuration(string config_path) {
     // TODO: check if file exists
     // boost::property_tree::read_json(config_path, config);  // store settings in config
     std::ifstream infile(config_path);
-    infile >> j;   
+    infile >> j;
 }
 
 void Configuration::Populate() {
@@ -165,6 +165,33 @@ void Configuration::Set_Perturbative_Order(int pto) {
 
 void Configuration::LoadPDFSet() {
     
+}
+
+string Configuration::Get_SF_Code(string sf) { // TODO: neaten this up, add NC as an option
+    return SF_INTERACTION_CODE["CC"] + SF_PARTICLE_CODE[projectile] + SF_NUMBER_CODES[sf] + SF_FLAVOR_CODES[sf_type_string];
+}
+
+LHAPDF::GridPDF* Configuration::Get_LHAPDF_SF(int mode) {
+    string suffix;
+    switch(mode) {
+        case 1: suffix = "_SF"; break;
+        case 2: suffix = "_TMC_SF"; break;
+        case 3: suffix = "_CKMT_SF"; break;
+        case 4: suffix = "_PCAC_SF"; break;
+    }
+    LHAPDF::GridPDF* gpdf = dynamic_cast<LHAPDF::GridPDF*>(LHAPDF::mkPDF(general.unique_name + suffix, pdf_info.replica));
+    const string xpol = "continuation";
+    gpdf->setExtrapolator(xpol);
+
+    return gpdf;
+}
+
+void Configuration::Set_Mode(int _mode) {
+    mode = _mode;
+    if ((mode == 3) || (mode == 4)) {
+        SF.Q2min = 0.01;
+        std::cout << "!!!WARNING!!! USING MODE " << mode << ", setting Q2min = 0.01!" << std::endl;
+    }
 }
 
 }

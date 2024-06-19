@@ -5,18 +5,35 @@ namespace nuxssplmkr {
 LHAPDFMaker::LHAPDFMaker(Configuration &_config)
     : config(_config)
 { 
+    suffix = "";
+    switch(config.mode) {
+        case 1: suffix = ""; break;
+        case 2: suffix = "_TMC"; break;
+        case 3: suffix = "_CKMT"; break;
+        case 4: suffix = "_PCAC"; break;
+    }
+    const char* lha_env_var = std::getenv("LHAPDF_DATA_PATH")    ;
+    const std::string lha_path = lha_env_var == NULL ? std::string(".") : std::string(lha_env_var);
+    pdf_path = lha_path + "/" + config.general.unique_name + suffix +"_SF/";
 
+    std::cout << "Saving structure functions to: " << std::endl;
+    std::cout << "  " << pdf_path << std::endl;
+
+    boost::filesystem::path out_folder = pdf_path;
+    if (!boost::filesystem::exists(out_folder)) {
+        boost::filesystem::create_directories(out_folder);
+    }
 }
 
 std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
 
-    std::string sfs[3] = {"F2", "F1", "F3"};
-    std::string flavors[4] = {"light", "charm", "bottom", "top"};
-    std::string projectiles[2] = {"neutrino", "antineutrino"};
-
     // std::string sfs[3] = {"F2", "F1", "F3"};
-    // std::string flavors[1] = {"light"};//, "charm", "bottom", "top"};
-    // std::string projectiles[1] = {"neutrino"};//, "antineutrino"};
+    // std::string flavors[4] = {"light", "charm", "bottom", "top"};
+    // std::string projectiles[2] = {"neutrino", "antineutrino"};
+
+    std::string sfs[3] = {"F2", "F1", "F3"};
+    std::string flavors[1] = {"light"};//, "charm", "bottom", "top"};
+    std::string projectiles[1] = {"neutrino"};//, "antineutrino"};
 
     std::unordered_map<std::string, std::vector<std::vector<double>>> sf_data;
     std::vector<std::string> sf_codes;
@@ -31,7 +48,7 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
             for (auto &_fl : flavors) {
                 std::string code = SF_INTERACTION_CODE["CC"] + SF_PARTICLE_CODE[_proj] + SF_NUMBER_CODES[_sf] + SF_FLAVOR_CODES[_fl];
 
-                std::string infile = datapath + "/" + _sf + "_" + _proj + "_" + config.target + "_" + _fl + ".grid";
+                std::string infile = datapath + "/" + _sf + "_" + _proj + "_" + config.target + "_" + _fl + suffix + ".grid";
                 std::cout << infile << std::endl;
                 std::ifstream gridfile(infile);
                 std::string line;
@@ -78,7 +95,9 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
             }
         }
     }
-    std::ofstream outfile(config.general.unique_name+"_SF/"+config.general.unique_name+"_SF_0000.dat");
+
+    std::ofstream outfile(pdf_path + config.general.unique_name+suffix+"_SF_0000.dat");
+
     outfile << "PdfType: central\nFormat: lhagrid1\n---\n";
     outfile << std::scientific << std::setprecision(11) << "   ";
     for (unsigned int i = 0; i < nx; i++) {
@@ -116,7 +135,7 @@ void LHAPDFMaker::MakeInfo(std::vector<std::string> codes) {
     // The following code is from the nnpdf collab code!
     // LHAPDF6 HEADER
     std::ofstream infodata;
-    infodata.open(config.general.unique_name+"_SF/"+config.general.unique_name + "_SF"+".info");
+    infodata.open(pdf_path+config.general.unique_name + suffix + "_SF"+".info");
     int nrep = 1; // TODO!
     infodata << "SetDesc: \"Structure functions!\"" << endl;
     infodata << "SetIndex: " << endl;

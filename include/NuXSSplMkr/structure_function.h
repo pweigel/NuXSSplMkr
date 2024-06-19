@@ -77,6 +77,11 @@ class StructureFunction {
         string f3_grid_fn;
         string fL_grid_fn;
 
+        int F1_code;
+        int F2_code;
+        int F3_code;
+        LHAPDF::GridPDF* SF_PDF;
+
         // ~ APFEL stuff ~
         void InitializeAPFEL();
 

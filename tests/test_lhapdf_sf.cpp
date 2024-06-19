@@ -16,6 +16,7 @@ using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
     std::string config_path = argv[1];
+    int mode = std::stoi(argv[2]);
 
     std::string target = "isoscalar";
     std::string projectile = "neutrino";
@@ -28,6 +29,7 @@ int main(int argc, char* argv[]){
     config.Set_Target(target);
     config.Set_Projectile(projectile);
     config.Set_SF_Type(sf_type);
+    config.Set_Mode(mode);
     LHAPDFMaker lhapdfmaker = LHAPDFMaker(config);
     std::vector<std::string> codes = lhapdfmaker.MakeSet(data_folder);
     lhapdfmaker.MakeInfo(codes);

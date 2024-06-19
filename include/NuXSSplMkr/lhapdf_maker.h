@@ -5,38 +5,15 @@
 #include "NuXSSplMkr/tools.h"
 #include "LHAPDF/LHAPDF.h"
 #include "LHAPDF/GridPDF.h"
+#include <boost/filesystem.hpp>
 
 namespace nuxssplmkr {
-  
-static unordered_map<string, string> SF_INTERACTION_CODE {
-    {"CC", "1"},
-    {"NC", "2"},
-};
-
-static unordered_map<string, string> SF_PARTICLE_CODE {
-    {"neutrino", "0"},
-    {"antineutrino", "1"},
-};
-
-static unordered_map<string, string> SF_NUMBER_CODES {
-    {"F2", "1"},
-    {"FL", "2"},
-    {"xF3", "3'"},
-    {"F1", "4"},
-    {"F3", "5"},
-};
-
-static unordered_map<string, string> SF_FLAVOR_CODES {
-    {"total", "0"},
-    {"light", "1"},
-    {"charm", "2"},
-    {"bottom", "3"},
-    {"top", "4"},
-};
 
 class LHAPDFMaker {
     private:
         Configuration config;
+        string suffix;
+        string pdf_path;
     public:
         LHAPDFMaker(Configuration& _config);
         ~LHAPDFMaker() {};
