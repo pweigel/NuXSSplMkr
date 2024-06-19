@@ -1,7 +1,9 @@
 #include "NuXSSplMkr/configuration.h"
 #include "NuXSSplMkr/physconst.h"
 #include "NuXSSplMkr/structure_function.h"
-#include "NuXSSplMkr/spline_maker.h"
+// #include "NuXSSplMkr/spline_maker.h"
+#include "NuXSSplMkr/lhapdf_maker.h"
+
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
@@ -48,26 +50,19 @@ int main(int argc, char* argv[]){
     config.Set_Target(target);
     config.Set_Projectile(projectile);
     config.Set_SF_Type(sf_type);
-
+    config.Set_Mode(mode);
+    
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
     sf.Set_Mode(mode);
 
     sf.Set_Lepton_Mass(pc->muon_mass);
 
-    if (mode > 1) {
-        sf.LoadSplines(data_folder);
-    } else {
+    if (mode == 1) {
         sf.InitializeAPFEL();
     }
-    sf.BuildGrids(data_folder); // Grid file
 
-    // Spline the structure functions
-    nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker();
-    splmkr.MakeSpline(sf.f1_grid_fn+".grid", sf.f1_grid_fn+".fits");
-    splmkr.MakeSpline(sf.f2_grid_fn+".grid", sf.f2_grid_fn+".fits");
-    splmkr.MakeSpline(sf.f3_grid_fn+".grid", sf.f3_grid_fn+".fits");
-    splmkr.MakeSpline(sf.fL_grid_fn+".grid", sf.fL_grid_fn+".fits");
+    sf.BuildGrids(data_folder);
 
     return 0;
 }
