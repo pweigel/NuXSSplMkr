@@ -22,5 +22,7 @@ int main(int argc, char* argv[]){
     config.Set_Mode(mode);
     LHAPDFMaker lhapdfmaker = LHAPDFMaker(config);
     std::vector<std::string> codes = lhapdfmaker.MakeSet(data_folder);
+
+    // Make .info file if it doesn't exist (lhapdfmaker will check if it does)
     lhapdfmaker.MakeInfo(codes);
 }

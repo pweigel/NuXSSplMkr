@@ -128,74 +128,95 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
 }
 
 void LHAPDFMaker::MakeInfo(std::vector<std::string> codes) {
-    // The following code is from the nnpdf collab code!
-    // LHAPDF6 HEADER
-    std::ofstream infodata;
-    infodata.open(pdf_path+config.general.unique_name + suffix + "_SF"+".info");
-    int nrep = 1; // TODO!
-    infodata << "SetDesc: \"Structure functions!\"" << endl;
-    infodata << "SetIndex: " << endl;
-    infodata << "Authors: Philip Weigel" << endl;
-    infodata << "Reference: N/A" << endl;
-    infodata << "Format: lhagrid1" << endl;
-    infodata << "DataVersion: 1" << endl;
-    infodata << "NumMembers: " << nrep << endl;
-    infodata << "Particle: 2212" << endl;
-    infodata << "Flavors: [";
-    for (int i = 0; i < codes.size()-1; i++) {
-        infodata << codes.at(i) << ", ";
-    }
-    infodata << codes.at(codes.size()-1) << "]" << std::endl;
-    infodata << "OrderQCD: " << config.SF.pto << endl;
-    infodata << "FlavorScheme: variable" << endl; // TODO: currently always set as variable which isn't always the case
-    infodata << "NumFlavors: 6" << endl; // should be a part of the config
-    infodata << "ErrorType: replicas" << endl; // get from lhapdf
+    std::string infodata_filename = pdf_path+config.general.unique_name + suffix + "_SF"+".info";
+    if (!boost::filesystem::exists(infodata_filename)) {
+        // The following code is a modified version of the nnpdf collab code!
+        // LHAPDF6 HEADER
+        LHAPDF::PDFInfo info = config.pdf->info();
+        int nreps = info.get_entry_as<int>("NumMembers");
+        std::string error_type = info.get_entry_as<std::string>("ErrorType");
+        double error_conf_level = info.get_entry_as<double>("ErrorConfLevel");
+        int nf = info.get_entry_as<int>("NumFlavors");
 
-    infodata.precision(7);
-    infodata << scientific;
-    infodata << "XMin: "<< config.SF.xmin << endl;
-    infodata << "XMax: "<< config.SF.xmax << endl;
-    infodata << "QMin: "<< to_string(sqrt(config.SF.Q2min)) << endl;
-    infodata << "QMax: "<< to_string(sqrt(config.SF.Q2max)) << endl;
-    infodata << "MZ: "  << config.constants.MassZ << endl;
-    infodata << "MUp: 0\nMDown: 0\nMStrange: 0" << std::endl;
-    infodata << "MCharm: "  << config.pdf_info.pdf_quark_masses[4] << endl;
-    infodata << "MBottom: " << config.pdf_info.pdf_quark_masses[5] << endl;
-    infodata << "MTop: "    << config.pdf_info.pdf_quark_masses[6] << endl;
+        double MZ, MUp, MDown, MStrange, MCharm, MBottom, MTop, AlphaS_MZ, AlphaS_OrderQCD;
+        std::string AlphaS_Type;
+        if (info.has_key("MZ")) MZ = info.get_entry_as<double>("MZ");
+            else MZ = 91.1870;
+        if (info.has_key("MUp")) MUp = info.get_entry_as<double>("MUp");
+            else MUp = 0.0;
+        if (info.has_key("MDown")) MDown = info.get_entry_as<double>("MDown");
+            else MDown = 0.0;
+        if (info.has_key("MStrange")) MStrange = info.get_entry_as<double>("MStrange");
+            else MStrange = 0.0;
+        // if (info.has_key("MCharm")) MCharm = info.get_entry_as<double>("MCharm");
+        //     else MCharm = 1.3;
+        // if (info.has_key("MBottom")) MBottom = info.get_entry_as<double>("MBottom");
+        //     else MBottom = 4.75;
+        // if (info.has_key("MTop")) MTop = info.get_entry_as<double>("MTop");
+        //     else MTop = 172.0;
+        if (info.has_key("AlphaS_MZ")) AlphaS_MZ = info.get_entry_as<double>("AlphaS_MZ");
+            else AlphaS_MZ = 0.118;
+        if (info.has_key("AlphaS_OrderQCD")) AlphaS_OrderQCD = info.get_entry_as<int>("AlphaS_OrderQCD");
+            else AlphaS_OrderQCD = 2;
+        if (info.has_key("AlphaS_Type")) AlphaS_Type = info.get_entry_as<string>("AlphaS_Type");
+            else AlphaS_Type = "ipol";
+            
+        std::ofstream infodata;
+        infodata.open(infodata_filename);
+        infodata << "SetDesc: \"Structure functions from pdf set "<< config.pdf_info.pdfset << ", not for public use!" "\"" << endl;
+        infodata << "SetIndex: " << endl;
+        infodata << "Authors: Philip Weigel" << endl;
+        infodata << "Reference: N/A" << endl;
+        infodata << "Format: lhagrid1" << endl;
+        infodata << "DataVersion: 1" << endl;
+        infodata << "NumMembers: " << nreps << endl;
+        infodata << "Flavors: [";
+        for (int i = 0; i < codes.size()-1; i++) {
+            infodata << codes.at(i) << ", ";
+        }
+        infodata << codes.at(codes.size()-1) << "]" << std::endl;
+        infodata << "OrderQCD: " << config.SF.pto << endl;
+        infodata << "FlavorScheme: variable" << endl; // TODO: currently always set as variable which isn't always the case
+        infodata << "NumFlavors: " << nf << endl; // should be a part of the config
+        infodata << "ErrorType: " << error_type << endl;
+        infodata << "ErrorConfLevel: " << error_conf_level << endl;
 
-    LHAPDF::PDFInfo info = config.pdf->info();
-    if (info.has_key("AlphaS_MZ")) {
-        std::string AlphaS_MZ = info.get_entry_as<string>("AlphaS_MZ");
+        infodata.precision(7);
+        infodata << scientific;
+        infodata << "XMin: "<< config.SF.xmin << endl;
+        infodata << "XMax: "<< config.SF.xmax << endl;
+        infodata << "QMin: "<< to_string(sqrt(config.SF.Q2min)) << endl;
+        infodata << "QMax: "<< to_string(sqrt(config.SF.Q2max)) << endl;
+        infodata << "MZ: "       << MZ << endl;
+        infodata << "MUp: "      << MUp << endl;
+        infodata << "MDown: "    << MDown << endl;
+        infodata << "MStrange: " << MStrange << endl;
+        infodata << "MCharm: "   << config.pdf_info.pdf_quark_masses[4] << endl;
+        infodata << "MBottom: "  << config.pdf_info.pdf_quark_masses[5] << endl;
+        infodata << "MTop: "     << config.pdf_info.pdf_quark_masses[6] << endl;
         infodata << "AlphaS_MZ: " << AlphaS_MZ << endl;
-    }
-    if (info.has_key("AlphaS_OrderQCD")) {
-        std::string AlphaS_OrderQCD = info.get_entry_as<string>("AlphaS_OrderQCD");
         infodata << "AlphaS_OrderQCD: " << AlphaS_OrderQCD << endl;
-    }
-    if (info.has_key("AlphaS_Type")) {
-        std::string AlphaS_Type = info.get_entry_as<string>("AlphaS_Type");
         infodata << "AlphaS_Type: " << AlphaS_Type << endl;
-    }
 
-    if (info.has_key("AlphaS_Qs")) {
-        std::vector<double> AlphaS_Qs = info.get_entry_as<vector<double>>("AlphaS_Qs");
-        infodata << "AlphaS_Qs: [";
-        for (int i = 0; i < AlphaS_Qs.size()-1; i++) {
-            infodata << AlphaS_Qs.at(i) << ", ";
+        if (info.has_key("AlphaS_Qs")) {
+            std::vector<double> AlphaS_Qs = info.get_entry_as<vector<double>>("AlphaS_Qs");
+            infodata << "AlphaS_Qs: [";
+            for (int i = 0; i < AlphaS_Qs.size()-1; i++) {
+                infodata << AlphaS_Qs.at(i) << ", ";
+            }
+            infodata << AlphaS_Qs.at(AlphaS_Qs.size()-1) << "]" << endl;
         }
-        infodata << AlphaS_Qs.at(AlphaS_Qs.size()-1) << "]" << endl;
-    }
-    if (info.has_key("AlphaS_Vals")) {
-        std::vector<double> AlphaS_Vals = info.get_entry_as<vector<double>>("AlphaS_Vals");
-        infodata << "AlphaS_Vals: [";
-        for (int i = 0; i < AlphaS_Vals.size()-1; i++) {
-            infodata << AlphaS_Vals.at(i) << ", ";
+        if (info.has_key("AlphaS_Vals")) {
+            std::vector<double> AlphaS_Vals = info.get_entry_as<vector<double>>("AlphaS_Vals");
+            infodata << "AlphaS_Vals: [";
+            for (int i = 0; i < AlphaS_Vals.size()-1; i++) {
+                infodata << AlphaS_Vals.at(i) << ", ";
+            }
+            infodata << AlphaS_Vals.at(AlphaS_Vals.size()-1) << "]" << endl;
         }
-        infodata << AlphaS_Vals.at(AlphaS_Vals.size()-1) << "]" << endl;
+
+        infodata.close();
     }
-    // infodata << "AlphaS_Lambda4: 0.342207" << endl;
-    // infodata << "AlphaS_Lambda5: 0.239" << endl;
-    infodata.close();
 }
 
 }
