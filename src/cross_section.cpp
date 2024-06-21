@@ -6,7 +6,6 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     : config(_config), ps(_ps)
 {
     pc = new nuxssplmkr::PhysConst();
-    M_iso = pc->isoscalar_mass;
     rc_prefactor = (pc->alpha / (2.0 * M_PI));
     Set_Mode(config.mode);
 
@@ -16,8 +15,9 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
 
     SF_PDF = config.Get_LHAPDF_SF(mode);
 
-    double coef = pc->GF * pow(172.0 * pc->GeV, 2) / 8 / sqrt(2) / pow(M_PI, 2);
-    double rho  = 1 + 3 * coef * ( 1 + coef * ( 19 - 2 * pow(M_PI, 2) ) );
+    // TODO: not used yet, but needed for NC
+    // double coef = pc->GF * pow(top_mass * pc->GeV, 2) / 8 / sqrt(2) / pow(M_PI, 2);
+    // double rho  = 1 + 3 * coef * ( 1 + coef * ( 19 - 2 * pow(M_PI, 2) ) );
 }
 
 void CrossSection::Set_Mode(int _mode) {
@@ -32,130 +32,126 @@ void CrossSection::Set_Mode(int _mode) {
     }
 }
 
-void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
-    Load_F1(sf1_path);
-    Load_F2(sf2_path);
-    Load_F3(sf3_path);
-}
+// void CrossSection::Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path) {
+//     Load_F1(sf1_path);
+//     Load_F2(sf2_path);
+//     Load_F3(sf3_path);
+// }
 
-void CrossSection::Load_Structure_Functions(string inpath) {
-    string sf1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-    string sf2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-    string sf3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-    std::cout << sf1_path << std::endl;
-    std::cout << sf2_path << std::endl;
-    std::cout << sf3_path << std::endl;
-    Load_F1(sf1_path);
-    Load_F2(sf2_path);
-    Load_F3(sf3_path);
-}
+// void CrossSection::Load_Structure_Functions(string inpath) {
+//     string sf1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     string sf2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     string sf3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     std::cout << sf1_path << std::endl;
+//     std::cout << sf2_path << std::endl;
+//     std::cout << sf3_path << std::endl;
+//     Load_F1(sf1_path);
+//     Load_F2(sf2_path);
+//     Load_F3(sf3_path);
+// }
 
-Grid CrossSection::Load_Grid(string path) {
-    std::ifstream infile;
-    infile.open(path);
-    std::string line;
+// Grid CrossSection::Load_Grid(string path) {
+//     std::ifstream infile;
+//     infile.open(path);
+//     std::string line;
 
-    Grid grid;
-    std::vector<std::string> tokens;
+//     Grid grid;
+//     std::vector<std::string> tokens;
 
-    // Get first two lines
-    std::getline(infile, line);
-    boost::split(tokens, line, boost::is_any_of(" "));
-    grid.NQ2 = stoi(tokens[0]);
-    grid.Nx = stoi(tokens[1]);
+//     // Get first two lines
+//     std::getline(infile, line);
+//     boost::split(tokens, line, boost::is_any_of(" "));
+//     grid.NQ2 = stoi(tokens[0]);
+//     grid.Nx = stoi(tokens[1]);
 
-    std::getline(infile, line);
-    boost::split(tokens, line, boost::is_any_of(" "));
-    grid.Q2min = stod(tokens[0]);
-    grid.Q2max = stod(tokens[1]);
-    grid.xmin = stod(tokens[2]);
-    grid.xmax = stod(tokens[3]);
+//     std::getline(infile, line);
+//     boost::split(tokens, line, boost::is_any_of(" "));
+//     grid.Q2min = stod(tokens[0]);
+//     grid.Q2max = stod(tokens[1]);
+//     grid.xmin = stod(tokens[2]);
+//     grid.xmax = stod(tokens[3]);
 
-    int n = 0;
-    double value;
-    vector<double> data;
-    while(std::getline(infile, line)) {
-        std::stringstream linestream(line);
-        std::string val;
+//     int n = 0;
+//     double value;
+//     vector<double> data;
+//     while(std::getline(infile, line)) {
+//         std::stringstream linestream(line);
+//         std::string val;
 
-        while(getline(linestream, val,',')) {
-            data.push_back(stod(val));
-        }
-        n++;
-    }
-    grid.data = data;
-    infile.close();
+//         while(getline(linestream, val,',')) {
+//             data.push_back(stod(val));
+//         }
+//         n++;
+//     }
+//     grid.data = data;
+//     infile.close();
 
-    return grid;
-}
+//     return grid;
+// }
 
-void CrossSection::Load_F1(string path) {
-    bool is_grid = false;
-    if (is_grid) {
-        // Grid
-        Grid grid = Load_Grid(path);
-        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
-        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
-        std::cout << "F1 Grid Limits: " << std::endl;
-        std::cout << "    logQ2 = [" << grid.Q2min << ", " << grid.Q2max << "]" << std::endl;
-        std::cout << "    logx = [" << grid.xmin << ", " << grid.xmax << "]" << std::endl;
-        F1_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+// void CrossSection::Load_F1(string path) {
+//     bool is_grid = false;
+//     if (is_grid) {
+//         // Grid
+//         Grid grid = Load_Grid(path);
+//         double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+//         double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+//         std::cout << "F1 Grid Limits: " << std::endl;
+//         std::cout << "    logQ2 = [" << grid.Q2min << ", " << grid.Q2max << "]" << std::endl;
+//         std::cout << "    logx = [" << grid.xmin << ", " << grid.xmax << "]" << std::endl;
+//         F1_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
 
-    } else {
-        if (F1_loaded) {
-            F1 = photospline::splinetable<>();
-        }
-        F1.read_fits(path);
-    }
-    // std::cout << "Loaded F1!" << std::endl;
-    F1_loaded = true;
-}
+//     } else {
+//         if (F1_loaded) {
+//             F1 = photospline::splinetable<>();
+//         }
+//         F1.read_fits(path);
+//     }
+//     // std::cout << "Loaded F1!" << std::endl;
+//     F1_loaded = true;
+// }
 
-void CrossSection::Load_F2(string path) {
-    bool is_grid = false;
-    if (is_grid) {
-        // Grid
-        Grid grid = Load_Grid(path);
-        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
-        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
-        F2_interpolator = BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+// void CrossSection::Load_F2(string path) {
+//     bool is_grid = false;
+//     if (is_grid) {
+//         // Grid
+//         Grid grid = Load_Grid(path);
+//         double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+//         double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+//         F2_interpolator = BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
 
-    } else {
-        if (F2_loaded) {
-            F2 = photospline::splinetable<>();
-        }
-        F2.read_fits(path);
-    }
-    // std::cout << "Loaded F2!" << std::endl;
-    F2_loaded = true;
-}
+//     } else {
+//         if (F2_loaded) {
+//             F2 = photospline::splinetable<>();
+//         }
+//         F2.read_fits(path);
+//     }
+//     // std::cout << "Loaded F2!" << std::endl;
+//     F2_loaded = true;
+// }
 
-void CrossSection::Load_F3(string path) {
-    bool is_grid = false;
-    if (is_grid) {
-        // Grid
-        Grid grid = Load_Grid(path);
-        double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
-        double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
-        F3_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
+// void CrossSection::Load_F3(string path) {
+//     bool is_grid = false;
+//     if (is_grid) {
+//         // Grid
+//         Grid grid = Load_Grid(path);
+//         double dlogQ2 = (grid.Q2max - grid.Q2min) / ((double)grid.NQ2 - 1);
+//         double dlogx = (grid.xmax - grid.xmin) / ((double)grid.Nx - 1);
+//         F3_interpolator =  BilinearInterpolator(std::move(grid.data), grid.NQ2, grid.Nx, grid.Q2min, grid.Q2max, grid.xmin, grid.xmax);
 
-    } else {
-        if (F1_loaded) {
-            F3 = photospline::splinetable<>();
-        }
-        F3.read_fits(path);
-    }
-    // std::cout << "Loaded F3!" << std::endl;
-    F3_loaded = true;
-}
+//     } else {
+//         if (F1_loaded) {
+//             F3 = photospline::splinetable<>();
+//         }
+//         F3.read_fits(path);
+//     }
+//     // std::cout << "Loaded F3!" << std::endl;
+//     F3_loaded = true;
+// }
 
 void CrossSection::Set_Neutrino_Energy(double E) {
     ENU = E;
-    integral_max_Q2 = min(config.XS.Q2max*SQ(pc->GeV), 2.0 * M_iso * ENU); // TODO: M_ISO --> target mass
-}
-
-void CrossSection::Set_Lepton_Mass(double m) {
-    M_l = m;
+    integral_max_Q2 = min(config.XS.Q2max*SQ(pc->GeV), 2.0 * config.target_mass * ENU);
 }
 
 double CrossSection::ds_dxdy_kernel(double* k) {
@@ -197,9 +193,11 @@ double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
 
 double CrossSection::ds_dxdQ2(double x, double Q2) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
 
-    double s = 2.0 * M_iso * ENU + SQ(M_iso);
-    double y = Q2 / ( (s - SQ(M_iso)) * x);
+    double s = 2.0 * M_target * ENU + SQ(M_target);
+    double y = Q2 / ( (s - SQ(M_target)) * x);
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
@@ -227,11 +225,11 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
     
     double term1, term2, term3, term4, term5;
     if (config.XS.enable_mass_terms) {
-        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_iso) ) * F1_val;
-        term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
-        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
-        term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (M_iso * ENU) * F5_val;
+        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_target) ) * F1_val;
+        term2 = ( 1 - y - M_target*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
+        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_target*ENU)) * F3_val;
+        term4 = (x*y*SQ(M_l) / (2 * M_target * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_target*ENU))) * F4_val;
+        term5 = -1.0 * SQ(M_l) / (M_target * ENU) * F5_val;
     } else {
         term1 = y*y*x * F1_val;
         term2 = ( 1 - y ) * F2_val;
@@ -245,9 +243,11 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
 
 double CrossSection::ds_dxdy(double x, double y) {
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
 
-    double s = 2.0 * M_iso * ENU + SQ(M_iso);// - SQ(top_mass*pc->GeV);
-    double Q2 = (s - SQ(M_iso)) * x * y;
+    double s = 2.0 * M_target * ENU + SQ(M_target);// - SQ(top_mass*pc->GeV);
+    double Q2 = (s - SQ(M_target)) * x * y;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
@@ -275,25 +275,19 @@ double CrossSection::ds_dxdy(double x, double y) {
     
     double term1, term2, term3, term4, term5;
     if (config.XS.enable_mass_terms) {
-        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_iso) ) * F1_val;
-        term2 = ( 1 - y - M_iso*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
-        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_iso*ENU)) * F3_val;
-        term4 = (x*y*SQ(M_l) / (2 * M_iso * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_iso*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (M_iso * ENU) * F5_val;
+        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_target) ) * F1_val;
+        term2 = ( 1 - y - M_target*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
+        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_target*ENU)) * F3_val;
+        term4 = (x*y*SQ(M_l) / (2 * M_target * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_target*ENU))) * F4_val;
+        term5 = -1.0 * SQ(M_l) / (M_target * ENU) * F5_val;
     } else {
-        // prefactor = SQ(pc->GF) * M_iso * ENU / (M_PI * SQ(1.0 + Q2/MW2));
-        // jacobian = 0.0;
-        // propagator = 0.0;
         term1 = y*y*x * F1_val;
-        term2 = ( 1 - y - M_iso * x * y / (2 * ENU) ) * F2_val; // modified to match the cteq paper
+        term2 = ( 1 - y ) * F2_val;
         term3 = config.cp_factor * y*(1-y/2) * x*F3_val;
         term4 = 0.0;
         term5 = 0.0;
     }
     double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
-    // if (xs < 0.0) {
-    //     std::cout << F1_val << "," << F2_val << "," << F3_val << std::endl;
-    // }
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
@@ -310,11 +304,11 @@ double CrossSection::ds_dxdy_partonic(double E, double x, double y) {
 
 double CrossSection::ds_dxdy_partonic(double x, double y) {
     // TODO: W threshold and slow rescaling, CP factor fix
-    
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double M_target = config.target_mass;
 
-    double s_energy = 2.*M_iso*ENU + SQ(M_iso); // using s for strange parton later
-    double Q2 = (s_energy - SQ(M_iso)) * x * y;
+    double s_energy = 2.*M_target*ENU + SQ(M_target); // using s for strange parton later
+    double Q2 = (s_energy - SQ(M_target)) * x * y;
     double mQ2 = Q2/(pc->GeV2); // This is used a lot, so precompute it
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
@@ -411,9 +405,12 @@ double CrossSection::ds_dy_TMC() {
 
 double CrossSection::ds_dy(double E, double y) {
     Set_Neutrino_Energy(E);
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
+
     kernel_y = y;
-    double s = 2.0 * M_iso * E + SQ(pc->m_N); // TODO: VERIFY THIS ENTIRE SECTION
-    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    // double s = 2.0 * M_target * E + SQ(M_target);
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * M_target * (E - M_l)));
     double xmax = ps.x_max;
 
     if (!ps.Validate(E)) {
@@ -432,7 +429,7 @@ double CrossSection::ds_dy(double E, double y) {
     }
     F.params = this;
     
-    int status = gsl_integration_cquad(&F, log(xmin), log(xmax), 0, 1.e-3, w, &result, &error, &neval);
+    int status = gsl_integration_cquad(&F, log(xmin), log(xmax), 0, 1.e-4, w, &result, &error, &neval);
     if (status != 0) {
         std::cout << "ERR: " << status << std::endl;
     }
@@ -444,13 +441,16 @@ double CrossSection::ds_dy(double E, double y) {
 double CrossSection::TotalXS_xQ2(double E) {
     // integrate over x-Q2
     Set_Neutrino_Energy(E);
-    double s = 2.0 * pc->m_N * E + SQ(pc->m_N);
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
+
+    double s = 2.0 * M_target * E + SQ(M_target);
     
-    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * M_target * (E - M_l)));
     double xmax = 1.0-1e-9;
 
     double Q2min = ps.Q2_min;
-    double Q2max = s - SQ(pc->m_N);
+    double Q2max = s - SQ(M_target);
 
     double res,err;
     const unsigned long dim = 2; int calls = 250000; // bump it
@@ -485,36 +485,38 @@ double CrossSection::TotalXS_xQ2(double E) {
 
 double CrossSection::AlternativeTotalXS(double E) {
     // this is a method using apfelxx/bgr method of integrating (this is their code!)
-    double xl = 1e-9;
-    double xu = 1.0 - 1e-3;
-    double Ql = sqrt(0.01) * pc->GeV;
-    double Qu = 1e7 * pc->GeV;
-    double GF2 = pc->GF2;
-
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV);
-    const double s_tot = SQ(M_iso) + 2 * M_iso * E;
+
+    double xl = 1e-9;
+    double xu = 1.0 - 1e-9;
+    double Ql = sqrt(0.01) * pc->GeV;
+    double Qu = 2 * log(500 * MW2);
+    double GF2 = pc->GF2;
+    double M_target = config.target_mass;
+
+    const double s_tot = SQ(M_target) + 2 * M_target * E;
     // Integration bounds in ln(Q2)
     const double log_Q2min = 2 * log(Ql);
-    const double log_Q2max = min(log(s_tot - SQ(M_iso)), 2 * log(500 * MW2));
+    const double log_Q2max = min(log(s_tot - SQ(M_target)), Qu);
     // const double conv = 0.3894e9;
 
     const auto dsigmadlnQ2 = [=] (double const& log_Q2) -> double
     {
-        const double log_xmin = log_Q2 - log(s_tot - SQ(M_iso));
-        const double log_xmax = 0 - 1e-9;
+        const double log_xmin = log_Q2 - log(s_tot - SQ(M_target));
+        const double log_xmax = log(xu);
 
         // Helpers
         const double Q2 = exp(log_Q2);
-        const double Q  = sqrt(Q2);
+        // const double Q  = sqrt(Q2);
 
         const auto dsigmadlnxdlnQ2 = [=] (double const& log_x) -> double
         {
             const double x      = max(exp(log_x), xl);
-            const double y      = Q2 / x / ( s_tot - SQ(M_iso) );
+            const double y      = Q2 / x / ( s_tot - SQ(M_target) );
             const double omy2   = pow(1 - y, 2);
             const double Yplus  = 1 + omy2;
             const double Yminus = 1 - omy2;
-            const double W2     = Q2 * (1 - x) / x + SQ(M_iso);
+            const double W2     = Q2 * (1 - x) / x + SQ(M_target);
             if (W2 < 1.96 * SQ(pc->GeV)) {
                 return 0.0;
             }
@@ -551,9 +553,12 @@ double CrossSection::AlternativeTotalXS(double E) {
 
 double CrossSection::TotalXS(double E){
     Set_Neutrino_Energy(E);
-    double s = 2.0 * M_iso * E + SQ(M_iso);
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
+
+    // double s = 2.0 * M_target * E + SQ(M_target);
     
-    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * pc->m_N * (E - M_l)));
+    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * M_target * (E - M_l)));
     double xmax = ps.x_max;
 
     if (!ps.Validate(E)) {
@@ -580,13 +585,19 @@ double CrossSection::TotalXS(double E){
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
     gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
 
+    int max_iterations = 10;
+    int n_iter = 0;
     do
     {
         gsl_monte_vegas_integrate (&F, xl, xu, dim, calls/5, r, s_vegas, &res, &err);
         // printf ("result = % .6e sigma = % .6e "
         //         "chisq/dof = %.2f\n", res, err, gsl_monte_vegas_chisq (s_vegas));
+        n_iter += 1;
     }
-    while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
+    while ( (fabs(gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5) && (n_iter < max_iterations) );
+    if (n_iter == max_iterations) {
+        std::cout << "WARNING: Max iterations reached for E = " << E/pc->GeV << " GeV!" << std::endl;
+    }
 
     gsl_monte_vegas_free (s_vegas);
     gsl_rng_free (r);
@@ -639,7 +650,9 @@ double CrossSection::rc_kernel(double k) {
 }
 
 double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y) {
-    double s = 2.0 * M_iso * E + SQ(M_iso);
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
+    double s = 2.0 * M_target * E + SQ(M_target);
     double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l));
     return calculate_rc_dsdxdy(z, E, x, y, L);
 }
@@ -649,7 +662,9 @@ double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y,
     double yhat = (z + y - 1.0) / z;
     double zmin = 1.0 - y * (1.0 - x);
 
-    // double s = 2.0 * M_iso * E + SQ(M_iso);
+    // double M_target = config.target_mass;
+    // double M_l = config.lepton_mass;
+    // double s = 2.0 * M_target * E + SQ(M_target);
     // double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
     std::array<double, 3> pt{{std::log10(E / pc->GeV), std::log10(x), std::log10(y)}};
@@ -683,10 +698,12 @@ double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y,
 
 double CrossSection::rc_integrate(double E, double x, double y) {
     Set_Neutrino_Energy(E);
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
     kernel_y = y;
     kernel_x = x;
     
-    double s = 2.0 * M_iso * E;// + SQ(M_iso);
+    double s = 2.0 * M_target * E;// + SQ(M_target);
     kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
     double integrate_zmin = 0.0;

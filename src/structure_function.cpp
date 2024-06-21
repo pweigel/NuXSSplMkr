@@ -8,11 +8,12 @@ StructureFunction::StructureFunction(Configuration &_config)
     pc = new PhysConst();
 
     GF2   = SQ(pc->GF);
-    M_iso = 0.5*(pc->proton_mass + pc->neutron_mass);
 
     F1_code = std::stoi(config.Get_SF_Code("F1"));
     F2_code = std::stoi(config.Get_SF_Code("F2"));
     F3_code = std::stoi(config.Get_SF_Code("F3"));
+
+    Set_Mode(config.mode);
 }
 
 void StructureFunction::Set_Mode(int _mode) {
@@ -25,10 +26,6 @@ void StructureFunction::Set_Mode(int _mode) {
         case 3: {insuffix = "_TMC"; outsuffix = "_CKMT"; break;}
         case 4: {insuffix = "_TMC"; outsuffix = "_PCAC"; break;}
     }
-}
-
-void StructureFunction::Set_Lepton_Mass(double m) {
-    M_lepton = m;
 }
 
 void StructureFunction::Set_Neutrino_Energy(double E) {
@@ -132,7 +129,7 @@ double StructureFunction::F1(double x, double Q2) {
     if ( (config.SF.perturbative_order == LO) && (config.SF.mass_scheme == "parton") ) {
         return F2(x, Q2) / (2. * x);
     } else {
-        double m = M_iso / (pc->GeV);
+        double m = (config.target_mass) / (pc->GeV);
         return (F2(x, Q2) * (1.0 + 4.0*SQ(x*m)/Q2)  - FL(x, Q2)) / (2. * x);
     }
 }
@@ -257,7 +254,7 @@ double StructureFunction::RescalingVariable(double x, double Q2) {
 }
 
 double StructureFunction::NachtmannR(double x, double Q2){
-    double m = M_iso / (pc->GeV);
+    double m = (config.target_mass) / (pc->GeV);
     return sqrt(1. + 4.*x*x*SQ(m)/Q2);
 }
 
@@ -379,7 +376,7 @@ double StructureFunction::F1_TMC(double x, double Q2) {
         return 0.0;
     }
     double r = NachtmannR(x, Q2);
-    double m = M_iso / (pc->GeV);
+    double m = (config.target_mass) / (pc->GeV);
 
     // Get the value from the F1 spline at Q2, xi
     double f1 = SF_PDF->xfxQ2(F1_code, xi, Q2);
@@ -401,7 +398,7 @@ double StructureFunction::F2_TMC(double x, double Q2) {
     }
 
     double r = NachtmannR(x, Q2);
-    double m = M_iso / (pc->GeV);
+    double m = (config.target_mass) / (pc->GeV);
 
     // Get the value from the F2 spline at Q2, xi
     double f2 = SF_PDF->xfxQ2(F2_code, xi, Q2);
@@ -423,7 +420,7 @@ double StructureFunction::F3_TMC(double x, double Q2) {
       return 0.0;
     }
     double r = NachtmannR(x, Q2);
-    double m = M_iso / (pc->GeV);
+    double m = (config.target_mass) / (pc->GeV);
 
     // Get the value from the F2 spline at Q2, xi
     double f3 = SF_PDF->xfxQ2(F3_code, xi, Q2);
@@ -483,7 +480,7 @@ double StructureFunction::R_CKMT(double x, double Q2){
 }
 
 double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
-    double m = M_iso / pc->GeV;
+    double m = (config.target_mass) / (pc->GeV);
     double _R;
     if (Q2 < 0.3) {
         // _R = R_CKMT(x, 0.3) * Q2 / 0.3;
@@ -524,14 +521,14 @@ std::map<int,double> StructureFunction::PDFExtract(double x, double Q2){
 }
 
 std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x, double Q2) {
-    double _F1, _F2, _F3;
-    double _FL = 0;
+    double _F1 = 0, _F2 = 0, _F3 = 0, _FL = 0;
+
     switch (mode) {
         case 0:  // Parton
             break;
         case 1: // Plain ol' APFEL structure functions
         {
-            double m = M_iso / (pc->GeV);
+            double m = (config.target_mass) / (pc->GeV);
             _FL = FL(x, Q2);
             _F2 = F2(x, Q2);
             _F1 = (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
@@ -568,7 +565,7 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
 
                 double chi = RescalingVariable(x, Q2);
                 double chi_Q0 = RescalingVariable(x, SQ(config.CKMT.Q0));
-                if (chi >= 1.0) {
+                if ( (chi >= 1.0) || (config.sf_type == SFType::bottom) || (config.sf_type == SFType::top) ) {
                     _F1 = 0.0;
                     _F2 = 0.0;
                     _F3 = 0.0;
@@ -608,7 +605,7 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
                 double chi = RescalingVariable(x, Q2);
                 double chi_Q0 = RescalingVariable(x, SQ(config.CKMT.Q0));
 
-                if (chi >= 1.0) {
+                if ( (chi >= 1.0) || (config.sf_type == SFType::bottom) || (config.sf_type == SFType::top) ) {
                     _F1 = 0.0;
                     _F2 = 0.0;
                     _F3 = 0.0;
@@ -640,30 +637,30 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
     return {_F1, _F2, _F3, _FL};
 }
 
-void StructureFunction::LoadSplines(string inpath) {
-    if (splines_loaded) {
-        throw std::runtime_error("Splines have already been loaded!!");
-    }
+// void StructureFunction::LoadSplines(string inpath) {
+//     if (splines_loaded) {
+//         throw std::runtime_error("Splines have already been loaded!!");
+//     }
 
-    string f1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-    string f2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-    string f3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     string f1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     string f2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
+//     string f3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
 
-    std::cout << "Loading the following splines: " << std::endl;
-    std::cout << f1_path << std::endl;
-    std::cout << f2_path << std::endl;
-    std::cout << f3_path << std::endl;
+//     std::cout << "Loading the following splines: " << std::endl;
+//     std::cout << f1_path << std::endl;
+//     std::cout << f2_path << std::endl;
+//     std::cout << f3_path << std::endl;
 
-    spline_F1 = photospline::splinetable<>();
-    spline_F2 = photospline::splinetable<>();
-    spline_F3 = photospline::splinetable<>();
+//     spline_F1 = photospline::splinetable<>();
+//     spline_F2 = photospline::splinetable<>();
+//     spline_F3 = photospline::splinetable<>();
 
-    spline_F1.read_fits(f1_path);
-    spline_F2.read_fits(f2_path);
-    spline_F3.read_fits(f3_path);
+//     spline_F1.read_fits(f1_path);
+//     spline_F2.read_fits(f2_path);
+//     spline_F3.read_fits(f3_path);
 
-    splines_loaded = true;
-}
+//     splines_loaded = true;
+// }
 
 void StructureFunction::BuildGrids(string outpath) {
     const int Nx = config.SF.Nx;
@@ -679,14 +676,14 @@ void StructureFunction::BuildGrids(string outpath) {
 
     // Load the SF from LHAPDF
     if (mode == 2) {
-        SF_PDF = config.Get_LHAPDF_SF(1);
+        SF_PDF = config.Get_LHAPDF_SF(1); // Loads the plain APFEL structure functions
     } else if (mode == 3) {
-        SF_PDF = config.Get_LHAPDF_SF(2);
+        SF_PDF = config.Get_LHAPDF_SF(2); // Loads the TMC structure functions
     } else if (mode == 4) {
-        SF_PDF = config.Get_LHAPDF_SF(2);
+        SF_PDF = config.Get_LHAPDF_SF(2); // Loads the TMC structure functions
     }
 
-    // Step sizes in log space
+    // Step sizes in log space, we do a slightly modified thing for the x spacing to get more points near x=1
     double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2-1);
     double d_log_x  = std::abs( std::log10(config.SF.xmin) - std::log10(0.1)  ) / (Nx-60);
 
@@ -743,7 +740,7 @@ void StructureFunction::BuildGrids(string outpath) {
     f1_outfile << "\n"; f2_outfile << "\n"; f3_outfile << "\n"; fL_outfile << "\n";
 
     // Collect SF values and write grids
-    for (unsigned int i = 0; i < NQ2; i++) {
+    for (int i = 0; i < NQ2; i++) {
         double log_Q2 = Q2_arr.at(i);
         double Q2 = std::pow(10.0, log_Q2);
         if (config.general.debug) {
@@ -754,7 +751,7 @@ void StructureFunction::BuildGrids(string outpath) {
             Set_Q_APFEL(std::sqrt(Q2));
         }
 
-        for (unsigned int j = 0; j < Nx; j++) {
+        for (int j = 0; j < Nx; j++) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
 

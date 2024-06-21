@@ -47,16 +47,15 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
 
+    nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
+
     config.Set_Target(target);
     config.Set_Projectile(projectile);
     config.Set_SF_Type(sf_type);
+    config.Set_Lepton_Mass(pc->muon_mass);
     config.Set_Mode(mode);
     
     nuxssplmkr::StructureFunction sf = nuxssplmkr::StructureFunction(config);
-    nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
-    sf.Set_Mode(mode);
-
-    sf.Set_Lepton_Mass(pc->muon_mass);
 
     if (mode == 1) {
         sf.InitializeAPFEL();

@@ -41,12 +41,12 @@ double KernelHelper(double x, void* param){
   return (p->*f)(x);
 }
 
-struct Grid {
-    int NQ2;
-    int Nx;
-    double Q2min, Q2max, xmin, xmax;
-    std::vector<double> data;
-};
+// struct Grid {
+//     int NQ2;
+//     int Nx;
+//     double Q2min, Q2max, xmin, xmax;
+//     std::vector<double> data;
+// };
 
 class CrossSection {
     private:
@@ -55,9 +55,9 @@ class CrossSection {
         double Normalization;
         double CP_Factor;
 
-        bool F1_loaded = false;
-        bool F2_loaded = false;
-        bool F3_loaded = false;
+        // bool F1_loaded = false;
+        // bool F2_loaded = false;
+        // bool F3_loaded = false;
 
         int F1_code;
         int F2_code;
@@ -69,8 +69,6 @@ class CrossSection {
         BilinearInterpolator F2_interpolator;
         BilinearInterpolator F3_interpolator;
 
-        double M_iso; // Isoscalar mass
-        double M_l; // lepton mass
         double ENU; // neutrino energy
 
         double kernel_y; // Used for integration
@@ -84,10 +82,6 @@ class CrossSection {
         double integral_max_x;
 
         double min_W2;
-
-        double charm_mass = 1.3;
-        double bottom_mass = 4.75;
-        double top_mass = 173.0; // for testing
 
         double rc_prefactor;
 
@@ -147,13 +141,12 @@ class CrossSection {
         void rc_load_dsdxdy(string spline_path); // load dsdxdy for rc
         photospline::splinetable<> rc_dsdxdy; // cross section for rc calcs TODO: rename this
         
-        Grid Load_Grid(string path);
-
-        void Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path);
-        void Load_Structure_Functions(string inpath);
-        void Load_F1(string path);
-        void Load_F2(string path);
-        void Load_F3(string path);
+        // Grid Load_Grid(string path);
+        // void Load_Structure_Functions(string sf1_path, string sf2_path, string sf3_path);
+        // void Load_Structure_Functions(string inpath);
+        // void Load_F1(string path);
+        // void Load_F2(string path);
+        // void Load_F3(string path);
 
         photospline::splinetable<> F1;
         photospline::splinetable<> F2;
@@ -178,7 +171,6 @@ class CrossSection {
 
         // ~ Settings ~
         void Set_Mode(int _mode);
-        void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
 };
 

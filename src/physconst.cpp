@@ -97,10 +97,9 @@ PhysConst::PhysConst(void){
     // Angle
     degree = pi/180.0;              // [rad/degree]
     
-    proton_mass = 0.938272*GeV;
-    neutron_mass = 0.939565*GeV; 
+    proton_mass = 0.93827208816*GeV;
+    neutron_mass = 0.9395654205*GeV; 
     isoscalar_mass = 0.5*(proton_mass + neutron_mass);
-    m_N = isoscalar_mass;
     Wboson_mass = 80.385*GeV;
     Zboson_mass = 91.1876*GeV;
     

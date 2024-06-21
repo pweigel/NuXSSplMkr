@@ -19,7 +19,8 @@ int main(int argc, char* argv[]){
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
-    const unsigned int replica = std::stoi(argv[5]);
+    const int mode = std::stoi(argv[5]);
+    const unsigned int replica = std::stoi(argv[6]);
 
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;
@@ -35,34 +36,32 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
 
+    PhysConst* pc = new PhysConst();
+
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
-
-    PhysConst* pc = new PhysConst();
+    config.Set_Lepton_Mass(pc->muon_mass);
+    config.Set_Mode(mode);
 
     PhaseSpace ps(config);
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
 
-    // load the three structure function fit files
-    // string f1 = data_folder + "/F1_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    // string f2 = data_folder + "/F2_" + projectile + "_" + target + "_" + xs_type + ".fits";
-    // string f3 = data_folder + "/F3_" + projectile + "_" + target + "_" + xs_type + ".fits";
-
     int NE = 110;
     int Ny = 100;
 
-    double logemin = 1;
-    double logemax = 12;
+    double logemin = std::log10(5e1);
+    double logemax = std::log10(5e12);
     double dE = (logemax - logemin) / (NE-1);
 
-    // const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4,
-    //   1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8,
-    //   5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11, 2e11, 5e11,
-    //   1e12, 2e12, 5e12};
-    const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4};
+    const vector<double> EnuTab{5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4,
+      1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8,
+      5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11, 2e11, 5e11,
+      1e12, 2e12, 5e12};
+
+    // const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4};
 
     // const vector<double> yvals{
     //     1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 
@@ -76,9 +75,6 @@ int main(int argc, char* argv[]){
     double dy = (logymax - logymin) / Ny;
 
     int Nylin = 100;
-
-    xs->Set_Lepton_Mass(pc->muon_mass);
-    xs->Load_Structure_Functions(data_folder);
 
     // ds/dy
     std::ofstream dsdy_outfile;
@@ -108,18 +104,14 @@ int main(int argc, char* argv[]){
     dsdy_outfile << std::endl;
 
     for (const auto E : EnuTab) { // loop over E
-        std::cout << "E = " << E << " GeV" << std::endl;
-        // for (int yi = 0; yi < Ny; yi++) { // loop over y
+        std::cout << "E = " << E << " [GeV]" << std::endl;
         for (const auto y : yvals) {
             double _dxs = xs->ds_dy(E*pc->GeV, y);
-
             dsdy_outfile << _dxs << " ";
         }
         dsdy_outfile << std::endl;
     }
     dsdy_outfile.close();
-
-
 
     return 0;
 }

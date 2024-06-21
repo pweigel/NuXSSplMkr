@@ -47,12 +47,14 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
 
+    PhysConst* pc = new PhysConst();
+
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
+    config.Set_Lepton_Mass(pc->muon_mass);
     config.Set_Mode(mode);
 
-    PhysConst* pc = new PhysConst();
     PhaseSpace ps(config);
     ps.Print();
 
@@ -79,10 +81,6 @@ int main(int argc, char* argv[]){
     std::ofstream outfile;
     outfile.open(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
 
-    // xs->Load_Structure_Functions(f1, f2, f3);
-    // xs->Load_Structure_Functions(data_folder);
-    xs->Set_Lepton_Mass(pc->muon_mass);
-    
     // Get the energy, inelasticity values and put them in the header
     std::vector<double> energy_values;
     outfile << "E";

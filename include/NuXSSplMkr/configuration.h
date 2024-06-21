@@ -1,6 +1,7 @@
 #ifndef __CONFIGURATION_H
 #define __CONFIGURATION_H
 
+#include "NuXSSplMkr/physconst.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -114,7 +115,8 @@ struct fundamental_constants {
 class Configuration {
   private:
     nlohmann::json j;
-
+    PhysConst* pc; // Constants
+  
   public:
     // Configuration();
     Configuration(string config_path);
@@ -126,6 +128,7 @@ class Configuration {
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
     void Set_Mass_Scheme(string mass_scheme);
+    void Set_Lepton_Mass(double m);
     void Set_Mode(int mode);
     void Set_Perturbative_Order(int pto);
     string Get_SF_Code(string sf);
@@ -153,6 +156,9 @@ class Configuration {
     int mode;
 
     double cp_factor;
+    double target_mass;
+    double lepton_mass;
+
 
     bool flag_set_flavor = false;
     bool flag_set_projectile = false;

@@ -46,16 +46,14 @@ class StructureFunction {
         std::map<int,double> F3coef;
 
         // PCAC constants (cite reno paper)
-        double pion_mass = 135.0; // TODO: exact value
+        double pion_mass = 139.57039; // TODO: exact value
         double fpi = 0.93 * pion_mass;
 
         bool use_AlbrightJarlskog;
 
-        double _Q2_cached = -1.0;
-
-        photospline::splinetable<> spline_F1;
-        photospline::splinetable<> spline_F2;
-        photospline::splinetable<> spline_F3;
+        // photospline::splinetable<> spline_F1;
+        // photospline::splinetable<> spline_F2;
+        // photospline::splinetable<> spline_F3;
 
         int mode = 0;
         string insuffix = "";
@@ -137,18 +135,14 @@ class StructureFunction {
         std::tuple<double,double,double,double> EvaluateSFs(double x, double Q2);
         void Compute();
 
-        void LoadGrids(string inpath);
-        void LoadSplines(string inpath);
-        
+        // void LoadGrids(string inpath);
+        // void LoadSplines(string inpath);
         void BuildGrids(string outpath);
 
         std::map<int,double> PDFExtract(double x, double Q2);
         
         // ~ Settings ~
         void Set_Mode(int mode);
-        void Set_Target(string target_string);
-        void Set_Projectile(string projectile_string);
-        void Set_Lepton_Mass(double m);
         void Set_Neutrino_Energy(double E);
         void Set_SF_Type(string sf_type_string);
         void Set_Q_APFEL(double Q);

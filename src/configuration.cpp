@@ -8,6 +8,8 @@ Configuration::Configuration(string config_path) {
     // boost::property_tree::read_json(config_path, config);  // store settings in config
     std::ifstream infile(config_path);
     infile >> j;
+
+    pc = new nuxssplmkr::PhysConst();
 }
 
 void Configuration::Populate() {
@@ -94,6 +96,7 @@ void Configuration::Populate() {
     }
 
     dynamic_W2_min = j["XS"].value("dynamic_W2_min", false);
+    target_mass = pc->isoscalar_mass;
 }
 
 void Configuration::Set_Replica(int replica) {
@@ -111,6 +114,12 @@ void Configuration::Set_Replica(int replica) {
 void Configuration::Set_Target(string target_string) {
     target = target_string;
     target_type = TargetTypeMap.at(target_string);
+    switch (target_type) {
+        case TargetType::proton: target_mass = pc->proton_mass; break;
+        case TargetType::neutron: target_mass = pc->neutron_mass; break;
+        case TargetType::isoscalar: target_mass = pc->isoscalar_mass; break;
+        default: target_mass = pc->isoscalar_mass;
+    };
 
     flag_set_target = true;
 }
@@ -192,6 +201,10 @@ void Configuration::Set_Mode(int _mode) {
         SF.Q2min = 0.01;
         std::cout << "!!!WARNING!!! USING MODE " << mode << ", setting Q2min = 0.01!" << std::endl;
     }
+}
+
+void Configuration::Set_Lepton_Mass(double m) {
+    lepton_mass = m;
 }
 
 }
