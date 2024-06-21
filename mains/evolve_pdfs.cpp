@@ -37,13 +37,13 @@ int main(int argc, char* argv[]){
 
     double Q0 = 1.295;
     if (enable_small_x) {
-        Q0 = std::sqrt(3.5);
+        Q0 = std::sqrt(3.5); // TODO: be smarter about this? -PW
     }
 
     APFEL::SetPDFSet(inpdf);
     APFEL::SetReplica(0);
     APFEL::SetTheory("QCD");
-    APFEL::SetQLimits(Q0, 1e7);
+    APFEL::SetQLimits(Q0, 1e5);
     APFEL::SetPerturbativeOrder(pto);
     APFEL::SetPDFEvolution("exactalpha");
     APFEL::SetFastEvolution(false);
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
     int nx = nlogx + nlinx;
 
     double logQ2_min = std::log10(Q0*Q0);
-    double logQ2_max = 14;
+    double logQ2_max = 10;
     double logx_min = -9;
     double logx_max = -1;
     double x_max = 1;

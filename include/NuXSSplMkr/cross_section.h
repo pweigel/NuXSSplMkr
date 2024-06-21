@@ -59,6 +59,12 @@ class CrossSection {
         bool F2_loaded = false;
         bool F3_loaded = false;
 
+        int F1_code;
+        int F2_code;
+        int F3_code;
+
+        LHAPDF::GridPDF* SF_PDF;
+
         BilinearInterpolator F1_interpolator;
         BilinearInterpolator F2_interpolator;
         BilinearInterpolator F3_interpolator;

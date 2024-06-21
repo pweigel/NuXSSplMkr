@@ -22,7 +22,8 @@ int main(int argc, char* argv[]){
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
-    const unsigned int replica = std::stoi(argv[5]);
+    const int mode = std::stoi(argv[5]);
+    const unsigned int replica = std::stoi(argv[6]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
@@ -31,6 +32,7 @@ int main(int argc, char* argv[]){
     std::cout << "Target: " << target << std::endl;
     std::cout << "XS Type: " << xs_type << std::endl;
     std::cout << "Replica: " << replica << std::endl;
+    std::cout << "Mode: " << mode << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
     Configuration config = Configuration(config_path);
@@ -48,6 +50,7 @@ int main(int argc, char* argv[]){
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
+    config.Set_Mode(mode);
 
     PhysConst* pc = new PhysConst();
     PhaseSpace ps(config);
@@ -56,8 +59,8 @@ int main(int argc, char* argv[]){
     CrossSection* xs = new CrossSection(config, ps);
 
     // int NE = 110;
-    int Ny = 100;
-    int Nx = 100;
+    int Ny = 300;
+    int Nx = 300;
 
     double logemin = 1;
     double logemax = 12;
@@ -65,11 +68,11 @@ int main(int argc, char* argv[]){
     // double dE = (logemax - logemin) / (NE-1);
     double dE = 1.;
 
-    double logymin = -5;
+    double logymin = -3;
     double logymax = 0;
     double dy = (logymax - logymin) / (Ny-1);
 
-    double logxmin = -5;
+    double logxmin = -3;
     double logxmax = 0;
     double dx = (logxmax - logxmin) / (Nx-1);
 
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]){
     outfile.open(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
 
     // xs->Load_Structure_Functions(f1, f2, f3);
-    xs->Load_Structure_Functions(data_folder);
+    // xs->Load_Structure_Functions(data_folder);
     xs->Set_Lepton_Mass(pc->muon_mass);
     
     // Get the energy, inelasticity values and put them in the header

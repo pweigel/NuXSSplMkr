@@ -243,7 +243,7 @@ double StructureFunction::F5(double x, double Q2) {
     }
 }
 
-double StructureFunction::RescalingVariable(double Q2) {
+double StructureFunction::RescalingVariable(double x, double Q2) {
     double m2;
     switch(config.sf_type) {
         case SFType::total:  m2 = 0; break;
@@ -253,7 +253,7 @@ double StructureFunction::RescalingVariable(double Q2) {
         case SFType::top:    m2 = SQ(config.pdf_info.pdf_quark_masses[6]); break;
         default:             m2 = 0; break;
     }
-    return 1.0 / (1 + m2 / Q2);
+    return x * (1 + m2 / Q2);
 }
 
 double StructureFunction::NachtmannR(double x, double Q2){
@@ -266,11 +266,11 @@ double StructureFunction::NachtmannXi(double x, double Q2){
     return 2.*x / denominator;
 }
 
-double StructureFunction::NachtmannXibar(double x, double Q2){
-    double denominator = 1. + NachtmannR(x, Q2);
-    double rescaling = RescalingVariable(Q2);
-    return 2.*x*rescaling / denominator;
-}
+// double StructureFunction::NachtmannXibar(double x, double Q2){
+//     double denominator = 1. + NachtmannR(x, Q2);
+//     double rescaling = RescalingVariable(Q2);
+//     return 2.*x*rescaling / denominator;
+// }
 
 template<class T,double (T::*f)(double,double), int n, int m>
 double StructureFunction::HGeneric(double xi, double Q2){
@@ -294,46 +294,18 @@ double StructureFunction::HGeneric(double xi, double Q2){
     return result;
 }
 
-// double StructureFunction::H2(double xi, double Q2){
-//     return HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
-// }
-
-// double StructureFunction::H3(double xi, double Q2){
-//     return HGeneric<StructureFunction,&StructureFunction::F3,1,1>(xi, Q2);
-// }
-
-// double StructureFunction::G2(double xi, double Q2){
-//     return HGeneric<StructureFunction,&StructureFunction::F2,1,1>(xi, Q2) - xi*HGeneric<StructureFunction,&StructureFunction::F2,2,1>(xi, Q2);
-// }
-
 double StructureFunction::H2_kernel(double u) {
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
-    // spline_F2.searchcenters(pt.data(), spline_centers.data());
-    // double F2_val = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double f2 = SF_PDF->xfxQ2(F2_code, u, _kernel_Q2);
-
     return f2 / SQ(u);
 }
 
 double StructureFunction::H3_kernel(double u) {
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(u)}};
-    // spline_F3.searchcenters(pt.data(), spline_centers.data());
-    // double F3_val = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
-    
     double f3 = SF_PDF->xfxQ2(F2_code, u, _kernel_Q2);
-
     return f3 / u;
 }
 
 double StructureFunction::G2_kernel(double v) {
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(_kernel_Q2), std::log10(v)}};
-    // spline_F2.searchcenters(pt.data(), spline_centers.data());
-    // double F2_val = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
     double f2 = SF_PDF->xfxQ2(F2_code, v, _kernel_Q2);
-
     return (v - _kernel_xi) * f2 / SQ(v);
 }
 
@@ -410,14 +382,6 @@ double StructureFunction::F1_TMC(double x, double Q2) {
     double m = M_iso / (pc->GeV);
 
     // Get the value from the F1 spline at Q2, xi
-
-    // OLD PHOTOSPLINE METHOD:
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
-    // spline_F1.searchcenters(pt.data(), spline_centers.data());
-    // double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
-
-    // NEW LHAPDF METHOD:
     double f1 = SF_PDF->xfxQ2(F1_code, xi, Q2);
 
     double h2 = H2(xi, Q2);
@@ -439,14 +403,7 @@ double StructureFunction::F2_TMC(double x, double Q2) {
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
-    // OLD PHOTOSPLINE METHOD:
     // Get the value from the F2 spline at Q2, xi
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
-    // spline_F2.searchcenters(pt.data(), spline_centers.data());
-    // double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
-
-    // NEW LHAPDF METHOD:
     double f2 = SF_PDF->xfxQ2(F2_code, xi, Q2);
 
     double g2 = G2(xi, Q2);
@@ -468,14 +425,7 @@ double StructureFunction::F3_TMC(double x, double Q2) {
     double r = NachtmannR(x, Q2);
     double m = M_iso / (pc->GeV);
 
-    // OLD PHOTOSPLINE METHOD
     // Get the value from the F2 spline at Q2, xi
-    // std::array<int, 2> spline_centers;
-    // std::array<double, 2> pt{{std::log10(Q2), std::log10(xi)}};
-    // spline_F3.searchcenters(pt.data(), spline_centers.data());
-    // double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
-
-    // NEW LHAPDF METHOD
     double f3 = SF_PDF->xfxQ2(F3_code, xi, Q2);
 
     double h3 = H3(xi, Q2);
@@ -509,10 +459,16 @@ double StructureFunction::F_CKMT(double x, double Q2, double A, double B, double
 }
 
 double StructureFunction::F2_CKMT(double x, double Q2) {
+    if (config.sf_type == SFType::charm) {
+        return F_CKMT(x, Q2, config.CKMT.F2A, 0.0, config.CKMT.F2f); // sea only
+    }
     return F_CKMT(x, Q2, config.CKMT.F2A, config.CKMT.F2B, config.CKMT.F2f);
 }
 
 double StructureFunction::xF3_CKMT(double x, double Q2) {
+    if (config.sf_type == SFType::charm) {
+        return F_CKMT(x, Q2, config.CKMT.xF3A, 0.0, config.CKMT.xF3f);
+    }
     return F_CKMT(x, Q2, config.CKMT.xF3A, config.cp_factor * config.CKMT.xF3B, config.CKMT.xF3f);
 }
 
@@ -530,7 +486,8 @@ double StructureFunction::F1_CKMT(double _F2, double x, double Q2){
     double m = M_iso / pc->GeV;
     double _R;
     if (Q2 < 0.3) {
-        _R = R_CKMT(x, 0.3) * Q2 / 0.3;
+        // _R = R_CKMT(x, 0.3) * Q2 / 0.3;
+        _R = R_CKMT(x, 0.3) * 0.3 / Q2;
     } else {
         _R = R_CKMT(x, Q2);
     }
@@ -548,6 +505,9 @@ double StructureFunction::F2_PCAC(double x, double Q2) {
     double f_PCAC = 1.0 / SQ(1 + Q2 / SQ(M_PCAC));
     double term1 = config.PCAC.A * pow(x, -1.0*delta) * pow(1.0-x, n + 4.0) * pow( (Q2 / (Q2 + config.CKMT.a)), delta);
     double term2 = config.PCAC.B * pow(x, 1.0 - config.CKMT.AlphaR) * pow(1.0-x, n) * pow(Q2 / (Q2 + config.CKMT.b), config.CKMT.AlphaR - 1.0) * (1.0 + config.CKMT.F2f * (1.0 - x));
+    if (config.sf_type == SFType::charm) {
+        term2 = 0.;
+    }
     return f_PCAC * (term1 + term2);
 }
 
@@ -574,31 +534,17 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
             double m = M_iso / (pc->GeV);
             _FL = FL(x, Q2);
             _F2 = F2(x, Q2);
-            // _F1 = (_F2 - _FL) / (2. * x);
             _F1 = (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
             _F3 = F3(x, Q2);
             break;
         }
         case 2: // TMC
         {
-            if (!splines_loaded){
-                throw std::runtime_error("Splines have not been loaded!");
-            }
-
             if (x > 1e-3) {
                 _F1 = F1_TMC(x, Q2);
                 _F2 = F2_TMC(x, Q2);
                 _F3 = F3_TMC(x, Q2);
             } else {
-                // std::array<int, 2> spline_centers;
-                // std::array<double, 2> pt{{std::log10(Q2), std::log10(x)}};
-                // spline_F1.searchcenters(pt.data(), spline_centers.data());
-                // spline_F2.searchcenters(pt.data(), spline_centers.data());
-                // spline_F3.searchcenters(pt.data(), spline_centers.data());
-
-                // _F1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
-                // _F2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
-                // _F3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
                 _F1 = SF_PDF->xfxQ2(F1_code, x, Q2);
                 _F2 = SF_PDF->xfxQ2(F2_code, x, Q2);
                 _F3 = SF_PDF->xfxQ2(F3_code, x, Q2);
@@ -614,32 +560,31 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
                 Q2_eval = SQ(config.CKMT.Q0);
             }
 
-            // std::array<int, 2> spline_centers;
-            // std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
-            // spline_F1.searchcenters(pt.data(), spline_centers.data());
-            // spline_F2.searchcenters(pt.data(), spline_centers.data());
-            // spline_F3.searchcenters(pt.data(), spline_centers.data());
-
-            // values of the TMC structure functions
-            // double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
             double f1 = SF_PDF->xfxQ2(F1_code, x, Q2_eval);
             double f2 = SF_PDF->xfxQ2(F2_code, x, Q2_eval);
             double f3 = SF_PDF->xfxQ2(F3_code, x, Q2_eval);
 
             if (Q2 <= SQ(config.CKMT.Q0)) {  // if below Q0, apply CKMT
-                double _F2_CKMT = F2_CKMT(x, Q2);
-                double _F3_CKMT = F3_CKMT(x, Q2)/x;
-                double _F1_CKMT = F1_CKMT(_F2_CKMT, x, Q2);
 
-                double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
-                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0))/x;
-                double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
+                double chi = RescalingVariable(x, Q2);
+                double chi_Q0 = RescalingVariable(x, SQ(config.CKMT.Q0));
+                if (chi >= 1.0) {
+                    _F1 = 0.0;
+                    _F2 = 0.0;
+                    _F3 = 0.0;
+                } else {
+                    double _F2_CKMT = F2_CKMT(chi, Q2);
+                    double _F3_CKMT = F3_CKMT(chi, Q2);
+                    double _F1_CKMT = F1_CKMT(_F2_CKMT, chi, Q2);
 
-                _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
-                _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
-                _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+                    double _F2_CKMT_Q0 = F2_CKMT(chi_Q0, SQ(config.CKMT.Q0));
+                    double _F3_CKMT_Q0 = F3_CKMT(chi_Q0, SQ(config.CKMT.Q0));
+                    double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, chi_Q0, SQ(config.CKMT.Q0));
+
+                    _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
+                    _F2 = _F2_CKMT * (f2 / _F2_CKMT_Q0);
+                    _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+                }
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -655,35 +600,34 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
                 Q2_eval = SQ(config.CKMT.Q0);
             }
 
-            // std::array<int, 2> spline_centers;
-            // std::array<double, 2> pt{{std::log10(Q2_eval), std::log10(x)}};
-            // spline_F1.searchcenters(pt.data(), spline_centers.data());
-            // spline_F2.searchcenters(pt.data(), spline_centers.data());
-            // spline_F3.searchcenters(pt.data(), spline_centers.data());
-
-            // double f1 = spline_F1.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f2 = spline_F2.ndsplineeval(pt.data(), spline_centers.data(), 0);
-            // double f3 = spline_F3.ndsplineeval(pt.data(), spline_centers.data(), 0);
             double f1 = SF_PDF->xfxQ2(F1_code, x, Q2_eval);
             double f2 = SF_PDF->xfxQ2(F2_code, x, Q2_eval);
             double f3 = SF_PDF->xfxQ2(F3_code, x, Q2_eval);
 
             if (Q2 <= SQ(config.CKMT.Q0)) {
-                double _F2_CKMT    = F2_CKMT(x, Q2);
-                double _F3_CKMT    = F3_CKMT(x, Q2)/x;
-                double _F1_CKMT    = F1_CKMT(_F2_CKMT, x, Q2);
+                double chi = RescalingVariable(x, Q2);
+                double chi_Q0 = RescalingVariable(x, SQ(config.CKMT.Q0));
 
-                double _F2_CKMT_Q0 = F2_CKMT(x, SQ(config.CKMT.Q0));
-                double _F3_CKMT_Q0 = F3_CKMT(x, SQ(config.CKMT.Q0))/x;
-                double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, x, SQ(config.CKMT.Q0));
+                if (chi >= 1.0) {
+                    _F1 = 0.0;
+                    _F2 = 0.0;
+                    _F3 = 0.0;
+                } else {
+                    double _F2_CKMT    = F2_CKMT(chi, Q2);
+                    double _F3_CKMT    = F3_CKMT(chi, Q2);
+                    double _F1_CKMT    = F1_CKMT(_F2_CKMT, chi, Q2);
 
+                    double _F2_CKMT_Q0 = F2_CKMT(chi_Q0, SQ(config.CKMT.Q0));
+                    double _F3_CKMT_Q0 = F3_CKMT(chi_Q0, SQ(config.CKMT.Q0));
+                    double _F1_CKMT_Q0 = F1_CKMT(_F2_CKMT_Q0, chi_Q0, SQ(config.CKMT.Q0));
 
-                double _F2_PCAC = F2_PCAC(x, Q2);
-                double _F2_PCAC_Q0 = F2_PCAC(x, SQ(config.CKMT.Q0));
+                    double _F2_PCAC = F2_PCAC(chi, Q2);
+                    double _F2_PCAC_Q0 = F2_PCAC(chi_Q0, SQ(config.CKMT.Q0));
 
-                _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
-                _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
-                _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+                    _F1 = _F1_CKMT * (f1 / _F1_CKMT_Q0);
+                    _F2 = (_F2_CKMT + _F2_PCAC) * (f2 / (_F2_CKMT_Q0 + _F2_PCAC_Q0 ));
+                    _F3 = _F3_CKMT * (f3 / _F3_CKMT_Q0);
+                }
             } else {
                 _F1 = f1;
                 _F2 = f2;
@@ -734,18 +678,17 @@ void StructureFunction::BuildGrids(string outpath) {
     }
 
     // Load the SF from LHAPDF
-    if (mode > 1) {
-        SF_PDF = config.Get_LHAPDF_SF(mode-1); // TODO: mode-1 is ugly!
+    if (mode == 2) {
+        SF_PDF = config.Get_LHAPDF_SF(1);
+    } else if (mode == 3) {
+        SF_PDF = config.Get_LHAPDF_SF(2);
+    } else if (mode == 4) {
+        SF_PDF = config.Get_LHAPDF_SF(2);
     }
 
     // Step sizes in log space
     double d_log_Q2 = std::abs( std::log10(config.SF.Q2min) - std::log10(config.SF.Q2max) ) / (NQ2-1);
-    // double d_log_x  = std::abs( std::log10(config.SF.xmin)  - std::log10(config.SF.xmax)  ) / (Nx-1);
     double d_log_x  = std::abs( std::log10(config.SF.xmin) - std::log10(0.1)  ) / (Nx-60);
-
-    std::cout << "log_Q2min = " << std::log10(config.SF.Q2min) << ", log_Q2max = " << std::log10(config.SF.Q2max) << std::endl;
-    std::cout << "log_xmin = " << std::log10(config.SF.xmin) << ", log_xmax = " << std::log10(config.SF.xmax) << std::endl;
-    std::cout << "d_log_Q2 = " << d_log_Q2 << ", d_log_x = " << d_log_x << std::endl;
 
     // setup grid stuff
     f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
@@ -814,13 +757,6 @@ void StructureFunction::BuildGrids(string outpath) {
         for (unsigned int j = 0; j < Nx; j++) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
-
-            // sometimes we get too close to the walls
-            // if (std::abs(x - config.SF.xmin) < 1e-6) {
-            //     x *= 1.001;
-            // } else if (std::abs(x - config.SF.xmax) < 1e-9) {
-            //     x = 1.0 - 1e-9;
-            // }
 
             double _F1, _F2, _F3, _FL;
             std::tie(_F1, _F2, _F3, _FL) = EvaluateSFs(x, Q2);

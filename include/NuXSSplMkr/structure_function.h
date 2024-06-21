@@ -98,10 +98,10 @@ class StructureFunction {
         double F2_LO(map<int, double>& xq_arr); // Calculate F2 from pdf
         double xF3_LO(map<int, double>& xq_arr); // Calculate xF3 from pdf
 
-        double RescalingVariable(double Q2); // slow rescaling variable
+        double RescalingVariable(double x, double Q2); // slow rescaling variable
         double NachtmannR(double x, double Q2);
         double NachtmannXi(double x, double Q2);
-        double NachtmannXibar(double x, double Q2); // w/ mass rescaling
+        // double NachtmannXibar(double x, double Q2); // w/ mass rescaling
 
         template<class T,double (T::*f)(double,double),int n,int m>
         double HGeneric(double x, double Q2);

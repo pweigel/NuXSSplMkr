@@ -26,14 +26,9 @@ LHAPDFMaker::LHAPDFMaker(Configuration &_config)
 }
 
 std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
-
-    // std::string sfs[3] = {"F2", "F1", "F3"};
-    // std::string flavors[4] = {"light", "charm", "bottom", "top"};
-    // std::string projectiles[2] = {"neutrino", "antineutrino"};
-
     std::string sfs[3] = {"F2", "F1", "F3"};
-    std::string flavors[1] = {"light"};//, "charm", "bottom", "top"};
-    std::string projectiles[1] = {"neutrino"};//, "antineutrino"};
+    std::string flavors[4] = {"light", "charm", "bottom", "top"};
+    std::string projectiles[2] = {"neutrino", "antineutrino"};
 
     std::unordered_map<std::string, std::vector<std::vector<double>>> sf_data;
     std::vector<std::string> sf_codes;
@@ -71,6 +66,7 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
 
                     initialized_xQ2 = true;
                 } else {
+                    // 2 lines of header we need to skip
                     std::getline(gridfile, line);
                     std::getline(gridfile, line);
                 }

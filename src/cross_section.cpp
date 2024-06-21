@@ -8,7 +8,13 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     pc = new nuxssplmkr::PhysConst();
     M_iso = pc->isoscalar_mass;
     rc_prefactor = (pc->alpha / (2.0 * M_PI));
-    Set_Mode(_config.XS.mode);
+    Set_Mode(config.mode);
+
+    F1_code = std::stoi(config.Get_SF_Code("F1"));
+    F2_code = std::stoi(config.Get_SF_Code("F2"));
+    F3_code = std::stoi(config.Get_SF_Code("F3"));
+
+    SF_PDF = config.Get_LHAPDF_SF(mode);
 
     double coef = pc->GF * pow(172.0 * pc->GeV, 2) / 8 / sqrt(2) / pow(M_PI, 2);
     double rho  = 1 + 3 * coef * ( 1 + coef * ( 19 - 2 * pow(M_PI, 2) ) );
@@ -198,19 +204,24 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = 1; //s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-    std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+    // std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
-    std::array<int, 2> F1_splc;
-    std::array<int, 2> F2_splc;
-    std::array<int, 2> F3_splc;
+    // std::array<int, 2> F1_splc;
+    // std::array<int, 2> F2_splc;
+    // std::array<int, 2> F3_splc;
 
-    F1.searchcenters(pt.data(), F1_splc.data());
-    F2.searchcenters(pt.data(), F2_splc.data());
-    F3.searchcenters(pt.data(), F3_splc.data());
+    // F1.searchcenters(pt.data(), F1_splc.data());
+    // F2.searchcenters(pt.data(), F2_splc.data());
+    // F3.searchcenters(pt.data(), F3_splc.data());
 
-    double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
-    double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
-    double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+    // double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+    // double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+    // double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+
+    double F1_val = SF_PDF->xfxQ2(F1_code, x, Q2/SQ(pc->GeV));
+    double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
+    double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
+
     double F4_val = 0.0;
     double F5_val = F2_val / x;
     
@@ -241,19 +252,24 @@ double CrossSection::ds_dxdy(double x, double y) {
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
     double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-    std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
+    // std::array<double, 2> pt{{std::log10(Q2 / SQ(pc->GeV)), std::log10(x)}};
 
-    std::array<int, 2> F1_splc;
-    std::array<int, 2> F2_splc;
-    std::array<int, 2> F3_splc;
+    // std::array<int, 2> F1_splc;
+    // std::array<int, 2> F2_splc;
+    // std::array<int, 2> F3_splc;
 
-    F1.searchcenters(pt.data(), F1_splc.data());
-    F2.searchcenters(pt.data(), F2_splc.data());
-    F3.searchcenters(pt.data(), F3_splc.data());
+    // F1.searchcenters(pt.data(), F1_splc.data());
+    // F2.searchcenters(pt.data(), F2_splc.data());
+    // F3.searchcenters(pt.data(), F3_splc.data());
 
-    double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
-    double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
-    double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+    // double F1_val = F1.ndsplineeval(pt.data(), F1_splc.data(), 0);
+    // double F2_val = F2.ndsplineeval(pt.data(), F2_splc.data(), 0);
+    // double F3_val = F3.ndsplineeval(pt.data(), F3_splc.data(), 0);
+
+    double F1_val = SF_PDF->xfxQ2(F1_code, x, Q2/SQ(pc->GeV));
+    double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
+    double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
+
     double F4_val = 0.0;
     double F5_val = F2_val / x;
     
