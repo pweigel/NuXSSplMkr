@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char* argv[]){
     if (argc != 5) {
         std::cout << "Not enough/too many inputs!" << std::endl;
-        std::cout << "Usage: evolve_pdfs INPDF OUTPDF REPLICA ENABLE_SMALLX" << std::endl;
+        std::cout << "Usage: evolve_pdf INPDF OUTPDF REPLICA ENABLE_SMALLX" << std::endl;
         return 1;
     }
 
