@@ -13,11 +13,12 @@ using namespace nuxssplmkr;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]){
-
-   if (argc < 6) {
-        std::cout << "Not enough inputs." << std::endl;
-        return 0;
+    if (argc != 7) {
+        std::cout << "Not enough/too many inputs!" << std::endl;
+        std::cout << "Usage: calculate_dsdxdy CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
+        return 1;
     }
+
     const std::string config_path = argv[1];
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron

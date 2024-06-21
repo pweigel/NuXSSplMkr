@@ -10,5 +10,4 @@ int main(int argc, char* argv[]){
 
     nuxssplmkr::SplineMaker splmkr = nuxssplmkr::SplineMaker();
     splmkr.MakeSpline(infile, outfile);
-
 }

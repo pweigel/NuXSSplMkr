@@ -1,12 +1,11 @@
 LIST (APPEND MAIN_SOURCES
-    #${PROJECT_SOURCE_DIR}/mains/make_sf_splines.cpp
-    ${PROJECT_SOURCE_DIR}/mains/make_sf_grid.cpp
+    ${PROJECT_SOURCE_DIR}/mains/make_structure_functions.cpp
+    ${PROJECT_SOURCE_DIR}/mains/create_lhapdf_structure_functions.cpp
     ${PROJECT_SOURCE_DIR}/mains/grid2spline.cpp
-    #${PROJECT_SOURCE_DIR}/mains/make_all_sf_splines.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
-    ${PROJECT_SOURCE_DIR}/mains/calculate_xs.cpp
-    ${PROJECT_SOURCE_DIR}/mains/evolve_pdfs.cpp
+    ${PROJECT_SOURCE_DIR}/mains/calculate_total_xs.cpp
+    ${PROJECT_SOURCE_DIR}/mains/evolve_pdf.cpp
 )
 
 foreach(SOURCE ${MAIN_SOURCES})

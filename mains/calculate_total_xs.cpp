@@ -10,13 +10,12 @@
 using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
-    if (argc < 7) {
-        std::cout << "Not enough inputs!" << std::endl;
-        return 1;
-    } else if (argc > 7) {
-        std::cout << "Too many inputs!" << std::endl;
+    if (argc != 7) {
+        std::cout << "Not enough/too many inputs!" << std::endl;
+        std::cout << "Usage: calculate_total_xs CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
         return 1;
     }
+
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron

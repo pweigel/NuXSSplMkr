@@ -7,19 +7,17 @@
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
-    // if (argc < 5) {
-    //     std::cout << "Not enough inputs!" << std::endl;
-    //     return 1;
-    // } else if (argc > 5) {
-    //     std::cout << "Too many inputs!" << std::endl;
-    //     return 1;
-    // }
+    if (argc != 7) {
+        std::cout << "Not enough/too many inputs!" << std::endl;
+        std::cout << "Usage: make_structure_functions CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
+        return 1;
+    }
+
 
     const std::string config_path = argv[1];
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
     const std::string sf_type = argv[4]; // total, light, charm, ..
-
     const unsigned int mode = std::stoi(argv[5]);
     const unsigned int replica = std::stoi(argv[6]);
 

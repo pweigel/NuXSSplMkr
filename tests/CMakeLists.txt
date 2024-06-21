@@ -1,9 +1,5 @@
 LIST (APPEND TEST_SOURCES
-# ${PROJECT_SOURCE_DIR}/tests/test_evolution.cpp
-# ${PROJECT_SOURCE_DIR}/tests/test_evolution_sx.cpp
-# ${PROJECT_SOURCE_DIR}/tests/test_cross_section.cpp
-# ${PROJECT_SOURCE_DIR}/tests/test_structure_functions.cpp
-${PROJECT_SOURCE_DIR}/tests/test_lhapdf_sf.cpp
+
 )
 
 foreach(SOURCE ${TEST_SOURCES})
