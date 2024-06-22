@@ -1,6 +1,7 @@
 {
   "general": {
     "unique_name": "EPPS21nlo_CT18Anlo_O16_nf6_sx",
+    "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 

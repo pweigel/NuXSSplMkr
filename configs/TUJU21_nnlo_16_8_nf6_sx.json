@@ -1,19 +1,19 @@
 {
   "general": {
-    "unique_name": "nCTEQ15HQ_1_1_nf6_sx",
+    "unique_name": "TUJU21_nnlo_16_8_nf6_sx",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "nCTEQ15HQ_1_1_nf6_sx",
+    "pdfset": "TUJU21_nnlo_16_8_nf6_sx",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-B",
+    "mass_scheme": "FONLL-C",
     "disable_top": false,
-    "perturbative_order": 1,
+    "perturbative_order": 2,
     "DIS_process": "CC",
 
     "enable_FONLL_damping": true,
@@ -22,6 +22,7 @@
 
     "enable_small_x": true,
     "small_x_order": "NLL",
+    "nf": 6,
 
     "enable_TMC": false,
     "enable_CKMT": false,
@@ -69,9 +70,9 @@
     "integration": { 
       "xmin": 1e-12,
       "xmax": 1.0,
-      "Q2min": 1.69,
+      "Q2min": 3.0,
       "Q2max": 1e10,
-      "W2min": 1.96
+      "W2min": 1.1621
     }
   },
 

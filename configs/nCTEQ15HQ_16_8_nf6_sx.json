@@ -1,12 +1,12 @@
 {
   "general": {
-    "unique_name": "nCTEQ15HQ_1_1_nf6_sx",
+    "unique_name": "nCTEQ15HQ_16_8_nf6_sx",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "nCTEQ15HQ_1_1_nf6_sx",
+    "pdfset": "nCTEQ15HQ_16_8_nf6_sx",
     "replica": 0
   },
 
