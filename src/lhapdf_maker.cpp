@@ -91,8 +91,8 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
             }
         }
     }
-
-    std::ofstream outfile(pdf_path + config.general.unique_name+suffix+"_SF_0000.dat");
+    std::string replica_string = std::string(4 - std::min(4, static_cast<int>(std::to_string(config.pdf_info.replica).length()) ), '0') + std::to_string(config.pdf_info.replica);
+    std::ofstream outfile(pdf_path + config.general.unique_name+suffix+"_SF_"+replica_string+".dat");
 
     outfile << "PdfType: central\nFormat: lhagrid1\n---\n";
     outfile << std::scientific << std::setprecision(11) << "   ";
@@ -134,8 +134,6 @@ void LHAPDFMaker::MakeInfo(std::vector<std::string> codes) {
         // LHAPDF6 HEADER
         LHAPDF::PDFInfo info = config.pdf->info();
         int nreps = info.get_entry_as<int>("NumMembers");
-        std::string error_type = info.get_entry_as<std::string>("ErrorType");
-        double error_conf_level = info.get_entry_as<double>("ErrorConfLevel");
         int nf = info.get_entry_as<int>("NumFlavors");
 
         double MZ, MUp, MDown, MStrange, MCharm, MBottom, MTop, AlphaS_MZ, AlphaS_OrderQCD;
@@ -178,9 +176,14 @@ void LHAPDFMaker::MakeInfo(std::vector<std::string> codes) {
         infodata << "OrderQCD: " << config.SF.pto << endl;
         infodata << "FlavorScheme: variable" << endl; // TODO: currently always set as variable which isn't always the case
         infodata << "NumFlavors: " << nf << endl; // should be a part of the config
-        infodata << "ErrorType: " << error_type << endl;
-        infodata << "ErrorConfLevel: " << error_conf_level << endl;
-
+        if (info.has_key("ErrorType")) {
+            std::string error_type = info.get_entry_as<std::string>("ErrorType");
+            infodata << "ErrorType: " << error_type << endl;
+        }
+        if (info.has_key("ErrorConfLevel")) {
+            double error_conf_level = info.get_entry_as<double>("ErrorConfLevel");
+            infodata << "ErrorConfLevel: " << error_conf_level << endl;
+        }
         infodata.precision(7);
         infodata << scientific;
         infodata << "XMin: "<< config.SF.xmin << endl;

@@ -100,6 +100,7 @@ struct PCAC_settings {
 struct xs_settings {
     bool enable_mass_terms;
     bool enable_shallow_region;
+    bool enable_radiative_corrections;
     int mode;
     double xmin, xmax, ymin, ymax, Q2min, Q2max, W2min, W2max; // integration limits
 };

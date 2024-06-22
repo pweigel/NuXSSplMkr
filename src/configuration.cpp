@@ -61,7 +61,8 @@ void Configuration::Populate() {
     PCAC.B = j["PCAC"].value("B", 0.265);
 
     XS.mode = j["XS"].value("mode", 1);
-    XS.enable_mass_terms = j["XS"].value("enable_mass_terms", false);
+    XS.enable_mass_terms = j["XS"].value("enable_mass_terms", true);
+    XS.enable_radiative_corrections = j["XS"].value("enable_radiative_corrections", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
     XS.xmax = j["XS"]["integration"].at("xmax");
     XS.ymin = j["XS"]["integration"].value("ymin", 1e-20);
