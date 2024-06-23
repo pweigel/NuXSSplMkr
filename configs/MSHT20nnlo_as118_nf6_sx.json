@@ -1,12 +1,12 @@
 {
   "general": {
-    "unique_name": "CT18ANNLO_nf6_sx",
+    "unique_name": "MSHT20nnlo_as118_nf6_sx",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO_nf6_sx",
+    "pdfset": "MSHT20nnlo_as118_nf6_sx",
     "replica": 0
   },
 
@@ -20,7 +20,7 @@
     "FONLL_damping_factor": 2.0,
     "evolve_pdf": false,
 
-    "enable_small_x": false,
+    "enable_small_x": true,
     "small_x_order": "NLL",
     "nf": 6,
 
@@ -66,7 +66,6 @@
     "mode": 4,
     "enable_mass_terms": true,
     "enable_shallow_region": true,
-    "enable_radiative_corrections": false,
 
     "integration": { 
       "xmin": 1e-12,

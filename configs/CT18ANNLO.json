@@ -1,12 +1,12 @@
 {
   "general": {
-    "unique_name": "CT18ANNLO_nf6_sx",
+    "unique_name": "CT18ANNLO",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "CT18ANNLO_nf6_sx",
+    "pdfset": "CT18ANNLO",
     "replica": 0
   },
 
@@ -22,7 +22,7 @@
 
     "enable_small_x": false,
     "small_x_order": "NLL",
-    "nf": 6,
+    "nf": 5,
 
     "enable_TMC": false,
     "enable_CKMT": false,
