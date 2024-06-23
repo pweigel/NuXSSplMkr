@@ -48,7 +48,7 @@ double CrossSection::ds_dxdy_kernel(double* k) {
 
     double ddxs = ds_dxdy(x, y);
     if (config.XS.enable_radiative_corrections) {
-        double radiative_correction = rc_dsdxdy(ENU, x, y);
+        double radiative_correction = rc_dsdxdy(ENU, x, y, ddxs);
         ddxs += radiative_correction;
     }
 
@@ -118,12 +118,15 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
 }
 
 double CrossSection::ds_dxdy(double x, double y) {
+    double xy = x*y;
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
     double M_target = config.target_mass;
-    double M_l = config.lepton_mass;
+    double ME = M_target * ENU;
+    double M_l2 = SQ(config.lepton_mass);
+
 
     double s = 2.0 * M_target * ENU + SQ(M_target);// - SQ(top_mass*pc->GeV);
-    double Q2 = (s - SQ(M_target)) * x * y;
+    double Q2 = (s - SQ(M_target)) * xy;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
@@ -133,24 +136,26 @@ double CrossSection::ds_dxdy(double x, double y) {
     double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
     double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
 
-    double F4_val = 0.0;
+    // double F4_val = 0.0;
     double F5_val = F2_val / x;
     
-    double term1, term2, term3, term4, term5;
+    // double term1, term2, term3, term4, term5;
+    double term1, term2, term3, term5;
     if (config.XS.enable_mass_terms) {
-        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_target) ) * F1_val;
-        term2 = ( 1 - y - M_target*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
-        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_target*ENU)) * F3_val;
-        term4 = (x*y*SQ(M_l) / (2 * M_target * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_target*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (M_target * ENU) * F5_val;
+        term1 = y * ( xy + M_l2/(2*ME) ) * F1_val;
+        term2 = ( 1 - y - M_target*xy/(2*ENU) - M_l2/(4*SQ(ENU)) ) * F2_val;
+        term3 = config.cp_factor * (xy*(1-y/2) - y*M_l2/(4*ME)) * F3_val;
+        // term4 = (xy*M_l2 / (2 * ME) + M_l2*M_l2 / (4*SQ(ME))) * F4_val;
+        term5 = -1.0 * M_l2 / (ME) * F5_val;
     } else {
         term1 = y*y*x * F1_val;
         term2 = ( 1 - y ) * F2_val;
         term3 = config.cp_factor * y*(1-y/2) * x*F3_val;
-        term4 = 0.0;
+        // term4 = 0.0;
         term5 = 0.0;
     }
-    double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
+    // double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
+    double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term5), 0);
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 
@@ -162,7 +167,13 @@ double CrossSection::ds_dy_kernel(double k) {
         return 0;
     }
 
-    double result = x * ds_dxdy(x, kernel_y);
+    double ddxs = ds_dxdy(x, kernel_y);
+    if (config.XS.enable_radiative_corrections) {
+        double radiative_correction = rc_dsdxdy(ENU, x, kernel_y, ddxs);
+        ddxs += radiative_correction;
+    }
+
+    double result = x * ddxs;
     return result;
 }
 
@@ -327,22 +338,21 @@ double CrossSection::calculate_rc_dsdzdxdy(double z, double x, double y) {
     // double M_l = config.lepton_mass;
     // double s = 2.0 * M_target * E + SQ(M_target);
     // double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
-    double born_dsdxdy = ds_dxdy(x, y); // cross section evaluated at regular x, y
-
+    // double born_dsdxdy = ds_dxdy(x, y); // cross section evaluated at regular x, y
     double term1 = 0.0;
     if (z > zmin) {
-        if (xhat >= 1.0) xhat = 1.0;
-        if (yhat >= 1.0) yhat = 1.0;
+        // if (xhat >= 1.0) xhat = 1.0;
+        // if (yhat >= 1.0) yhat = 1.0;
         if (ps.Validate(ENU, xhat, yhat)) { // only calc if in phase space, is this right? should entire dsdzdxdy be zero? -PW
             double born_dsdxdy_hat = ds_dxdy(xhat, yhat);
             term1 = rc_jacobian(x, y, z) * born_dsdxdy_hat;
         }
     }
 
-    return qed_splitting(z) * (term1 - born_dsdxdy);
+    return qed_splitting(z) * (term1 - kernel_born_dsdxdy);
 }
 
-double CrossSection::rc_dsdxdy(double E, double x, double y) {
+double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy) {
     Set_Neutrino_Energy(E);
     // TODO: think about if we want this to be called externally at all
     // In the kernel for dsdxdy, we call this function so ENU is already set and the phase space is checked
@@ -350,12 +360,15 @@ double CrossSection::rc_dsdxdy(double E, double x, double y) {
     double M_l = config.lepton_mass;
     kernel_y = y;
     kernel_x = x;
+    kernel_born_dsdxdy = born_dsdxdy; // set this to speed up the calculation
     
     double s = 2.0 * M_target * E + SQ(M_target);
     kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
-    double integrate_zmin = 0.0;
-    double integrate_zmax = 1.0; // maybe this needs to be 0.9999 or something -PW
+    double integrate_zmin = 0;
+    double integrate_zmax = 0.99999; // maybe this needs to be 0.9999 or something -PW
+
+    // E -> E/z > E
 
     if (!ps.Validate(E, x, y)) {
         return 0;
@@ -371,7 +384,7 @@ double CrossSection::rc_dsdxdy(double E, double x, double y) {
 
     int status = gsl_integration_cquad(&F, integrate_zmin, integrate_zmax, 0, 1.e-3, w, &result, &error, &neval);
     if (status != 0) {
-        std::cout << "ERR: " << status << std::endl;
+        std::cout << "RC ERR: " << status << std::endl;
     }
     gsl_integration_cquad_workspace_free(w);
 

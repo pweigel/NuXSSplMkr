@@ -70,6 +70,7 @@ class CrossSection {
         double kernel_y; // Used for integration
         double kernel_x; // Used for integration
         double kernel_L; // large log for rc integration
+        double kernel_born_dsdxdy; //used to speed up the rc calculation
 
         // Limits of integration
         double integral_min_Q2;
@@ -121,7 +122,7 @@ class CrossSection {
         double rc_jacobian(double x, double y, double z); // vars -> hat(vars)
         double rc_kernel(double k);
         double calculate_rc_dsdzdxdy(double z, double x, double y);
-        double rc_dsdxdy(double E, double x, double y);
+        double rc_dsdxdy(double E, double x, double y, double born_dsdxdy);
     
         // ~ Settings ~
         void Set_Mode(int _mode);
