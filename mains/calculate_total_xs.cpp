@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
     const std::string projectile = argv[2]; // neutrino or antineutrino
     const std::string target = argv[3]; // proton or neutron
-    const std::string sf_type = argv[4]; // Which SFs to use total, light, charm, ..
+    const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
     const int mode = std::stoi(argv[5]);
     const unsigned int replica = std::stoi(argv[6]);
 
@@ -28,12 +28,12 @@ int main(int argc, char* argv[]){
     std::cout << "Config Path: " << config_path << std::endl;
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
-    std::cout << "SF Type: " << sf_type << std::endl;
+    std::cout << "SF Type: " << xs_type << std::endl;
     std::cout << "Mode: " << mode << std::endl;
     std::cout << "Replica: " << replica << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
-    double logemin = std::log10(1e1);
+    double logemin = std::log10(1e9);
     double logemax = std::log10(5e12);
 
     int NE = 120;
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
     
     config.Set_Projectile(projectile);
     config.Set_Target(target);
-    config.Set_SF_Type(sf_type);
+    config.Set_SF_Type(xs_type);
     config.Set_Lepton_Mass(pc->muon_mass);
     config.Set_Mode(mode);
 
@@ -68,9 +68,15 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
+    std::string outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out";
+    if (config.XS.enable_radiative_corrections) {
+        std::cout << "Radiative corrections enabled!" << std::endl;
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".rc";
+    }
 
     std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".out");
+    outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".out");
 
     // smooth E dist
     for (int ei = 0; ei < NE; ei++) {
@@ -82,7 +88,7 @@ int main(int argc, char* argv[]){
     }
 
     std::ofstream outfile_table;
-    outfile_table.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + sf_type + ".table");
+    outfile_table.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".table");
     for (auto const& Enu : EnuTab) {
         double E = pc->GeV * Enu;
         double _xs;

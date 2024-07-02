@@ -164,8 +164,6 @@ int main(int argc, char* argv[]){
     if (!boost::filesystem::exists(outpdf + "/" + outpdf + ".info")) {
         // Get some useful things
         int nreps = info.get_entry_as<int>("NumMembers");
-        std::string error_type = info.get_entry_as<std::string>("ErrorType");
-        double error_conf_level = info.get_entry_as<double>("ErrorConfLevel");
 
         // The following code is a modified version of the nnpdf collab code!
         // LHAPDF6 HEADER
@@ -188,8 +186,15 @@ int main(int argc, char* argv[]){
         infodata << "OrderQCD: " << APFEL::GetPerturbativeOrder() << endl;
         infodata << "FlavorScheme: variable" << endl;
         infodata << "NumFlavors: " << APFEL::GetMaxFlavourPDFs() << endl;
-        infodata << "ErrorType: " << error_type << endl;
-        infodata << "ErrorConfLevel: " << error_conf_level << endl;
+                
+        if (info.has_key("ErrorType")) {
+            std::string error_type = info.get_entry_as<std::string>("ErrorType");
+            infodata << "ErrorType: " << error_type << endl;
+        } 
+        if (info.has_key("ErrorConfLevel")) {
+            double error_conf_level = info.get_entry_as<double>("ErrorConfLevel");
+            infodata << "ErrorConfLevel: " << error_conf_level << endl;
+        }
 
         infodata.precision(7);
         infodata << scientific;

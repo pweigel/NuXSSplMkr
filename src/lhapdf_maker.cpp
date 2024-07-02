@@ -26,9 +26,15 @@ LHAPDFMaker::LHAPDFMaker(Configuration &_config)
 }
 
 std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
+    std::string projectiles[2] = {"neutrino", "antineutrino"};
+    std::string targets[3] = {"isoscalar", "proton", "neutron"};
     std::string sfs[3] = {"F2", "F1", "F3"};
     std::string flavors[4] = {"light", "charm", "bottom", "top"};
-    std::string projectiles[2] = {"neutrino", "antineutrino"};
+
+    // std::string projectiles[1] = {"neutrino"};
+    // std::string targets[1] = {"proton"};
+    // std::string sfs[1] = {"F2"};
+    // std::string flavors[1] = {"light"};
 
     std::unordered_map<std::string, std::vector<std::vector<double>>> sf_data;
     std::vector<std::string> sf_codes;
@@ -39,55 +45,61 @@ std::vector<std::string> LHAPDFMaker::MakeSet(string datapath) {
     unsigned int nQ2 = 1;
     unsigned int nx = 1;
     for (auto &_proj : projectiles) {
-        for (auto &_sf : sfs) {
-            for (auto &_fl : flavors) {
-                std::string code = SF_INTERACTION_CODE["CC"] + SF_PARTICLE_CODE[_proj] + SF_NUMBER_CODES[_sf] + SF_FLAVOR_CODES[_fl];
+        for (auto &_target: targets) {
+            for (auto &_sf : sfs) {
+                for (auto &_fl : flavors) {
+                    std::string code = SF_INTERACTION_CODE["CC"] + SF_PARTICLE_CODE[_proj] + SF_TARGET_CODE[_target] + SF_NUMBER_CODES[_sf] + SF_FLAVOR_CODES[_fl];
 
-                std::string infile = datapath + "/" + _sf + "_" + _proj + "_" + config.target + "_" + _fl + suffix + ".grid";
-                std::cout << infile << std::endl;
-                std::ifstream gridfile(infile);
-                std::string line;
-
-                if (!initialized_xQ2) {
-                    // The first line contains the log Q2 values
-                    std::getline(gridfile, line);
-                    std::istringstream logQ2_stream(line);
-                    double _logQ2;
-                    while (logQ2_stream >> _logQ2) {logQ2_values.push_back(_logQ2);}
-
-                    // The second line contains the log x values
-                    std::getline(gridfile, line);
-                    std::istringstream logx_stream(line);
-                    double _logx;
-                    while (logx_stream >> _logx) {logx_values.push_back(_logx);}
-
-                    nQ2 = logQ2_values.size();
-                    nx = logx_values.size();
-
-                    initialized_xQ2 = true;
-                } else {
-                    // 2 lines of header we need to skip
-                    std::getline(gridfile, line);
-                    std::getline(gridfile, line);
-                }
-
-                // create data
-                std::vector<std::vector<double>> data(nQ2, std::vector<double>(nx, 0.0));
-
-                for (unsigned int i = 0; i < nQ2; i++){
-                    std::getline(gridfile, line);
-                    std::istringstream linestream(line);
-                    std::string val;
-                    unsigned int j = 0;
-                    while (std::getline(linestream, val, ',')) {
-                        data[i][j] =  std::stod(val);
-                        j += 1;
+                    std::string infile = datapath + "/" + _sf + "_" + _proj + "_" + _target + "_" + _fl + suffix + ".grid";
+                    if (!boost::filesystem::exists(infile)) {
+                        std::cout << "Didn't find code: " << code << ", skipping!" << std::endl;
+                        continue;
                     }
-                }
-                gridfile.close();
 
-                sf_data[code] = data;
-                sf_codes.push_back(code);
+                    std::cout << code << ": " << infile << std::endl;
+                    std::ifstream gridfile(infile);
+                    std::string line;
+
+                    if (!initialized_xQ2) {
+                        // The first line contains the log Q2 values
+                        std::getline(gridfile, line);
+                        std::istringstream logQ2_stream(line);
+                        double _logQ2;
+                        while (logQ2_stream >> _logQ2) {logQ2_values.push_back(_logQ2);}
+
+                        // The second line contains the log x values
+                        std::getline(gridfile, line);
+                        std::istringstream logx_stream(line);
+                        double _logx;
+                        while (logx_stream >> _logx) {logx_values.push_back(_logx);}
+
+                        nQ2 = logQ2_values.size();
+                        nx = logx_values.size();
+
+                        initialized_xQ2 = true;
+                    } else {
+                        // 2 lines of header we need to skip
+                        std::getline(gridfile, line);
+                        std::getline(gridfile, line);
+                    }
+                    // create data
+                    std::vector<std::vector<double>> data(nQ2, std::vector<double>(nx, 0.0));
+
+                    for (unsigned int i = 0; i < nQ2; i++){
+                        std::getline(gridfile, line);
+                        std::istringstream linestream(line);
+                        std::string val;
+                        unsigned int j = 0;
+                        while (std::getline(linestream, val, ',')) {
+                            data[i][j] =  std::stod(val);
+                            j += 1;
+                        }
+                    }
+                    gridfile.close();
+
+                    sf_data[code] = data;
+                    sf_codes.push_back(code);
+                }
             }
         }
     }

@@ -13,6 +13,11 @@ CrossSection::CrossSection(Configuration& _config, PhaseSpace& _ps)
     F2_code = std::stoi(config.Get_SF_Code("F2"));
     F3_code = std::stoi(config.Get_SF_Code("F3"));
 
+    std::cout << "SF codes: " << std::endl;
+    std::cout << F1_code << std::endl;
+    std::cout << F2_code << std::endl;
+    std::cout << F3_code << std::endl;
+
     SF_PDF = config.Get_LHAPDF_SF(mode);
 
     // TODO: not used yet, but needed for NC
@@ -130,7 +135,7 @@ double CrossSection::ds_dxdy(double x, double y) {
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
     double propagator = SQ( MW2 / (Q2 + MW2) );
-    double jacobian = s * x; // from d2s/dxdQ2 --> d2s/dxdy    
+    double jacobian = (s - SQ(M_target)) * x; // from d2s/dxdQ2 --> d2s/dxdy    
 
     double F1_val = SF_PDF->xfxQ2(F1_code, x, Q2/SQ(pc->GeV));
     double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
@@ -269,7 +274,7 @@ double CrossSection::TotalXS(double E){
     }
 
     double res,err;
-    const unsigned long dim = 2; int calls = 250000; // bump it
+    const unsigned long dim = 2; int calls = 25000; // bump it
 
     // integrating on the log of x and y
     double xl[dim] = { log(xmin), log(1.e-12) };
@@ -282,7 +287,7 @@ double CrossSection::TotalXS(double E){
     gsl_monte_function F;
     F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdy_kernel>, dim, this};
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
 
     int max_iterations = 10;
     int n_iter = 0;
@@ -309,25 +314,19 @@ Radiative Corrections
 */
 double CrossSection::qed_splitting(double z) {
     return (1.0 + z*z) / (1.0 - z);
-    // return exp( log1p(z*z) - log1p(-z) );
+}
+
+double CrossSection::qed_splitting_integrated(double a) {
+    return -0.5 * a * (a + 2.0) - 2.0 * std::log(1.0 - a);
 }
 
 double CrossSection::rc_jacobian(double x, double y, double z) {
     return y / (z * (z + y - 1.0));
-    // return exp( log(y) - log(z) - log(z + y - 1.0) );
 }
 
 double CrossSection::rc_kernel(double k) {
     return calculate_rc_dsdzdxdy(k, kernel_x, kernel_y);
 }
-
-// double CrossSection::calculate_rc_dsdxdy(double z, double E, double x, double y) {
-//     double M_target = config.target_mass;
-//     double M_l = config.lepton_mass;
-//     double s = 2.0 * M_target * E + SQ(M_target);
-//     double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l));
-//     return calculate_rc_dsdxdy(z, E, x, y, L);
-// }
 
 double CrossSection::calculate_rc_dsdzdxdy(double z, double x, double y) {
     double xhat = x * y / (z + y - 1.0);
@@ -340,19 +339,49 @@ double CrossSection::calculate_rc_dsdzdxdy(double z, double x, double y) {
     // double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
     // double born_dsdxdy = ds_dxdy(x, y); // cross section evaluated at regular x, y
     double term1 = 0.0;
+    double born_dsdxdy_hat = 0.0;
     if (z > zmin) {
-        // if (xhat >= 1.0) xhat = 1.0;
-        // if (yhat >= 1.0) yhat = 1.0;
+        if (xhat >= 1.0-1e-3) xhat = 1.0-1e-3;
+        if (yhat >= 1.0-1e-3) yhat = 1.0-1e-3;
         if (ps.Validate(ENU, xhat, yhat)) { // only calc if in phase space, is this right? should entire dsdzdxdy be zero? -PW
-            double born_dsdxdy_hat = ds_dxdy(xhat, yhat);
+            if (interp_grid_loaded) {
+                double Ei[] = {ENU};
+                double yi[] = {yhat};
+                double xi[] = {xhat};
+                double interp_output[1];
+                mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
+                born_dsdxdy_hat = interp_output[0];
+                // Ei[0] = {ENU};
+                // yi[0] = {x};
+                // xi[0] = {y};
+                // mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
+                // kernel_born_dsdxdy = interp_output[0];
+
+            } else if (rc_spline_loaded) { // Get the double differential cross section from the spline
+                std::array<double, 3> pt{{std::log10(ENU / pc->GeV), std::log10(xhat), std::log10(yhat)}};
+                std::array<int, 3> xs_splc;
+                rc_spline.searchcenters(pt.data(), xs_splc.data());
+                born_dsdxdy_hat = pow(10.0, rc_spline.ndsplineeval(pt.data(), xs_splc.data(), 0));
+            } else { // if we have no spline, do it manually
+                // Set_Neutrino_Energy(ENU/z);
+                born_dsdxdy_hat = ds_dxdy(xhat, yhat);
+                // Set_Neutrino_Energy(ENU);
+            }
+            if (born_dsdxdy_hat < 0) {
+                born_dsdxdy_hat = 0.0;
+            }
+
             term1 = rc_jacobian(x, y, z) * born_dsdxdy_hat;
         }
     }
-
+    // std::cout << z/zmin - 1.0 << " | " << term1 << ", " << kernel_born_dsdxdy << ", " << (1-zmin) * qed_splitting(z) << std::endl;
+    // std::cout << (1-zmin) * qed_splitting(z) * (term1 - kernel_born_dsdxdy) / kernel_born_dsdxdy << std::endl;
     return qed_splitting(z) * (term1 - kernel_born_dsdxdy);
 }
 
 double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy) {
+    if (born_dsdxdy <= 0.0) return 0.0;
+
     Set_Neutrino_Energy(E);
     // TODO: think about if we want this to be called externally at all
     // In the kernel for dsdxdy, we call this function so ENU is already set and the phase space is checked
@@ -365,11 +394,10 @@ double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy)
     double s = 2.0 * M_target * E + SQ(M_target);
     kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
 
-    double integrate_zmin = 0;
-    double integrate_zmax = 0.99999; // maybe this needs to be 0.9999 or something -PW
+    double zmin = 1.0 - y * (1.0 - x);
 
-    // E -> E/z > E
-
+    double integrate_zmin = zmin+1e-5;
+    double integrate_zmax = 1.0-1e-4; // maybe this needs to be 0.9999 or something -PW
     if (!ps.Validate(E, x, y)) {
         return 0;
     }
@@ -384,11 +412,108 @@ double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy)
 
     int status = gsl_integration_cquad(&F, integrate_zmin, integrate_zmax, 0, 1.e-3, w, &result, &error, &neval);
     if (status != 0) {
-        std::cout << "RC ERR: " << status << std::endl;
+        std::cout << "RC ERR: (" << x << ", " << y << "): " << status << ", " << neval << " | " << born_dsdxdy << ", " << result << std::endl;
     }
     gsl_integration_cquad_workspace_free(w);
 
-    return rc_prefactor * kernel_L * result;
+    return rc_prefactor * kernel_L * (result - qed_splitting_integrated(zmin) * born_dsdxdy);
+}
+
+void CrossSection::Load_RC_Spline(string spline_path) {
+    if (rc_spline_loaded) {
+        rc_spline = photospline::splinetable<>();
+    }
+    rc_spline.read_fits(spline_path);
+    rc_spline_loaded = true;
+}
+
+void CrossSection::Load_InterpGrid(string grid_path) {
+
+    std::cout << "Loading grid for linear interpolator: " << grid_path << std::endl;
+
+    std::vector<double> E_values;
+    std::vector<double> y_values;
+    std::vector<double> x_values;
+
+    std::ifstream gridfile(grid_path);
+    std::string line;
+    std::string discard;
+    std::string token;
+
+    // The first line contains the E values
+    std::getline(gridfile, line);
+    std::istringstream E_stream(line);
+    while (std::getline(E_stream, token, ',')) {
+        if (token == "E") continue;
+        double E = std::stod(token);
+        E_values.push_back(E);
+    }
+
+    // The second line contains the y values
+    std::getline(gridfile, line);
+    std::istringstream y_stream(line);
+    while (std::getline(y_stream, token, ',')) {
+        if (token == "y") continue;
+        double y = std::stod(token);
+        y_values.push_back(y);
+    }
+
+    // The second line contains the x values
+    std::getline(gridfile, line);
+    std::istringstream x_stream(line);
+    while (std::getline(x_stream, token, ',')) {
+        if (token == "x") continue;
+        double x = std::stod(token);
+        x_values.push_back(x);
+    }
+
+    int nE = E_values.size();
+    int ny = y_values.size();
+    int nx = x_values.size();
+
+    int n = 0;
+    for (int i = 0; i < nE; i++){
+        for (int j = 0; j < ny; j++) {
+            std::getline(gridfile, line);
+            std::istringstream linestream(line);
+            std::string val;
+            int k = 0;
+            while (std::getline(linestream, val, ',')) {
+                n = k + j * nx + i * nx * ny;
+                interp_indata[n] =  std::stod(val);
+                interp_E[i] = E_values[i];
+                interp_y[j] = y_values[j];
+                interp_x[k] = x_values[k];
+                k += 1;
+            }
+        }
+    }
+    gridfile.close();
+
+    interp_grid_loaded = true;
+
+    // int nE_interp = 1;
+    // int nx_interp = 1;
+    // int ny_interp = 1;
+
+    // nd = {nE, ny, nx};
+    // int ni = 1;
+
+    // double E_interp[nE_interp] = {1e10};
+    // double y_interp[ny_interp] = {0.1};
+    // double x_interp[nx_interp] = {0.1};
+
+    // double output[nE_interp*ny_interp*nx_interp]; // Result is stored in this buffer
+    // mlinterp::interp(
+    //     nd, ni,                   // Number of points
+    //     data, output,                                          // Output axis
+    //     data_E, E_interp, data_y, y_interp, data_x, x_interp);
+
+    // for (auto& a : output) {
+    //     std::cout << a << std::endl;
+    // }
+    // std::cout << nE << ", " << ny << ", " << nx << std::endl;
+
 }
 
 }

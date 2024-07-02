@@ -60,27 +60,33 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-
-    // int NE = 110;
-    int Ny = 300;
-    int Nx = 300;
+    std::string outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out";
+    if (config.XS.enable_radiative_corrections) {
+        std::cout << "Radiative corrections enabled!" << std::endl;
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+        outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".rc";
+    }
+    
+    int NE = 100;
+    int Ny = 80;
+    int Nylin = 40;
+    int Nx = 80;
+    int Nxlin = 40;
 
     double logemin = 1;
-    double logemax = 12;
-    int NE = 1;
-    // double dE = (logemax - logemin) / (NE-1);
-    double dE = 1.;
+    double logemax = 13;
+    double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -3;
-    double logymax = 0;
-    double dy = (logymax - logymin) / (Ny-1);
+    double logymin = -10;
+    double logymax = -1;
+    double dy = (logymax - logymin) / (Ny);
 
-    double logxmin = -3;
-    double logxmax = 0;
-    double dx = (logxmax - logxmin) / (Nx-1);
+    double logxmin = -12;
+    double logxmax = -1;
+    double dx = (logxmax - logxmin) / (Nx);
 
     std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+    outfile.open(outfilename);
 
     // Get the energy, inelasticity values and put them in the header
     std::vector<double> energy_values;
@@ -94,10 +100,16 @@ int main(int argc, char* argv[]){
 
     std::vector<double> inelasticity_values;
     outfile << "y";
-    for (int yi = 0; yi < Ny; yi++) {
-        double y = std::pow(10, logymin + yi * dy);
-        inelasticity_values.push_back(y);
+    for (int i = 0; i < Ny; i++) {
+        double y = pow(10, logymin + i * dy);
         outfile << "," << y;
+        inelasticity_values.push_back(y);
+    }
+    dy = (1.0 - pow(10, logymax))/Nylin;
+    for (int i = 0; i < Nylin; i++) {
+        double y = pow(10, logymax) + i*dy;
+        outfile << "," << y;
+        inelasticity_values.push_back(y);
     }
     outfile << std::endl;
 
@@ -108,14 +120,21 @@ int main(int argc, char* argv[]){
         x_values.push_back(x);
         outfile << "," << x;
     }
+    dx = (1.0 - pow(10, logxmax))/Nxlin;
+    for (int i = 0; i < Nylin; i++) {
+        double x = pow(10, logxmax) + i*dx;
+        x_values.push_back(x);
+        outfile << "," << x;
+    }
     outfile << std::endl;
 
     for (int ei = 0; ei < NE; ei++) {
         double E = energy_values[ei];
         xs->Set_Neutrino_Energy(E);
-        for (int yi = 0; yi < Ny; yi++) { // loop over y
+        std::cout << E/1e9 << std::endl;
+        for (int yi = 0; yi < Ny+Nylin; yi++) { // loop over y
             double y = inelasticity_values[yi];
-            for (int xi = 0; xi < Nx; xi++) { // loop over x
+            for (int xi = 0; xi < Nx+Nxlin; xi++) { // loop over x
                 double x = x_values[xi];
                 double _dsdxdy;
                 bool ps_valid = ps.Validate(E, x, y);
@@ -124,10 +143,15 @@ int main(int argc, char* argv[]){
                     _dsdxdy = 0.0;
                 } else {
                     _dsdxdy = xs->ds_dxdy(x, y);
+                    double rc = 0.0;
+                    if (config.XS.enable_radiative_corrections) {
+                        rc = xs->rc_dsdxdy(E, x, y, _dsdxdy);
+                    }
+                    _dsdxdy += rc;
                 }
                 
                 outfile << _dsdxdy;
-                if ( !(xi == Nx - 1) ) {
+                if ( !(xi == Nx + Nxlin - 1) ) {
                     outfile << ",";
                 }
             }

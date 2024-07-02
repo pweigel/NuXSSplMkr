@@ -39,6 +39,7 @@ static unordered_map<string, SFType> SFTypeMap { {"total", SFType::total},{"ligh
 // codes
 static unordered_map<string, string> SF_INTERACTION_CODE { {"CC", "1"}, {"NC", "2"} };
 static unordered_map<string, string> SF_PARTICLE_CODE { {"neutrino", "0"}, {"antineutrino", "1"} };
+static unordered_map<string, string> SF_TARGET_CODE { {"isoscalar", "0"}, {"proton", "1"}, {"neutron", "2"} };
 static unordered_map<string, string> SF_NUMBER_CODES { {"F2", "1"}, {"FL", "2"}, {"xF3", "3'"}, {"F1", "4"}, {"F3", "5"} };
 static unordered_map<string, string> SF_FLAVOR_CODES { {"total", "0"}, {"light", "1"}, {"charm", "2"}, {"bottom", "3"}, {"top", "4"} };
 

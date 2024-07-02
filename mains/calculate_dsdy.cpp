@@ -23,6 +23,7 @@ int main(int argc, char* argv[]){
     const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
     const int mode = std::stoi(argv[5]);
     const unsigned int replica = std::stoi(argv[6]);
+    // const bool use_rc = !!(std::stoi(argv[7]));
 
     // Create a new config w/ the filename
     std::cout << config_path << std::endl;

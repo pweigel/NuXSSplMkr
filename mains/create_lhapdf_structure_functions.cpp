@@ -20,6 +20,7 @@ int main(int argc, char* argv[]){
 
     std::string data_folder = config.general.data_path + "/" + config.general.unique_name + "/replica_" + std::to_string(config.pdf_info.replica);
     config.Set_Mode(mode);
+    // config.Set_Target(target);
     LHAPDFMaker lhapdfmaker = LHAPDFMaker(config);
     std::vector<std::string> codes = lhapdfmaker.MakeSet(data_folder);
 

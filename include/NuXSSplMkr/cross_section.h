@@ -22,6 +22,7 @@
 #include "LHAPDF/GridPDF.h"
 // using boost::math::interpolators::bilinear_uniform;
 #include <apfel/apfelxx.h>
+#include "mlinterp.hpp"
 
 namespace nuxssplmkr {
 
@@ -85,7 +86,16 @@ class CrossSection {
         Configuration &config;
         PhaseSpace &ps;
 
-        bool rc_dsdxdy_loaded = false;
+        photospline::splinetable<> rc_spline;
+        bool rc_spline_loaded = false;
+
+        // Tools for interpolation
+        int interp_nd[3] = {100, 120, 120};
+        double interp_E[100];
+        double interp_y[120];
+        double interp_x[120];
+        double interp_indata[1440000];
+        bool interp_grid_loaded = false;
 
         void SetThresholdW2();
 
@@ -119,10 +129,13 @@ class CrossSection {
 
         // ~ QED Corrections ~
         double qed_splitting(double z);  // splitting function
+        double qed_splitting_integrated(double a); // splitting function integrated from 0 to a
         double rc_jacobian(double x, double y, double z); // vars -> hat(vars)
         double rc_kernel(double k);
         double calculate_rc_dsdzdxdy(double z, double x, double y);
         double rc_dsdxdy(double E, double x, double y, double born_dsdxdy);
+        void Load_RC_Spline(string spline_path);
+        void Load_InterpGrid(string grid_path);
     
         // ~ Settings ~
         void Set_Mode(int _mode);

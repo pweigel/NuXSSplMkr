@@ -178,7 +178,7 @@ void Configuration::LoadPDFSet() {
 }
 
 string Configuration::Get_SF_Code(string sf) { // TODO: neaten this up, add NC as an option
-    return SF_INTERACTION_CODE["CC"] + SF_PARTICLE_CODE[projectile] + SF_NUMBER_CODES[sf] + SF_FLAVOR_CODES[sf_type_string];
+    return SF_INTERACTION_CODE[SF.DIS_process] + SF_PARTICLE_CODE[projectile] + SF_TARGET_CODE[target] + SF_NUMBER_CODES[sf] + SF_FLAVOR_CODES[sf_type_string];
 }
 
 LHAPDF::GridPDF* Configuration::Get_LHAPDF_SF(int mode) {
@@ -192,6 +192,8 @@ LHAPDF::GridPDF* Configuration::Get_LHAPDF_SF(int mode) {
     LHAPDF::GridPDF* gpdf = dynamic_cast<LHAPDF::GridPDF*>(LHAPDF::mkPDF(general.unique_name + suffix, pdf_info.replica));
     const string xpol = "continuation";
     gpdf->setExtrapolator(xpol);
+
+    std::cout << "Loaded LHAPDF SF set: " << general.unique_name + suffix << " (replica "<< pdf_info.replica << ")" << std::endl;
 
     return gpdf;
 }

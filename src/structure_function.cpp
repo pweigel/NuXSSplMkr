@@ -773,6 +773,7 @@ void StructureFunction::BuildGrids(string outpath) {
             if(!std::isfinite(_FL)) {
                 _FL = 0.0;
             }
+            // std::cout << x << "," << Q2 << ": " << _F2 << std::endl;
 
             // Write grid data
             f1_outfile << _F1; f2_outfile << _F2; f3_outfile << _F3; fL_outfile << _FL;
