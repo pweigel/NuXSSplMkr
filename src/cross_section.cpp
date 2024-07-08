@@ -55,6 +55,8 @@ double CrossSection::ds_dxdy_kernel(double* k) {
     if (config.XS.enable_radiative_corrections) {
         double radiative_correction = rc_dsdxdy(ENU, x, y, ddxs);
         ddxs += radiative_correction;
+        // double radiative_correction = rc_bardin(ENU, x, y);
+        // ddxs *= (1.0 + radiative_correction);
     }
 
     // Jacobian = x * y, needed because we're integrating over log space
@@ -102,7 +104,7 @@ double CrossSection::ds_dxdQ2(double x, double Q2) {
     double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
 
     double F4_val = 0.0;
-    double F5_val = F2_val / x;
+    double F5_val = F2_val / (2.0*x);
     
     double term1, term2, term3, term4, term5;
     if (config.XS.enable_mass_terms) {
@@ -129,7 +131,6 @@ double CrossSection::ds_dxdy(double x, double y) {
     double ME = M_target * ENU;
     double M_l2 = SQ(config.lepton_mass);
 
-
     double s = 2.0 * M_target * ENU + SQ(M_target);// - SQ(top_mass*pc->GeV);
     double Q2 = (s - SQ(M_target)) * xy;
 
@@ -142,7 +143,7 @@ double CrossSection::ds_dxdy(double x, double y) {
     double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
 
     // double F4_val = 0.0;
-    double F5_val = F2_val / x;
+    double F5_val = F2_val / (2.0*x);
     
     // double term1, term2, term3, term4, term5;
     double term1, term2, term3, term5;
@@ -176,6 +177,8 @@ double CrossSection::ds_dy_kernel(double k) {
     if (config.XS.enable_radiative_corrections) {
         double radiative_correction = rc_dsdxdy(ENU, x, kernel_y, ddxs);
         ddxs += radiative_correction;
+        // double radiative_correction = rc_bardin(ENU, x, kernel_y);
+        // ddxs = ddxs * (1.0 + radiative_correction);
     }
 
     double result = x * ddxs;
@@ -312,72 +315,144 @@ double CrossSection::TotalXS(double E){
 /*
 Radiative Corrections
 */
-double CrossSection::qed_splitting(double z) {
-    return (1.0 + z*z) / (1.0 - z);
+long double CrossSection::qed_splitting(long double z) {
+    return (1.0L + z*z) / (1.0L - z);
+    // return exp( log1p(z*z) - log1p(-z));
 }
 
-double CrossSection::qed_splitting_integrated(double a) {
-    return -0.5 * a * (a + 2.0) - 2.0 * std::log(1.0 - a);
+long double CrossSection::P11(long double z) {
+    return qed_splitting(z);
 }
 
-double CrossSection::rc_jacobian(double x, double y, double z) {
-    return y / (z * (z + y - 1.0));
+long double CrossSection::P21(long double z) {
+    return ((1.0L + z*z) / (1.0L - z)) * (2.0L * log(1-z) - log(z) + 1.5L) + 0.5L * (1.0L + z) * log(z) - (1.0 - z);
 }
 
+long double CrossSection::P22(long double z) {
+    return (1.0L + z) * log(z) + 0.5L * (1.0L - z) + (2.0L / 3.0L) * (1.0L / z - z*z);
+}
+
+long double CrossSection::P23(long double z) {
+    // leptons
+}
+
+long double CrossSection::Psoft(long double z) {
+    long double eta = -3.0L * log(1.0L - (rc_prefactor / M_PI) * kernel_L );
+    long double D = eta * pow(1.0L - z, eta - 1.0L) * exp(0.5L * eta * (1.5L - 2.0L * pc->gammaE)) / tgamma(1.0L+eta);
+    return D - rc_prefactor * kernel_L * (2.0L / (1.0L - z)) * (1.0L + rc_prefactor * kernel_L * (11.0L/6.0L + 2.0L * log(1.0L-z)));
+}
+
+long double CrossSection::qed_splitting_integrated(long double a) {
+    return -0.5L * a * (a + 2.0L) - 2.0L * std::log(1.0L - a);
+}
+
+long double CrossSection::rc_jacobian(long double x, long double y, long double z) {
+     return y / (z * (z + y - 1.0L));
+    // return exp( log(y) - log(z) - log(z + y - 1.0L));
+}
 double CrossSection::rc_kernel(double k) {
-    return calculate_rc_dsdzdxdy(k, kernel_x, kernel_y);
+    return static_cast<double>(calculate_highorder_rc_dsdzdxdy(static_cast<long double>(k), 
+                                                     static_cast<long double>(kernel_x), 
+                                                     static_cast<long double>(kernel_y))
+                              );
 }
 
-double CrossSection::calculate_rc_dsdzdxdy(double z, double x, double y) {
-    double xhat = x * y / (z + y - 1.0);
-    double yhat = (z + y - 1.0) / z;
-    double zmin = 1.0 - y * (1.0 - x);
+long double CrossSection::calculate_rc_dsdzdxdy(long double z, long double x, long double y) {
+    long double xhat = x * y / (z + y - 1.0L);
+    long double yhat = (z + y - 1.0L) / z;
+    long double zmin = 1.0L - y * (1.0L - x);
 
-    // double M_target = config.target_mass;
-    // double M_l = config.lepton_mass;
-    // double s = 2.0 * M_target * E + SQ(M_target);
-    // double L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
-    // double born_dsdxdy = ds_dxdy(x, y); // cross section evaluated at regular x, y
-    double term1 = 0.0;
-    double born_dsdxdy_hat = 0.0;
+    long double term1 = 0.0;
+    long double born_dsdxdy_hat = 0.0;
+
+    if (xhat > 1.0L) xhat = 1.0L;
+    if (yhat > 1.0L) yhat = 1.0L;
+    
     if (z > zmin) {
-        if (xhat >= 1.0-1e-3) xhat = 1.0-1e-3;
-        if (yhat >= 1.0-1e-3) yhat = 1.0-1e-3;
         if (ps.Validate(ENU, xhat, yhat)) { // only calc if in phase space, is this right? should entire dsdzdxdy be zero? -PW
             if (interp_grid_loaded) {
                 double Ei[] = {ENU};
-                double yi[] = {yhat};
-                double xi[] = {xhat};
+                double yi[] = {static_cast<double>(yhat)};
+                double xi[] = {static_cast<double>(xhat)};
                 double interp_output[1];
                 mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
-                born_dsdxdy_hat = interp_output[0];
-                // Ei[0] = {ENU};
-                // yi[0] = {x};
-                // xi[0] = {y};
-                // mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
-                // kernel_born_dsdxdy = interp_output[0];
-
-            } else if (rc_spline_loaded) { // Get the double differential cross section from the spline
-                std::array<double, 3> pt{{std::log10(ENU / pc->GeV), std::log10(xhat), std::log10(yhat)}};
-                std::array<int, 3> xs_splc;
-                rc_spline.searchcenters(pt.data(), xs_splc.data());
-                born_dsdxdy_hat = pow(10.0, rc_spline.ndsplineeval(pt.data(), xs_splc.data(), 0));
+                born_dsdxdy_hat = static_cast<long double>(interp_output[0]);
             } else { // if we have no spline, do it manually
-                // Set_Neutrino_Energy(ENU/z);
-                born_dsdxdy_hat = ds_dxdy(xhat, yhat);
-                // Set_Neutrino_Energy(ENU);
+                born_dsdxdy_hat = static_cast<long double>(ds_dxdy(xhat, yhat));
             }
+            
             if (born_dsdxdy_hat < 0) {
-                born_dsdxdy_hat = 0.0;
+                born_dsdxdy_hat = 0.0L;
             }
 
             term1 = rc_jacobian(x, y, z) * born_dsdxdy_hat;
         }
     }
-    // std::cout << z/zmin - 1.0 << " | " << term1 << ", " << kernel_born_dsdxdy << ", " << (1-zmin) * qed_splitting(z) << std::endl;
-    // std::cout << (1-zmin) * qed_splitting(z) * (term1 - kernel_born_dsdxdy) / kernel_born_dsdxdy << std::endl;
-    return qed_splitting(z) * (term1 - kernel_born_dsdxdy);
+
+    double Ei[] = {ENU};
+    double yi[] = {static_cast<double>(y)};
+    double xi[] = {static_cast<double>(x)};
+    double interp_output[1];
+    mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
+    long double born_dsdxdy = static_cast<long double>(interp_output[0]);
+
+    // std::cout << "RC PS Failed: (E, x, y, z) = ( " << ENU/1e9 << ", " << xhat/x << ", " << yhat/y << ", " << zmin/z << " )" <<std::endl;
+// std::cout << "            (xh, yh, zmin) = ( " << xhat << ", " << yhat << ", " << zmin << " )" <<std::endl;
+
+    return qed_splitting(z) * (term1 - born_dsdxdy);
 }
+
+long double CrossSection::calculate_highorder_rc_dsdzdxdy(long double z, long double x, long double y) {
+    long double xhat = x * y / (z + y - 1.0L);
+    long double yhat = (z + y - 1.0L) / z;
+    long double zmin = 1.0L - y * (1.0L - x);
+
+    long double term1 = 0.0;
+    long double born_dsdxdy_hat = 0.0;
+
+    long double L = static_cast<long double>(kernel_L);
+    long double a = static_cast<long double>(rc_prefactor);
+
+    long double term_one = 0.0L;
+    // long double term_two = 0.0L;
+    // long double term_three = 0.0L;
+
+    long double J = rc_jacobian(x, y, z);
+
+    if (xhat > 1.0L) xhat = 1.0L;
+    if (yhat > 1.0L) yhat = 1.0L;
+
+    if (z > zmin) {
+        
+        if (ps.Validate(ENU/z, xhat, yhat)) { 
+            // double Ei[] = {ENU/z};
+            // double yi[] = {static_cast<double>(yhat)};
+            // double xi[] = {static_cast<double>(xhat)};
+            // double interp_output[1];
+            // mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
+            // born_dsdxdy_hat = static_cast<long double>(interp_output[0]);
+            Set_Neutrino_Energy(ENU/z);
+            born_dsdxdy_hat = static_cast<long double>(ds_dxdy(xhat, yhat));
+            Set_Neutrino_Energy(ENU);
+            term_one = J * born_dsdxdy_hat;
+            // term_two = P21(z) * J * born_dsdxdy_hat;
+            // term_three = P22(z) * J * born_dsdxdy_hat;
+        }
+    }
+
+    // double Ei[] = {ENU};
+    // double yi[] = {static_cast<double>(y)};
+    // double xi[] = {static_cast<double>(x)};
+    // double interp_output[1];
+    // mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
+    // long double born_dsdxdy = static_cast<long double>(interp_output[0]);
+    long double born_dsdxdy = static_cast<long double>(kernel_born_dsdxdy);
+
+    // return a*L*P11(z)*(term_one - born_dsdxdy) + a*a*L*L*(P21(z)*(term_one - born_dsdxdy) + P22(z)*term_one) + Psoft(z) * (term_one - born_dsdxdy);
+    // return a*L*P11(z)*(term_one - born_dsdxdy) + a*a*L*L*(P21(z)*(term_one - born_dsdxdy) + P22(z)*term_one);
+    return a*L*P11(z)*(term_one - born_dsdxdy);
+}
+
 
 double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy) {
     if (born_dsdxdy <= 0.0) return 0.0;
@@ -392,12 +467,13 @@ double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy)
     kernel_born_dsdxdy = born_dsdxdy; // set this to speed up the calculation
     
     double s = 2.0 * M_target * E + SQ(M_target);
-    kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
+    double Q2 = (s - SQ(M_target)) * x * y;
+    // kernel_L = log( (s * SQ(1.0 - y + x*y)) / SQ(M_l)); // large logarithm
+    kernel_L = log( Q2 / SQ(M_l));
+    // long double zmin = 1.0L - static_cast<long double>(y) * (1.0L - static_cast<long double>(x));
 
-    double zmin = 1.0 - y * (1.0 - x);
-
-    double integrate_zmin = zmin+1e-5;
-    double integrate_zmax = 1.0-1e-4; // maybe this needs to be 0.9999 or something -PW
+    double integrate_zmin = 1e-5;
+    double integrate_zmax = 0.9999; // maybe this needs to be 0.9999 or something -PW
     if (!ps.Validate(E, x, y)) {
         return 0;
     }
@@ -405,18 +481,59 @@ double CrossSection::rc_dsdxdy(double E, double x, double y, double born_dsdxdy)
     gsl_integration_cquad_workspace * w = gsl_integration_cquad_workspace_alloc(2500);
     double result, error;
     size_t neval;
-
     gsl_function F;
     F.function = &KernelHelper<CrossSection, &CrossSection::rc_kernel>;
     F.params = this;
-
     int status = gsl_integration_cquad(&F, integrate_zmin, integrate_zmax, 0, 1.e-3, w, &result, &error, &neval);
     if (status != 0) {
         std::cout << "RC ERR: (" << x << ", " << y << "): " << status << ", " << neval << " | " << born_dsdxdy << ", " << result << std::endl;
+        result = 0.0;
     }
     gsl_integration_cquad_workspace_free(w);
 
-    return rc_prefactor * kernel_L * (result - qed_splitting_integrated(zmin) * born_dsdxdy);
+    // if (abs(result) > 1e-60) {
+    //     std::cout << result << std::endl;
+    // }
+    
+    // return rc_prefactor * kernel_L * result;
+    return result;
+}
+
+double CrossSection::rc_bardin(double E, double x, double y) {
+    double M_target = config.target_mass;
+    double M_l = config.lepton_mass;
+    double MZ = pc->Zboson_mass;
+
+    double s = 2.0 * M_target * E + SQ(M_target);
+    double L = log(s / SQ(M_l));
+
+    double zeta2 = 2.0*SQ(M_PI)/6.0;
+
+    double delta_1LL = rc_prefactor * L * (2.0 * log(y) - log(1 - y) + 1.5 - y);
+    double delta_2LL = 0.5 * SQ(rc_prefactor * L) * (4.0 * SQ(log(y)) - 4.0 * log(y) * log(1-y) + 0.5 * SQ(log(1-y) - 
+                     4.0*zeta2 + (6.0 - 4.0*y)*log(y) + (3.0*y - 4.0)*log(1-y) + 9.0/4.0)) + (1.0/3.0)*rc_prefactor*L*delta_1LL;
+
+    double prefactor = pc->alpha / M_PI;
+    double line1 = -1.5 * log(s/SQ(MZ)) + (0.75 - 0.5*y - 0.5*log(1-y)+log(y)) * log(s/SQ(M_l));
+    double line2 = 0.5 * log(1-y)*log(y) - 1.5*gsl_sf_dilog(y) - 0.5*SQ(log(y)) - 0.5*SQ(log(1-y));
+    double line3 = (1-y)*log(1-y) - 7.0/4.0 * log(y) + 0.5*y*log(y) + 1.25*y + 0.5 + zeta2;
+
+    double Q1 = -(2.0/3.0);
+    double quark1 = Q1 * (3.0 - 1.5*log(s/SQ(MZ)) + zeta2 - log(1-y)*log(y) - 2*gsl_sf_dilog(y));
+    double quark2 = SQ(Q1) * (23.0/72.0 -5.0/12.0 * y + SQ(y)/24.0 - zeta2 - 17.0/18.0);
+
+    double delta_CC = prefactor * (line1 + line2 + line3 + quark1 + quark2);
+
+    // if (delta_2LL != delta_2LL) {
+    //     // std::cout << E << ", " << x << ", " << y << ": " << delta_1LL << ", " << delta_2LL << ", " << delta_CC << std::endl;
+    //     std::cout << E << ", " << x << ", " << y << ": " << L << ", " << log(y) << ", " << log(1-y) << std::endl;
+    // }
+
+
+    return delta_CC + delta_2LL;
+    // return delta_CC+delta_1LL;// + delta_2LL;
+    // return delta_1LL + delta_2LL;
+    // return delta_1LL;
 }
 
 void CrossSection::Load_RC_Spline(string spline_path) {

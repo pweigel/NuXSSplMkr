@@ -1,19 +1,19 @@
 {
   "general": {
-    "unique_name": "TUJU21_nnlo_56_26_nf6_sx",
+    "unique_name": "EPPS21nlo_CT18Anlo_Al27_nf6_sx",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "TUJU21_nnlo_56_26_nf6_sx",
+    "pdfset": "EPPS21nlo_CT18Anlo_Al27_nf6_sx",
     "replica": 0
   },
 
   "SF": {
-    "mass_scheme": "FONLL-C",
+    "mass_scheme": "FONLL-B",
     "disable_top": false,
-    "perturbative_order": 2,
+    "perturbative_order": 1,
     "DIS_process": "CC",
 
     "enable_FONLL_damping": true,
@@ -22,7 +22,6 @@
 
     "enable_small_x": true,
     "small_x_order": "NLL",
-    "nf": 6,
 
     "enable_TMC": false,
     "enable_CKMT": false,
@@ -66,10 +65,13 @@
     "mode": 4,
     "enable_mass_terms": true,
     "enable_shallow_region": true,
+    "enable_radiative_corrections": false,
 
     "integration": { 
       "xmin": 1e-12,
       "xmax": 1.0,
+      "ymin": 1e-16,
+      "ymax": 1.0,
       "Q2min": 0.01,
       "Q2max": 1e10,
       "W2min": 1.1621

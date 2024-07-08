@@ -20,6 +20,7 @@ class PhysConst {
         double piby2; 
         double sqrt2;
         double ln2;
+        double gammaE;
         // astronomical constants //
         double earthradius;
         double sunradius;

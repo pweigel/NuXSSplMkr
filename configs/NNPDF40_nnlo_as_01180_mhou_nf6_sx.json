@@ -1,19 +1,19 @@
 {
     "general": {
-      "unique_name": "nNNPDF30_nlo_as_0118_p_nf6_sx",
+      "unique_name": "NNPDF40_nnlo_as_01180_mhou_nf6_sx",
       "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
       "debug": false
     },
   
     "PDF": {
-      "pdfset": "nNNPDF30_nlo_as_0118_p_nf6_sx",
+      "pdfset": "NNPDF40_nnlo_as_01180_mhou_nf6_sx",
       "replica": 0
     },
   
     "SF": {
-      "mass_scheme": "FONLL-B",
+      "mass_scheme": "FONLL-C",
       "disable_top": false,
-      "perturbative_order": 1,
+      "perturbative_order": 2,
       "DIS_process": "CC",
   
       "enable_FONLL_damping": true,
@@ -66,10 +66,13 @@
       "mode": 4,
       "enable_mass_terms": true,
       "enable_shallow_region": true,
+      "enable_radiative_corrections": false,
   
       "integration": { 
         "xmin": 1e-12,
         "xmax": 1.0,
+        "ymin": 1e-16,
+        "ymax": 1.0,
         "Q2min": 0.01,
         "Q2max": 1e10,
         "W2min": 1.1621

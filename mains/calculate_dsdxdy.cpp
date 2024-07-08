@@ -64,20 +64,20 @@ int main(int argc, char* argv[]){
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
         xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
-        outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".rc";
+        outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".rc2";
     }
     
-    int NE = 100;
-    int Ny = 80;
-    int Nylin = 40;
-    int Nx = 80;
-    int Nxlin = 40;
+    int NE = 130;
+    int Ny = 255;
+    int Nylin = 100;
+    int Nx = 200;
+    int Nxlin = 100;
 
     double logemin = 1;
     double logemax = 13;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -10;
+    double logymin = -16;
     double logymax = -1;
     double dy = (logymax - logymin) / (Ny);
 
@@ -146,8 +146,19 @@ int main(int argc, char* argv[]){
                     double rc = 0.0;
                     if (config.XS.enable_radiative_corrections) {
                         rc = xs->rc_dsdxdy(E, x, y, _dsdxdy);
+                        // rc = xs->rc_bardin(E, x, y);
+                        // std::cout << rc << std::endl;
                     }
-                    _dsdxdy += rc;
+                    // if (rc / _dsdxdy < -1) {
+                    //     double zmin = 1 - y + x * y;
+                    //     double xhat = x*y / (zmin+y-1);
+                    //     double yhat = (zmin+y-1)/zmin;
+                    //     std::cout << scientific << setprecision(12);
+                    //     std::cout << E/1e9 << ", " << x << ", " << y << " (" << zmin << ", " << xhat << ", " << yhat << ")" << ": " << _dsdxdy << ", " << rc << std::endl;
+                    // }
+                    _dsdxdy = _dsdxdy + rc;
+                    // _dsdxdy *= (1.0 + rc);
+
                 }
                 
                 outfile << _dsdxdy;

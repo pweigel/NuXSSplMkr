@@ -11,6 +11,7 @@
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_vegas.h>
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_sf_dilog.h>
 #include "photospline/splinetable.h"
 #include <boost/math/quadrature/trapezoidal.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -90,11 +91,11 @@ class CrossSection {
         bool rc_spline_loaded = false;
 
         // Tools for interpolation
-        int interp_nd[3] = {100, 120, 120};
-        double interp_E[100];
-        double interp_y[120];
-        double interp_x[120];
-        double interp_indata[1440000];
+        int interp_nd[3] = {130, 355, 300};
+        double interp_E[130];
+        double interp_y[355];
+        double interp_x[300];
+        double interp_indata[130*355*300];
         bool interp_grid_loaded = false;
 
         void SetThresholdW2();
@@ -128,12 +129,20 @@ class CrossSection {
         double ds_dxdQ2_kernel(double* k);
 
         // ~ QED Corrections ~
-        double qed_splitting(double z);  // splitting function
-        double qed_splitting_integrated(double a); // splitting function integrated from 0 to a
-        double rc_jacobian(double x, double y, double z); // vars -> hat(vars)
+        long double qed_splitting(long double z);  // splitting function
+        long double P11(long double z);
+        long double P21(long double z);
+        long double P22(long double z);
+        long double P23(long double z);
+        long double Psoft(long double z);
+
+        long double qed_splitting_integrated(long double a); // splitting function integrated from 0 to a
+        long double rc_jacobian(long double x, long double y, long double z); // vars -> hat(vars)
         double rc_kernel(double k);
-        double calculate_rc_dsdzdxdy(double z, double x, double y);
+        long double calculate_rc_dsdzdxdy(long double z, long double x, long double y);
+        long double calculate_highorder_rc_dsdzdxdy(long double z, long double x, long double y);
         double rc_dsdxdy(double E, double x, double y, double born_dsdxdy);
+        double rc_bardin(double E, double x, double y);
         void Load_RC_Spline(string spline_path);
         void Load_InterpGrid(string grid_path);
     

@@ -284,7 +284,6 @@ double StructureFunction::HGeneric(double xi, double Q2){
     F.function = &HK<T, f, n, m>;
     F.params = this;
     size_t neval;
-    // double _integrate_xmax = 1.0;
     gsl_integration_cquad(&F, xi, 1.0, 0, 1.e-3, w, &result, &error, &neval);
     gsl_integration_cquad_workspace_free(w);
 

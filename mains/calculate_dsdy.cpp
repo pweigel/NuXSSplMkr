@@ -51,9 +51,15 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
+    std::string outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out";
+    if (config.XS.enable_radiative_corrections) {
+        std::cout << "Radiative corrections enabled!" << std::endl;
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+        outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".rc1";
+    }
 
     int NE = 110;
-    int Ny = 100;
+    int Ny = 150;
 
     double logemin = std::log10(5e1);
     double logemax = std::log10(5e12);
@@ -73,7 +79,7 @@ int main(int argc, char* argv[]){
     //     6e-1, 6.2e-1, 6.5e-1, 6.8e-1, 7e-1, 7.2e-1, 7.5e-1, 7.8e-1, 8e-1, 8.2e-1, 8.5e-1, 8.8e-1,
     //     9e-1, 9.2e-1, 9.5e-1, 9.8e-1, 9.9e-1};
 
-    double logymin = -4;
+    double logymin = -16;
     double logymax = -1;
     double dy = (logymax - logymin) / Ny;
 
@@ -81,7 +87,7 @@ int main(int argc, char* argv[]){
 
     // ds/dy
     std::ofstream dsdy_outfile;
-    dsdy_outfile.open(data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out");
+    dsdy_outfile.open(outfilename);
 
     // Get the energy, inelasticity values and put them in the header
     std::vector<double> energy_values;

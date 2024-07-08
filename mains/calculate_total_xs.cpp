@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
     std::cout << "Replica: " << replica << std::endl;
     std::cout << "=============================================" << std::endl << std::endl;
 
-    double logemin = std::log10(1e9);
+    double logemin = std::log10(1e1);
     double logemax = std::log10(5e12);
 
     int NE = 120;
@@ -72,11 +72,11 @@ int main(int argc, char* argv[]){
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
         xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
-        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".rc";
+        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".rc1";
     }
 
     std::ofstream outfile;
-    outfile.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".out");
+    outfile.open(outfilename);
 
     // smooth E dist
     for (int ei = 0; ei < NE; ei++) {
@@ -86,9 +86,14 @@ int main(int argc, char* argv[]){
         _xs = xs->TotalXS(E);
         outfile << E << "," << _xs << "\n";
     }
+    outfile.close();
 
     std::ofstream outfile_table;
-    outfile_table.open(data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".table");
+    outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".table";
+    if (config.XS.enable_radiative_corrections) {
+        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + ".rctable";
+    }
+    outfile_table.open(outfilename);
     for (auto const& Enu : EnuTab) {
         double E = pc->GeV * Enu;
         double _xs;
@@ -97,7 +102,6 @@ int main(int argc, char* argv[]){
         outfile_table << E << "," << _xs << "\n";
     }
 
-    outfile.close();
     outfile_table.close();
 
     return 0;

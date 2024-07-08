@@ -112,7 +112,7 @@ bool PhaseSpace::Validate(double E, double x, double y) {
         std::cout << "W2 = " << W2 << std::endl;
     }
 
-    if ((Q2 < Q2_min) || (Q2 > s) || (Q2_max > Q2_max)) {
+    if ((Q2 < Q2_min) || (Q2 > s - SQ(M_target)) || (Q2_max > Q2_max)) {
         /* 
         Constraints from:
         PDF minimum/maximum Q^2

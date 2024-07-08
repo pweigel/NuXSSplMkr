@@ -1,19 +1,19 @@
 {
     "general": {
-      "unique_name": "nNNPDF30_nlo_as_0118_p_nf6_sx",
+      "unique_name": "NNPDF40_nnlo_as_01180_qcd_nf6_sx",
       "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
       "debug": false
     },
   
     "PDF": {
-      "pdfset": "nNNPDF30_nlo_as_0118_p_nf6_sx",
+      "pdfset": "NNPDF40_nnlo_as_01180_qcd_nf6_sx",
       "replica": 0
     },
   
     "SF": {
-      "mass_scheme": "FONLL-B",
+      "mass_scheme": "FONLL-C",
       "disable_top": false,
-      "perturbative_order": 1,
+      "perturbative_order": 2,
       "DIS_process": "CC",
   
       "enable_FONLL_damping": true,

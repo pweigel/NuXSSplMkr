@@ -65,7 +65,7 @@ void Configuration::Populate() {
     XS.enable_radiative_corrections = j["XS"].value("enable_radiative_corrections", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
     XS.xmax = j["XS"]["integration"].at("xmax");
-    XS.ymin = j["XS"]["integration"].value("ymin", 1e-20);
+    XS.ymin = j["XS"]["integration"].value("ymin", 1e-12);
     XS.ymax = j["XS"]["integration"].value("ymax", 1.0);
     XS.Q2min = j["XS"]["integration"].at("Q2min");
     XS.Q2max = j["XS"]["integration"].at("Q2max");
