@@ -68,62 +68,6 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
     return ds_dxdy(x, y);
 }
 
-
-double CrossSection::ds_dxdQ2_kernel(double* k) {
-    double x = std::exp(k[0]);
-    double Q2 = std::exp(k[1]);
-
-    bool ps_valid = ps.Validate_xQ2(ENU, x, Q2);
-    if (!ps_valid) {
-        return 0;
-    }
-
-    // Jacobian = x * Q2, needed because we're integrating over log space
-    return x * Q2 * ds_dxdQ2(x, Q2);
-}
-
-double CrossSection::ds_dxdQ2(double E, double x, double Q2) {
-    Set_Neutrino_Energy(E);
-    return ds_dxdQ2(x, Q2);
-}
-
-double CrossSection::ds_dxdQ2(double x, double Q2) {
-    double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
-    double M_target = config.target_mass;
-    double M_l = config.lepton_mass;
-
-    double s = 2.0 * M_target * ENU + SQ(M_target);
-    double y = Q2 / ( (s - SQ(M_target)) * x);
-
-    double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
-    double propagator = SQ( MW2 / (Q2 + MW2) );
-    double jacobian = 1; //s * x; // from d2s/dxdQ2 --> d2s/dxdy    
-
-    double F1_val = SF_PDF->xfxQ2(F1_code, x, Q2/SQ(pc->GeV));
-    double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
-    double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
-
-    double F4_val = 0.0;
-    double F5_val = F2_val / (2.0*x);
-    
-    double term1, term2, term3, term4, term5;
-    if (config.XS.enable_mass_terms) {
-        term1 = y * ( x*y + SQ(M_l)/(2*ENU*M_target) ) * F1_val;
-        term2 = ( 1 - y - M_target*x*y/(2*ENU) - SQ(M_l)/(4*SQ(ENU)) ) * F2_val;
-        term3 = config.cp_factor * (x*y*(1-y/2) - y*SQ(M_l)/(4*M_target*ENU)) * F3_val;
-        term4 = (x*y*SQ(M_l) / (2 * M_target * ENU) + SQ(M_l)*SQ(M_l) / (4*SQ(M_target*ENU))) * F4_val;
-        term5 = -1.0 * SQ(M_l) / (M_target * ENU) * F5_val;
-    } else {
-        term1 = y*y*x * F1_val;
-        term2 = ( 1 - y ) * F2_val;
-        term3 = config.cp_factor * ( x*y*(1-y/2) ) * F3_val;
-        term4 = 0.0;
-        term5 = 0.0;
-    }
-    double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
-    return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
-}
-
 double CrossSection::ds_dxdy(double x, double y) {
     double xy = x*y;
     double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
@@ -215,51 +159,6 @@ double CrossSection::ds_dy(double E, double y) {
     gsl_integration_cquad_workspace_free(w);
 
     return result;
-}
-
-double CrossSection::TotalXS_xQ2(double E) {
-    // integrate over x-Q2
-    Set_Neutrino_Energy(E);
-    double M_target = config.target_mass;
-    double M_l = config.lepton_mass;
-
-    double s = 2.0 * M_target * E + SQ(M_target);
-    
-    double xmin = max(ps.x_min, SQ(M_l) / (2.0 * M_target * (E - M_l)));
-    double xmax = 1.0-1e-9;
-
-    double Q2min = ps.Q2_min;
-    double Q2max = s - SQ(M_target);
-
-    double res,err;
-    const unsigned long dim = 2; int calls = 250000; // bump it
-
-    // integrating on the log of x and Q2
-    double xl[dim] = { log(xmin), log(Q2min) };
-    double xu[dim] = { log(xmax), log(Q2max) };
-
-    gsl_rng_env_setup ();
-    const gsl_rng_type *T = gsl_rng_default;
-    gsl_rng *r = gsl_rng_alloc (T);
-
-    gsl_monte_function F;
-    F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdQ2_kernel>, dim, this};
-
-    gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 10000, r, s_vegas, &res, &err);
-
-    do
-    {
-        gsl_monte_vegas_integrate (&F, xl, xu, dim, calls/5, r, s_vegas, &res, &err);
-        // printf ("result = % .6e sigma = % .6e "
-        //         "chisq/dof = %.2f\n", res, err, gsl_monte_vegas_chisq (s_vegas));
-    }
-    while (fabs (gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5 );
-
-    gsl_monte_vegas_free (s_vegas);
-    gsl_rng_free (r);
-
-    return res;
 }
 
 double CrossSection::TotalXS(double E){
@@ -424,16 +323,14 @@ long double CrossSection::calculate_highorder_rc_dsdzdxdy(long double z, long do
 
     if (z > zmin) {
         
-        if (ps.Validate(ENU/z, xhat, yhat)) { 
+        if (ps.Validate(ENU, xhat, yhat)) { 
             // double Ei[] = {ENU/z};
             // double yi[] = {static_cast<double>(yhat)};
             // double xi[] = {static_cast<double>(xhat)};
             // double interp_output[1];
             // mlinterp::interp(interp_nd, 1, interp_indata, interp_output, interp_E, Ei, interp_y, yi, interp_x, xi);
             // born_dsdxdy_hat = static_cast<long double>(interp_output[0]);
-            Set_Neutrino_Energy(ENU/z);
             born_dsdxdy_hat = static_cast<long double>(ds_dxdy(xhat, yhat));
-            Set_Neutrino_Energy(ENU);
             term_one = J * born_dsdxdy_hat;
             // term_two = P21(z) * J * born_dsdxdy_hat;
             // term_three = P22(z) * J * born_dsdxdy_hat;
@@ -608,29 +505,6 @@ void CrossSection::Load_InterpGrid(string grid_path) {
     gridfile.close();
 
     interp_grid_loaded = true;
-
-    // int nE_interp = 1;
-    // int nx_interp = 1;
-    // int ny_interp = 1;
-
-    // nd = {nE, ny, nx};
-    // int ni = 1;
-
-    // double E_interp[nE_interp] = {1e10};
-    // double y_interp[ny_interp] = {0.1};
-    // double x_interp[nx_interp] = {0.1};
-
-    // double output[nE_interp*ny_interp*nx_interp]; // Result is stored in this buffer
-    // mlinterp::interp(
-    //     nd, ni,                   // Number of points
-    //     data, output,                                          // Output axis
-    //     data_E, E_interp, data_y, y_interp, data_x, x_interp);
-
-    // for (auto& a : output) {
-    //     std::cout << a << std::endl;
-    // }
-    // std::cout << nE << ", " << ny << ", " << nx << std::endl;
-
 }
 
 }

@@ -52,24 +52,6 @@ bool PhaseSpace::Validate(double E, double y) {
     return true;
 }
 
-bool PhaseSpace::Validate_xQ2(double E, double x, double Q2) {
-    double M_target = config.target_mass;
-    // E and Q^2 are given in units of eV and eV^2
-
-    if ((Q2 < Q2_min) || (Q2 > 2.0 * M_target * E)) {
-        return false;
-    }
-    double _xmin = max(x_min, Q2 / (2*M_target*E));
-    double _xmax = min(x_max, 1.0);
-    if ((x < _xmin) || (x > _xmax)) {
-        return false;
-    }
-    double W2 = Q2 * (1 - x) / x + pow(M_target, 2);
-    if (W2 < W2_min) {
-        return false;
-    }
-    return true;
-}
 
 bool PhaseSpace::Validate(double E, double x, double y) {
     /* 

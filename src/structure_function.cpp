@@ -530,7 +530,8 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
             double m = (config.target_mass) / (pc->GeV);
             _FL = FL(x, Q2);
             _F2 = F2(x, Q2);
-            _F1 = (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
+            // _F1 = (_F2 * (1.0 + 4.0*SQ(x*m)/Q2) - _FL) / (2. * x);
+            _F1 = (_F2 - _FL) / (2. * x);
             _F3 = F3(x, Q2);
             break;
         }
