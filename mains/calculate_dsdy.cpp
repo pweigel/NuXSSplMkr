@@ -51,11 +51,11 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-    std::string outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".out";
+    std::string outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out";
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
-        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + ".out");
-        outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + ".rc1";
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
+        outfilename = data_folder + "/cross_sections/dsdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
     }
 
     int NE = 110;

@@ -90,14 +90,6 @@ class CrossSection {
         photospline::splinetable<> rc_spline;
         bool rc_spline_loaded = false;
 
-        // Tools for interpolation
-        int interp_nd[3] = {130, 355, 300};
-        double interp_E[130];
-        double interp_y[355];
-        double interp_x[300];
-        double interp_indata[130*355*300];
-        bool interp_grid_loaded = false;
-
         void SetThresholdW2();
 
         int mode;
@@ -149,6 +141,15 @@ class CrossSection {
         // ~ Settings ~
         void Set_Mode(int _mode);
         void Set_Neutrino_Energy(double E);
+
+        // Tools for interpolation
+        int interp_nd[3] = {130, 355, 300};
+        double interp_E[130];
+        double interp_y[355];
+        double interp_x[300];
+        double interp_indata[130*355*300];
+        bool interp_grid_loaded = false;
+
 };
 
 }
