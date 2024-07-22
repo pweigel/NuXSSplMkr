@@ -65,7 +65,7 @@
     "mode": 4,
     "enable_mass_terms": true,
     "enable_shallow_region": true,
-    "enable_radiative_corrections": false,
+    "enable_radiative_corrections": true,
 
     "integration": { 
       "xmin": 1e-12,

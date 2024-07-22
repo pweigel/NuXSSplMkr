@@ -65,13 +65,16 @@
     "mode": 4,
     "enable_mass_terms": true,
     "enable_shallow_region": true,
+    "enable_radiative_corrections": false,
 
     "integration": { 
       "xmin": 1e-12,
       "xmax": 1.0,
+      "ymin": 1e-16,
+      "ymax": 1.0,
       "Q2min": 0.01,
       "Q2max": 1e10,
-      "W2min": 1.96
+      "W2min": 1.1621
     }
   },
 

@@ -1,12 +1,12 @@
 {
   "general": {
-    "unique_name": "nCTEQ15HQ_1_1_nf6_sx",
+    "unique_name": "test",
     "data_path": "/n/holylfs05/LABS/arguelles_delgado_lab/Everyone/pweigel/sandbox/src/NuXSSplMkr/data",
     "debug": false
   },
 
   "PDF": {
-    "pdfset": "nCTEQ15HQ_1_1_nf6_sx",
+    "pdfset": "CT18ANLO_nf6_sx",
     "replica": 0
   },
 
@@ -22,6 +22,7 @@
 
     "enable_small_x": true,
     "small_x_order": "NLL",
+    "nf": 6,
 
     "enable_TMC": false,
     "enable_CKMT": false,
