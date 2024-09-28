@@ -20,8 +20,8 @@ void Configuration::Populate() {
     SF.mass_scheme = j["SF"].at("mass_scheme");
     SF.pto = j["SF"].at("perturbative_order");
     SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
-    SF.DIS_process = j["SF"].at("DIS_process");
-    SF.current = CurrentMap.at(SF.DIS_process);
+    // SF.DIS_process = j["SF"].at("DIS_process");
+    // SF.current = CurrentMap.at(SF.DIS_process);
     SF.FFNS = -1; // TODO: Figure out how I want to handle this
 
     SF.dynamic_fixed_flavor = j["SF"].value("dynamic_fixed_flavor", true);
@@ -90,11 +90,11 @@ void Configuration::Populate() {
     pdf_info.PDFQ2min = pdf->q2Min();
     pdf_info.PDFQ2max = pdf->q2Max();
 
-    if (SF.current == CC) {
-        constants.Mboson2 = constants.MassW * constants.MassW;
-    } else if (SF.current == NC) {
-        constants.Mboson2 = constants.MassZ * constants.MassZ;
-    }
+    // if (SF.current == CC) {
+    //     constants.Mboson2 = constants.MassW * constants.MassW;
+    // } else if (SF.current == NC) {
+    //     constants.Mboson2 = constants.MassZ * constants.MassZ;
+    // }
 
     dynamic_W2_min = j["XS"].value("dynamic_W2_min", false);
     target_mass = pc->isoscalar_mass;
@@ -110,6 +110,17 @@ void Configuration::Set_Replica(int replica) {
     pdf_info.PDFxmin  = pdf->xMin();
     pdf_info.PDFQ2min = pdf->q2Min();
     pdf_info.PDFQ2max = pdf->q2Max();
+}
+
+void Configuration::Set_Current(string current_string) {
+    current = current_string;
+    current_type = CurrentMap.at(current_string);
+    if (current_type == CC) {
+        constants.Mboson2 = constants.MassW * constants.MassW;
+    } else if (current_type == NC) {
+        constants.Mboson2 = constants.MassZ * constants.MassZ;
+    }
+    flag_set_current = true;
 }
 
 void Configuration::Set_Target(string target_string) {
@@ -178,7 +189,7 @@ void Configuration::LoadPDFSet() {
 }
 
 string Configuration::Get_SF_Code(string sf) { // TODO: neaten this up, add NC as an option
-    return SF_INTERACTION_CODE[SF.DIS_process] + SF_PARTICLE_CODE[projectile] + SF_TARGET_CODE[target] + SF_NUMBER_CODES[sf] + SF_FLAVOR_CODES[sf_type_string];
+    return SF_INTERACTION_CODE[current] + SF_PARTICLE_CODE[projectile] + SF_TARGET_CODE[target] + SF_NUMBER_CODES[sf] + SF_FLAVOR_CODES[sf_type_string];
 }
 
 LHAPDF::GridPDF* Configuration::Get_LHAPDF_SF(int mode) {

@@ -7,23 +7,24 @@
 #include <boost/filesystem.hpp>
 
 int main(int argc, char* argv[]){
-    if (argc != 7) {
+    if (argc != 8) {
         std::cout << "Not enough/too many inputs!" << std::endl;
-        std::cout << "Usage: make_structure_functions CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
+        std::cout << "Usage: make_structure_functions CONFIG CURRENT PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
         return 1;
     }
 
-
     const std::string config_path = argv[1];
-    const std::string projectile = argv[2]; // neutrino or antineutrino
-    const std::string target = argv[3]; // proton or neutron
-    const std::string sf_type = argv[4]; // total, light, charm, ..
-    const unsigned int mode = std::stoi(argv[5]);
-    const unsigned int replica = std::stoi(argv[6]);
+    const std::string current = argv[2];
+    const std::string projectile = argv[3]; // neutrino or antineutrino
+    const std::string target = argv[4]; // proton or neutron
+    const std::string sf_type = argv[5]; // total, light, charm, ..
+    const unsigned int mode = std::stoi(argv[6]);
+    const unsigned int replica = std::stoi(argv[7]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
+    std::cout << "Current: " << current << std::endl;
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
     std::cout << "SF Type: " << sf_type << std::endl;
@@ -47,6 +48,7 @@ int main(int argc, char* argv[]){
 
     nuxssplmkr::PhysConst* pc = new nuxssplmkr::PhysConst();
 
+    config.Set_Current(current);
     config.Set_Target(target);
     config.Set_Projectile(projectile);
     config.Set_SF_Type(sf_type);

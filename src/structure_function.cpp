@@ -84,7 +84,8 @@ void StructureFunction::InitializeAPFEL() {
     APFEL::SetCKM(config.constants.Vud, config.constants.Vus, config.constants.Vub,
                   config.constants.Vcd, config.constants.Vcs, config.constants.Vcb,
                   config.constants.Vtd, config.constants.Vts, config.constants.Vtb);
-    APFEL::SetProcessDIS(config.SF.DIS_process);
+
+    APFEL::SetProcessDIS(config.current);
 
     APFEL::SetProjectileDIS(config.projectile);
     APFEL::SetTargetDIS(config.target);
@@ -637,31 +638,6 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
     return {_F1, _F2, _F3, _FL};
 }
 
-// void StructureFunction::LoadSplines(string inpath) {
-//     if (splines_loaded) {
-//         throw std::runtime_error("Splines have already been loaded!!");
-//     }
-
-//     string f1_path = inpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-//     string f2_path = inpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-//     string f3_path = inpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+insuffix+".fits";
-
-//     std::cout << "Loading the following splines: " << std::endl;
-//     std::cout << f1_path << std::endl;
-//     std::cout << f2_path << std::endl;
-//     std::cout << f3_path << std::endl;
-
-//     spline_F1 = photospline::splinetable<>();
-//     spline_F2 = photospline::splinetable<>();
-//     spline_F3 = photospline::splinetable<>();
-
-//     spline_F1.read_fits(f1_path);
-//     spline_F2.read_fits(f2_path);
-//     spline_F3.read_fits(f3_path);
-
-//     splines_loaded = true;
-// }
-
 void StructureFunction::BuildGrids(string outpath) {
     const int Nx = config.SF.Nx;
     const int NQ2 = config.SF.NQ2;
@@ -688,10 +664,10 @@ void StructureFunction::BuildGrids(string outpath) {
     double d_log_x  = std::abs( std::log10(config.SF.xmin) - std::log10(0.1)  ) / (Nx-60);
 
     // setup grid stuff
-    f1_grid_fn = outpath + "/F1_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
-    f2_grid_fn = outpath + "/F2_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
-    f3_grid_fn = outpath + "/F3_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
-    fL_grid_fn = outpath + "/FL_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    f1_grid_fn = outpath + "/F1_"+config.current+"_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    f2_grid_fn = outpath + "/F2_"+config.current+"_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    f3_grid_fn = outpath + "/F3_"+config.current+"_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
+    fL_grid_fn = outpath + "/FL_"+config.current+"_"+config.projectile+"_"+config.target+"_"+config.sf_type_string+outsuffix;//+".grid";
 
     std::ofstream f1_outfile;
     f1_outfile.open(f1_grid_fn + ".grid");
@@ -751,6 +727,11 @@ void StructureFunction::BuildGrids(string outpath) {
             Set_Q_APFEL(std::sqrt(Q2));
         }
 
+        double pf = 1.;  // prefactor for getting the NC right
+        if ( (config.current == "NC") && (mode == 1)) {
+            pf = 2./pow( Q2/(Q2 + pow(APFEL::GetZMass(),2))/4/APFEL::GetSin2ThetaW()/(1-APFEL::GetSin2ThetaW()),2);
+        }
+
         for (int j = 0; j < Nx; j++) {
             double log_x = x_arr.at(j);
             double x = std::pow(10.0, log_x);
@@ -776,7 +757,7 @@ void StructureFunction::BuildGrids(string outpath) {
             // std::cout << x << "," << Q2 << ": " << _F2 << std::endl;
 
             // Write grid data
-            f1_outfile << _F1; f2_outfile << _F2; f3_outfile << _F3; fL_outfile << _FL;
+            f1_outfile << pf*_F1; f2_outfile << pf*_F2; f3_outfile << pf*_F3; fL_outfile << pf*_FL;
             if (j < Nx-1) {
               f1_outfile << ","; f2_outfile << ","; f3_outfile << ","; fL_outfile << ",";
             } else {

@@ -70,7 +70,7 @@ double CrossSection::ds_dxdy(double E, double x, double y) {
 
 double CrossSection::ds_dxdy(double x, double y) {
     double xy = x*y;
-    double MW2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
+    double Mb2 = config.constants.Mboson2 * SQ(pc->GeV); // TODO: This should happen where M_boson2 is?
     double M_target = config.target_mass;
     double ME = M_target * ENU;
     double M_l2 = SQ(config.lepton_mass);
@@ -79,13 +79,13 @@ double CrossSection::ds_dxdy(double x, double y) {
     double Q2 = (s - SQ(M_target)) * xy;
 
     double prefactor = SQ(pc->GF) / (2 * M_PI * x); 
-    double propagator = SQ( MW2 / (Q2 + MW2) );
+    double propagator = SQ( Mb2 / (Q2 + Mb2) );
     double jacobian = (s - SQ(M_target)) * x; // from d2s/dxdQ2 --> d2s/dxdy    
 
     double F1_val = SF_PDF->xfxQ2(F1_code, x, Q2/SQ(pc->GeV));
     double F2_val = SF_PDF->xfxQ2(F2_code, x, Q2/SQ(pc->GeV));
     double F3_val = SF_PDF->xfxQ2(F3_code, x, Q2/SQ(pc->GeV));
-
+    // std::cout << ENU/1e9 << ", "<<x << ", " << y << ": " << F2_val << ", " << x * F3_val <<","<<Mb2<< std::endl;
     // double F4_val = 0.0;
     double F5_val = F2_val / (2.0*x);
     
@@ -106,6 +106,7 @@ double CrossSection::ds_dxdy(double x, double y) {
     }
     // double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term4 + term5), 0);
     double xs = fmax(prefactor * jacobian * propagator * (term1 + term2 + term3 + term5), 0);
+    // std::cout << xs << std::endl;
     return xs / SQ(pc->cm); // TODO: Unit conversion outside of this function?
 }
 

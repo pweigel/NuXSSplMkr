@@ -10,22 +10,24 @@
 using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
-    if (argc != 7) {
+    if (argc != 8) {
         std::cout << "Not enough/too many inputs!" << std::endl;
-        std::cout << "Usage: calculate_total_xs CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
+        std::cout << "Usage: calculate_total_xs CONFIG CURRENT PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
         return 1;
     }
 
     const std::string config_path = argv[1]; // Path to .json file containing configuration info
-    const std::string projectile = argv[2]; // neutrino or antineutrino
-    const std::string target = argv[3]; // proton or neutron
-    const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
-    const int mode = std::stoi(argv[5]);
-    const unsigned int replica = std::stoi(argv[6]);
+    const std::string current = argv[2]; // CC or NC
+    const std::string projectile = argv[3]; // neutrino or antineutrino
+    const std::string target = argv[4]; // proton or neutron
+    const std::string xs_type = argv[5]; // Which SFs to use total, light, charm, ..
+    const int mode = std::stoi(argv[6]);
+    const unsigned int replica = std::stoi(argv[7]);
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
+    std::cout << "Current: " << current << std::endl;
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
     std::cout << "SF Type: " << xs_type << std::endl;
@@ -58,6 +60,7 @@ int main(int argc, char* argv[]){
         boost::filesystem::create_directories(out_folder);
     }
     
+    config.Set_Current(current);
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
@@ -68,11 +71,11 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-    std::string outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out";
+    std::string outfilename = data_folder + "/cross_sections/total_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out";
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
-        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
-        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
+        outfilename = data_folder + "/cross_sections/total_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
     }
 
     std::ofstream outfile;
@@ -89,9 +92,9 @@ int main(int argc, char* argv[]){
     outfile.close();
 
     std::ofstream outfile_table;
-    outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".table";
+    outfilename = data_folder + "/cross_sections/total_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".table";
     if (config.XS.enable_radiative_corrections) {
-        outfilename = data_folder + "/cross_sections/total_" + projectile + "_" + target + "_" + xs_type+ "."+std::to_string(mode)+ ".rctable";
+        outfilename = data_folder + "/cross_sections/total_" + current + "_" + projectile + "_" + target + "_" + xs_type+ "."+std::to_string(mode)+ ".rctable";
     }
     outfile_table.open(outfilename);
     for (auto const& Enu : EnuTab) {

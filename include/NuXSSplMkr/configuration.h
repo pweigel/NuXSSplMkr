@@ -126,6 +126,7 @@ class Configuration {
     void Populate();
     void LoadPDFSet();
     void Set_Replica(int replica);
+    void Set_Current(string current_string);
     void Set_Projectile(string projectile_string);
     void Set_Target(string target_string);
     void Set_SF_Type(string sf_type_string);
@@ -150,6 +151,9 @@ class Configuration {
 
     string sf_type_string;
     SFType sf_type;
+
+    string current;
+    Current current_type;
     string target;
     TargetType target_type;
     string projectile;
@@ -161,7 +165,7 @@ class Configuration {
     double target_mass;
     double lepton_mass;
 
-
+    bool flag_set_current = false;
     bool flag_set_flavor = false;
     bool flag_set_projectile = false;
     bool flag_set_target = false;
