@@ -3,6 +3,9 @@ LIST (APPEND MAIN_SOURCES
     ${PROJECT_SOURCE_DIR}/mains/create_lhapdf_structure_functions.cpp
     ${PROJECT_SOURCE_DIR}/mains/grid2spline.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy.cpp
+    ${PROJECT_SOURCE_DIR}/mains/calculate_dsdxdy_small.cpp
+    ${PROJECT_SOURCE_DIR}/mains/calculate_nusquids_dsdy.cpp
+    ${PROJECT_SOURCE_DIR}/mains/calculate_nusquids_sigma.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_dsdy.cpp
     ${PROJECT_SOURCE_DIR}/mains/calculate_total_xs.cpp
     ${PROJECT_SOURCE_DIR}/mains/evolve_pdf.cpp

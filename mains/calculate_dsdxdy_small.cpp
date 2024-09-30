@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
+#include "mlinterp.hpp"
 
 using namespace nuxssplmkr;
 namespace po = boost::program_options;
@@ -15,22 +16,21 @@ namespace po = boost::program_options;
 int main(int argc, char* argv[]){
     if (argc != 8) {
         std::cout << "Not enough/too many inputs!" << std::endl;
-        std::cout << "Usage: calculate_dsdxdy CONFIG CURRENT PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
+        std::cout << "Usage: calculate_dsdxdy CONFIG PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
         return 1;
     }
 
     const std::string config_path = argv[1];
-    const std::string current = argv[2];
-    const std::string projectile = argv[3]; // neutrino or antineutrino
-    const std::string target = argv[4]; // proton or neutron
-    const std::string xs_type = argv[5]; // Which SFs to use total, light, charm, ..
-    const int mode = std::stoi(argv[6]);
-    const unsigned int replica = std::stoi(argv[7]);
+    const std::string projectile = argv[2]; // neutrino or antineutrino
+    const std::string target = argv[3]; // proton or neutron
+    const std::string xs_type = argv[4]; // Which SFs to use total, light, charm, ..
+    const int mode = std::stoi(argv[5]);
+    const unsigned int replica = std::stoi(argv[6]);
+    const bool use_rc = !!(std::stoi(argv[7]));
 
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
-    std::cout << "Current: " << current << std::endl;
     std::cout << "Projectile: " << projectile << std::endl;
     std::cout << "Target: " << target << std::endl;
     std::cout << "XS Type: " << xs_type << std::endl;
@@ -52,7 +52,6 @@ int main(int argc, char* argv[]){
 
     PhysConst* pc = new PhysConst();
 
-    config.Set_Current(current);
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
@@ -63,28 +62,28 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-    std::string outfilename = data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out";;
-    if (config.XS.enable_radiative_corrections) {
+    std::string outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".smallout";;
+    if (use_rc) {
         std::cout << "Radiative corrections enabled!" << std::endl;
-        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out");
-        outfilename = data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".rc";
+        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out");
+        outfilename = data_folder + "/cross_sections/dsdxdy_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".smallrc";
     }
     
-    int NE = 130;
-    int Ny = 255;
-    int Nylin = 100;
-    int Nx = 200;
-    int Nxlin = 100;
+    int NE = 13;
+    int Ny = 60;
+    int Nylin = 20;
+    int Nx = 50;
+    int Nxlin = 20;
 
     double logemin = 1;
     double logemax = 13;
     double dE = (logemax - logemin) / (NE-1);
 
-    double logymin = -16;
+    double logymin = -6;
     double logymax = -1;
     double dy = (logymax - logymin) / (Ny);
 
-    double logxmin = -12;
+    double logxmin = -5;
     double logxmax = -1;
     double dx = (logxmax - logxmin) / (Nx);
 
@@ -140,6 +139,11 @@ int main(int argc, char* argv[]){
             for (int xi = 0; xi < Nx+Nxlin; xi++) { // loop over x
                 double x = x_values[xi];
                 double _dsdxdy;
+                double interp_Ei[] = {E};
+                double interp_yi[] = {static_cast<double>(y)};
+                double interp_xi[] = {static_cast<double>(x)};
+                double interp_output[1];
+
                 bool ps_valid = ps.Validate(E, x, y);
 
                 if (!ps_valid) {
@@ -147,20 +151,13 @@ int main(int argc, char* argv[]){
                 } else {
                     _dsdxdy = xs->ds_dxdy(x, y);
                     double rc = 0.0;
-                    if (config.XS.enable_radiative_corrections) {
+                    if (use_rc) {
                         rc = xs->rc_dsdxdy(E, x, y, _dsdxdy);
-                        // rc = xs->rc_bardin(E, x, y);
-                        // std::cout << rc << std::endl;
+                        mlinterp::interp(xs->interp_nd, 1, xs->interp_indata, interp_output, xs->interp_E, interp_Ei, xs->interp_y, interp_yi, xs->interp_x, interp_xi);
+                        _dsdxdy = interp_output[0];
                     }
-                    // if (rc / _dsdxdy < -1) {
-                    //     double zmin = 1 - y + x * y;
-                    //     double xhat = x*y / (zmin+y-1);
-                    //     double yhat = (zmin+y-1)/zmin;
-                    //     std::cout << scientific << setprecision(12);
-                    //     std::cout << E/1e9 << ", " << x << ", " << y << " (" << zmin << ", " << xhat << ", " << yhat << ")" << ": " << _dsdxdy << ", " << rc << std::endl;
-                    // }
+
                     _dsdxdy = _dsdxdy + rc;
-                    // _dsdxdy *= (1.0 + rc);
 
                 }
                 

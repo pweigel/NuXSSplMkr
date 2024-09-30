@@ -53,72 +53,81 @@ int main(int argc, char* argv[]){
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-    std::string outfilename = data_folder + "/cross_sections/dsdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out";
+    std::string outfilename = data_folder + "/cross_sections/nusquids_dsdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out";
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
         xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
-        outfilename = data_folder + "/cross_sections/dsdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
+        outfilename = data_folder + "/cross_sections/nusquids_dsdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
     }
 
-    int NE = 110;
-    int Ny = 150;
+    int NE = 551;
+    int Nz = 551;
 
-    double logemin = std::log10(5e1);
-    double logemax = std::log10(5e12);
+    // y = (Ein - Eout) / Ein
+    // Eout = Ein * (1-y)
+    // z = (Eout - Eout,min)/(Ein - Eout,min)
+    // z = (Ein(1-y) - Eout,min)/(Ein - Eout,min)
+    // z (Ein - Eout,min) = Ein(1-y) - Eout,min
+    // z (Ein - Eout,min) + Eout,min = Ein(1-y)
+    // (z (Ein - Eout,min) + Eout,min) / Ein = 1-y
+    // y = 1 - (z (Ein - Eout,min) + Eout,min) / Ein
+    // Alfonso:
+    // y = (1-z)(ei-10)/ei
+
+    double logemin = std::log10(1e1);
+    double logemax = std::log10(1e12);
     double dE = (logemax - logemin) / (NE-1);
 
-    const vector<double> EnuTab{5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4,
-      1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8,
-      5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11, 2e11, 5e11,
-      1e12, 2e12, 5e12};
+    double emin = pow(10.0, logemin);
+    double emax = pow(10.0, logemax);
 
-    // const vector<double> EnuTab{1e1, 2e1, 5e1, 1e2, 2e2, 5e2, 1e3, 2e3, 5e3, 1e4};
-
-    // const vector<double> yvals{
-    //     1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 
-    //     1e-2, 2e-2, 5e-2, 8e-2, 1e-1, 1.2e-1, 1.5e-1, 1.8e-1, 2e-1, 2.2e-1, 2.5e-1, 2.8e-1,
-    //     3e-1, 3.2e-1, 3.5e-1, 3.8e-1, 4e-1, 4.2e-1, 4.5e-1, 4.8e-1, 5e-1, 5.2e-1, 5.5e-1, 5.8e-1,
-    //     6e-1, 6.2e-1, 6.5e-1, 6.8e-1, 7e-1, 7.2e-1, 7.5e-1, 7.8e-1, 8e-1, 8.2e-1, 8.5e-1, 8.8e-1,
-    //     9e-1, 9.2e-1, 9.5e-1, 9.8e-1, 9.9e-1};
-
-    double logymin = -16;
-    double logymax = -1;
-    double dy = (logymax - logymin) / Ny;
-
-    int Nylin = 100;
+    double zmin = 0.0;
+    double zmax = 1.0;
+    double dz = (zmax - zmin) / (Nz - 1);
 
     // ds/dy
     std::ofstream dsdy_outfile;
     dsdy_outfile.open(outfilename);
 
-    // Get the energy, inelasticity values and put them in the header
+    // Get the energy, z values and put them in the header
     std::vector<double> energy_values;
     dsdy_outfile << "E";
-    for (const auto E : EnuTab) { // loop over E
+    for (int i = 0; i < NE; i++) { // loop over E
+        double logE = logemin + i * dE;
+        double E = pow(10.0, logE);
+        energy_values.push_back(E);
         dsdy_outfile << "," << E * pc->GeV;
     }
     dsdy_outfile << std::endl;
 
-    std::vector<double> yvals;
-    dsdy_outfile << "y";
-    for (int i = 0; i < Ny; i++) {
-        double y = pow(10, logymin + i * dy);
-        dsdy_outfile << "," << y;
-        yvals.push_back(y);
-    }
-    dy = (1.0 - pow(10, logymax))/Nylin;
-    for (int i = 0; i < Nylin; i++) {
-        double y = pow(10, logymax) + i*dy;
-        dsdy_outfile << "," << y;
-        yvals.push_back(y);
+    std::vector<double> zvals;
+    dsdy_outfile << "z";
+    for (int i = 0; i < Nz; i++) {
+        double z = zmin + i * dz;
+        dsdy_outfile << "," << z;
+        zvals.push_back(z);
     }
     dsdy_outfile << std::endl;
 
-    for (const auto E : EnuTab) { // loop over E
+    for (const auto E : energy_values) { // loop over E
         std::cout << "E = " << E << " [GeV]" << std::endl;
-        for (const auto y : yvals) {
+        for (int i = 0; i < Nz; i++) {
+            double z = zvals[i];
+            double y = (1 - z) * (E - emin) / E;
+            // use alfonso's modification
+            if (y == 1.) y -= 1e-4;
+            if (y == 0.) {
+                y = 5.0 / E;
+                double z_prev = zvals[i-1]; 
+                double y_prev = (1 - z_prev) * (E - emin) / E;
+                if (y > y_prev) y = 1e-4;
+            }
+            // std::cout << y << std::endl;
             double _dxs = xs->ds_dy(E*pc->GeV, y);
-            dsdy_outfile << _dxs << " ";
+            if (_dxs == 0.0) {
+                _dxs = 1e-50;
+            }
+            dsdy_outfile << std::log10(_dxs) << " ";
         }
         dsdy_outfile << std::endl;
     }
