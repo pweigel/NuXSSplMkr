@@ -719,6 +719,15 @@ void StructureFunction::BuildGrids(string outpath) {
     for (int i = 0; i < NQ2; i++) {
         double log_Q2 = Q2_arr.at(i);
         double Q2 = std::pow(10.0, log_Q2);
+
+        // if ((Q2 >= 1e2) && config.SF.dynamic_small_x && !config.SF.enable_small_x) {
+        //     config.SF.enable_small_x = true;
+        //     InitializeAPFEL();
+        // } else if ((Q2 < 1e2) && config.SF.dynamic_small_x && config.SF.enable_small_x) {
+        //     config.SF.enable_small_x = false;
+        //     InitializeAPFEL();
+        // }
+
         if (config.general.debug) {
             std::cout << "Q2 = " << Q2 << std::endl;
         }

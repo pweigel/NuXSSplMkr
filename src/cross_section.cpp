@@ -180,7 +180,7 @@ double CrossSection::TotalXS(double E){
     const unsigned long dim = 2; int calls = 25000; // bump it
 
     // integrating on the log of x and y
-    double xl[dim] = { log(xmin), log(1.e-12) };
+    double xl[dim] = { log(xmin), log(1.e-14) };
     double xu[dim] = { log(xmax), log(1.)    };
 
     gsl_rng_env_setup ();
@@ -190,9 +190,9 @@ double CrossSection::TotalXS(double E){
     gsl_monte_function F;
     F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdy_kernel>, dim, this};
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 1000, r, s_vegas, &res, &err);
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 5000, r, s_vegas, &res, &err);
 
-    int max_iterations = 10;
+    int max_iterations = 100;
     int n_iter = 0;
     do
     {
@@ -203,7 +203,7 @@ double CrossSection::TotalXS(double E){
     }
     while ( (fabs(gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5) && (n_iter < max_iterations) );
     if (n_iter == max_iterations) {
-        std::cout << "WARNING: Max iterations reached for E = " << E/pc->GeV << " GeV!" << std::endl;
+        std::cout << "WARNING: Max iterations reached for E = " << E/pc->GeV << " GeV! |chi^2 - 1| = " << (fabs(gsl_monte_vegas_chisq (s_vegas) - 1.0) > 0.5) << std::endl;
     }
 
     gsl_monte_vegas_free (s_vegas);

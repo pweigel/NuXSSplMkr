@@ -72,6 +72,7 @@ struct SF_settings {
     bool disable_top;
     int nf;
     bool enable_small_x;
+    bool dynamic_small_x;
     string small_x_order;
     bool evolve_pdf;
     bool enable_TMC;

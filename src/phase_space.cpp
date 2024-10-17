@@ -13,15 +13,14 @@ void PhaseSpace::Initialize() {
     y_min = config.XS.ymin;
     y_max = config.XS.ymax;
     Q2_min = config.XS.Q2min * SQ(pc->GeV);
-    // if ((config.mode == 3) || (config.mode == 4)) { // we do this in the config now
-    //     Q2_min = 0.01 * SQ(pc->GeV);
-    // }
+    if ((config.mode == 3) || (config.mode == 4)) { // we do this in the config now
+        Q2_min = 0.01 * SQ(pc->GeV);
+    }
     Q2_max = config.XS.Q2max * SQ(pc->GeV);
     W2_min = config.XS.W2min * SQ(pc->GeV);
-    // if ((config.mode == 3) || (config.mode == 4)) {
-    //     // W2_min = 1.96 * SQ(pc->GeV);
-    //     W2_min = SQ(0.938 + 0.140) * SQ(pc->GeV);
-    // }
+    if ((config.mode == 3) || (config.mode == 4)) {
+        W2_min = SQ(0.938 + 0.140) * SQ(pc->GeV);
+    }
     W2_max = 1e20 * SQ(pc->GeV);
 
     debug = config.general.debug;
