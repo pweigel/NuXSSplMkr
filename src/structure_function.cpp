@@ -48,7 +48,7 @@ void StructureFunction::InitializeAPFEL() {
         return;
     }
 
-    APFEL::SetPDFSet(config.pdf_info.pdfset);
+    APFEL::SetPDFSet(config.pdf_info.active_pdfset);
     APFEL::SetReplica(config.pdf_info.replica);
     APFEL::SetMassScheme(config.SF.mass_scheme);
     std::cout << "PDF Masses: " << config.pdf_info.pdf_quark_masses[4] << " " << config.pdf_info.pdf_quark_masses[5] << " " << config.pdf_info.pdf_quark_masses[6] << std::endl;;
@@ -71,11 +71,14 @@ void StructureFunction::InitializeAPFEL() {
         // APFEL::SetVFNS();
     }
 
+    std::cout << "Set grids" << std::endl;
+
     APFEL::SetNumberOfGrids(1);
     APFEL::SetGridParameters(1, 190, 3, config.SF.xmin);
     // APFEL::SetGridParameters(2, 40, 5, 1e-1);
     // APFEL::SetGridParameters(3, 20, 5, 8e-1);
     APFEL::SetPerturbativeOrder(config.SF.perturbative_order);
+    std::cout << "enable small x" << std::endl;
     APFEL::SetSmallxResummation(config.SF.enable_small_x, config.SF.small_x_order);
     APFEL::SetAlphaQCDRef(config.pdf->alphasQ(config.constants.MassZ), config.constants.MassZ);
 
@@ -89,7 +92,7 @@ void StructureFunction::InitializeAPFEL() {
 
     APFEL::SetProjectileDIS(config.projectile);
     APFEL::SetTargetDIS(config.target);
-
+    std::cout << "initialize dis" << std::endl;
     // Initializes integrals on the grids
     APFEL::InitializeAPFEL_DIS();
 }
@@ -606,7 +609,8 @@ std::tuple<double,double,double,double> StructureFunction::EvaluateSFs(double x,
                 double chi = RescalingVariable(x, Q2);
                 double chi_Q0 = RescalingVariable(x, SQ(config.CKMT.Q0));
 
-                if ( (chi >= 1.0) || (config.sf_type == SFType::bottom) || (config.sf_type == SFType::top) ) {
+                // if ( (chi >= 1.0) || (config.sf_type == SFType::bottom) || (config.sf_type == SFType::top) ) {
+                if ( (chi >= 1.0)) {
                     _F1 = 0.0;
                     _F2 = 0.0;
                     _F3 = 0.0;
@@ -720,17 +724,26 @@ void StructureFunction::BuildGrids(string outpath) {
         double log_Q2 = Q2_arr.at(i);
         double Q2 = std::pow(10.0, log_Q2);
 
-        // if ((Q2 >= 1e2) && config.SF.dynamic_small_x && !config.SF.enable_small_x) {
-        //     config.SF.enable_small_x = true;
-        //     InitializeAPFEL();
-        // } else if ((Q2 < 1e2) && config.SF.dynamic_small_x && config.SF.enable_small_x) {
-        //     config.SF.enable_small_x = false;
-        //     InitializeAPFEL();
-        // }
-
         if (config.general.debug) {
             std::cout << "Q2 = " << Q2 << std::endl;
         }
+
+        // if ((Q2 >= 3.9) && config.SF.dynamic_small_x && !config.SF.enable_small_x && (mode == 1)) {
+        //     config.SF.enable_small_x = true;
+        //     config.Set_PDFSet(config.pdf_info.pdfset_sx, config.pdf_info.replica);
+        //     // APFEL::CleanUp();
+        //     // APFEL::InitializeAPFEL();
+        //     // APFEL::LockGrids(0);
+        //     // APFEL::CheckAPFEL();
+        //     InitializeAPFEL();
+        // } else if ((Q2 < 3.9) && config.SF.dynamic_small_x && config.SF.enable_small_x && (mode == 1)) {
+        //     config.SF.enable_small_x = false;
+        //     config.Set_PDFSet(config.pdf_info.pdfset, config.pdf_info.replica);
+        //     // APFEL::CleanUp();
+        //     // APFEL::InitializeAPFEL();
+        //     // APFEL::LockGrids(0);
+        //     InitializeAPFEL();
+        // }
 
         if ( (config.SF.mass_scheme != "parton") && (mode == 1)) {
             Set_Q_APFEL(std::sqrt(Q2));

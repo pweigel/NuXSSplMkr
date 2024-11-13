@@ -51,6 +51,8 @@ struct General_settings {
 
 struct PDF_settings {
     string pdfset;
+    string pdfset_sx;
+    string active_pdfset;
     int replica;
     std::map<int, double> pdf_quark_masses;
     double PDFxmin, PDFQ2min, PDFQ2max;
@@ -75,9 +77,6 @@ struct SF_settings {
     bool dynamic_small_x;
     string small_x_order;
     bool evolve_pdf;
-    bool enable_TMC;
-    bool enable_CKMT;
-    bool enable_PCAC;
     bool use_AlbrightJarlskog;
     double TMC_Q2max;
     
@@ -125,7 +124,7 @@ class Configuration {
     Configuration(string config_path);
     ~Configuration() { };
     void Populate();
-    void LoadPDFSet();
+    void Set_PDFSet(string pdfset, int replica);
     void Set_Replica(int replica);
     void Set_Current(string current_string);
     void Set_Projectile(string projectile_string);

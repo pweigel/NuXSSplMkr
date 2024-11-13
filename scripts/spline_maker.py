@@ -52,7 +52,6 @@ def SplineFitMaker1D(filenames, outfile='out.fits', N=100, skip_header=1, factor
     zs, weights = ndsparse.from_data(z, weights)
     result = photospline.glam_fit(zs, weights, [x], knots, order, smooth, penaltyorder)
     result.write(outfile)
-    
     print("Done. Generated: "  + outfile)
 
 # def SplineFitMaker2D(filename, outfile='out.fits', scale = 'lin', prefix = '', skip_header = 2, column = 2, N = [100, 100]):
@@ -144,11 +143,10 @@ def SplineFitMaker3D(filenames, outfile, scale = 'lin', prefix = '', skip_header
     datas = datas.reshape(len(energies), len(y_values), len(x_values))
 
     x = np.log10(energies) - 9.0 # convert to GeV
-    y = np.log10(y_values) # x
-    w = np.log10(x_values) # y
-    z = datas       # dsigma_dxdy
-
-    print(x.shape, y.shape, z.shape)
+    y = np.log10(x_values) # x
+    w = np.log10(y_values) # y
+    z = np.transpose(datas, (0, 2, 1))       # dsigma_dxdy
+    print(x.shape, y.shape, w.shape, z.shape)
 
     # knots = [np.linspace(x.min()-1,x.max()+1,N[0],endpoint = True),
     #          np.linspace(y.min()-2,y.max()+2,N[1],endpoint = True),
@@ -159,15 +157,15 @@ def SplineFitMaker3D(filenames, outfile, scale = 'lin', prefix = '', skip_header
     # x_knots = np.concatenate([np.linspace(w.min()-1,-1,N[2]-20,endpoint=False), np.log10(np.linspace(0.1, 1.0, 15)), np.log10([1.1, 1.2, 1.3, 1.5, 2.0])])
 
     # E_knots = np.linspace(0.0, 14, N[0], endpoint=True)
-    # y_knots = np.linspace(-14, 1, N[1], endpoint=True)
     # x_knots = np.linspace(-14, 1, N[2], endpoint=True)
-    
+    # y_knots = np.linspace(-14, 1, N[1], endpoint=True)
+
     # for lower E xs
     E_knots = np.linspace(0.0, 6, N[0], endpoint=True)
-    y_knots = np.linspace(-10, 1, N[1], endpoint=True)
     x_knots = np.linspace(-10, 1, N[2], endpoint=True)
+    y_knots = np.linspace(-10, 1, N[1], endpoint=True)
 
-    knots = [E_knots, y_knots, x_knots]
+    knots = [E_knots, x_knots, y_knots]
     order = [2, 2, 2]
     # smooth = [1.0e-10, 1.0e-2, 1.0e-2]
     # smooth = [1e-15, 1e-15, 1e-15]
@@ -216,7 +214,7 @@ def main(current, lepton, projectile, target):
     
     suff = '4'
     if current == 'NC':
-        suff = '2'
+        suff = '1'
     
     ### For double-diff
     infiles = []

@@ -177,10 +177,10 @@ double CrossSection::TotalXS(double E){
     }
 
     double res,err;
-    const unsigned long dim = 2; int calls = 25000; // bump it
+    const unsigned long dim = 2; int calls = 250000; // bump it
 
     // integrating on the log of x and y
-    double xl[dim] = { log(xmin), log(1.e-14) };
+    double xl[dim] = { log(xmin), log(1.e-16) };
     double xu[dim] = { log(xmax), log(1.)    };
 
     gsl_rng_env_setup ();
@@ -190,7 +190,7 @@ double CrossSection::TotalXS(double E){
     gsl_monte_function F;
     F = { &KernelHelper<CrossSection, &CrossSection::ds_dxdy_kernel>, dim, this};
     gsl_monte_vegas_state *s_vegas = gsl_monte_vegas_alloc (dim);
-    gsl_monte_vegas_integrate (&F, xl, xu, dim, 5000, r, s_vegas, &res, &err);
+    gsl_monte_vegas_integrate (&F, xl, xu, dim, 25000, r, s_vegas, &res, &err);
 
     int max_iterations = 100;
     int n_iter = 0;

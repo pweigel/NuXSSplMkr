@@ -35,9 +35,6 @@ void Configuration::Populate() {
     SF.dynamic_small_x = j["SF"].value("dynamic_small_x", true);
     SF.small_x_order = j["SF"].value("small_x_order", "NLL");
     SF.evolve_pdf = j["SF"].value("evolve_pdf", false);
-    SF.enable_TMC = j["SF"].value("enable_TMC", false);
-    SF.enable_CKMT = j["SF"].value("enable_CKMT", false);
-    SF.enable_PCAC = j["SF"].value("enable_PCAC", false);
     SF.TMC_Q2max = j["SF"].value("TMC_Q2max", 30.0);
     SF.use_AlbrightJarlskog = j["SF"].value("use_AlbrightJarlskog", true);
 
@@ -61,7 +58,7 @@ void Configuration::Populate() {
     PCAC.A = j["PCAC"].value("A", 0.147);
     PCAC.B = j["PCAC"].value("B", 0.265);
 
-    XS.mode = j["XS"].value("mode", 1);
+    // XS.mode = j["XS"].value("mode", 1);
     XS.enable_mass_terms = j["XS"].value("enable_mass_terms", true);
     XS.enable_radiative_corrections = j["XS"].value("enable_radiative_corrections", false);
     XS.xmin = j["XS"]["integration"].at("xmin");
@@ -82,8 +79,10 @@ void Configuration::Populate() {
 
     // Make the pdf with LHAPDF and get its properties
     pdf_info.pdfset = j["PDF"].at("pdfset");
+    pdf_info.pdfset_sx = j["PDF"].at("pdfset_sx");
+    pdf_info.active_pdfset = pdf_info.pdfset;
     pdf_info.replica = j["PDF"].at("replica");
-    pdf = LHAPDF::mkPDF(pdf_info.pdfset, pdf_info.replica);
+    pdf = LHAPDF::mkPDF(pdf_info.active_pdfset, pdf_info.replica);
     for (int i=1; i<7; i++){
         pdf_info.pdf_quark_masses[i] = pdf->quarkMass(i);
     }
@@ -101,10 +100,22 @@ void Configuration::Populate() {
     target_mass = pc->isoscalar_mass;
 }
 
+void Configuration::Set_PDFSet(string pdfset, int replica) {
+    pdf_info.active_pdfset = pdfset;
+    pdf_info.replica = replica;
+    pdf = LHAPDF::mkPDF(pdf_info.active_pdfset, pdf_info.replica);
+    for (int i=1; i<7; i++){
+        pdf_info.pdf_quark_masses[i] = pdf->quarkMass(i);
+    }
+    pdf_info.PDFxmin  = pdf->xMin();
+    pdf_info.PDFQ2min = pdf->q2Min();
+    pdf_info.PDFQ2max = pdf->q2Max();
+}
+
 void Configuration::Set_Replica(int replica) {
     // Make the pdf with LHAPDF and get its properties
     pdf_info.replica = replica;
-    pdf = LHAPDF::mkPDF(pdf_info.pdfset, pdf_info.replica);
+    pdf = LHAPDF::mkPDF(pdf_info.active_pdfset, pdf_info.replica);
     for (int i=1; i<7; i++){
         pdf_info.pdf_quark_masses[i] = pdf->quarkMass(i);
     }
@@ -183,10 +194,6 @@ void Configuration::Set_Mass_Scheme(string mass_scheme) {
 void Configuration::Set_Perturbative_Order(int pto) {
     SF.pto = pto;
     SF.perturbative_order = static_cast<QCDOrder>(SF.pto);
-}
-
-void Configuration::LoadPDFSet() {
-    
 }
 
 string Configuration::Get_SF_Code(string sf) { // TODO: neaten this up, add NC as an option
