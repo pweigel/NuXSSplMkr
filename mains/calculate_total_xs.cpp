@@ -102,7 +102,11 @@ int main(int argc, char* argv[]){
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         double _xs;
         std::cout << "E [GeV] = " << E / pc->GeV << std::endl;
-        _xs = xs->TotalXS(E);
+        if ((xs_type == "top") && ( (E / pc->GeV) < 5e3)) {
+            _xs = 0.0;
+        } else {
+            _xs = xs->TotalXS(E);
+        }
         outfile << E << "," << _xs << "\n";
     }
     outfile.close();

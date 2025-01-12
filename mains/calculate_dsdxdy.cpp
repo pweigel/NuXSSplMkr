@@ -90,13 +90,13 @@ int main(int argc, char* argv[]){
     // double logemax = 13;
     double dE = (logemax - logemin) / (NE-1);
 
-    // double logymin = -16;
-    double logymin = -9;
+    double logymin = -16;
+    // double logymin = -9;
     double logymax = -1;
     double dy = (logymax - logymin) / (Ny);
 
-    // double logxmin = -12;
-    double logxmin = -9;
+    double logxmin = -12;
+    // double logxmin = -9;
     double logxmax = -1;
     double dx = (logxmax - logxmin) / (Nx);
 

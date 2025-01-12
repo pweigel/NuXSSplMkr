@@ -10,7 +10,7 @@
 using namespace nuxssplmkr;
 
 int main(int argc, char* argv[]){
-    if (argc != 8) {
+    if (argc != 11) {
         std::cout << "Not enough/too many inputs!" << std::endl;
         std::cout << "Usage: calculate_total_xs CONFIG CURRENT PROJECTILE TARGET TYPE MODE REPLICA" << std::endl;
         return 1;
@@ -23,7 +23,10 @@ int main(int argc, char* argv[]){
     const std::string xs_type = argv[5]; // Which SFs to use total, light, charm, ..
     const int mode = std::stoi(argv[6]);
     const unsigned int replica = std::stoi(argv[7]);
-
+    const double logemin = std::stod(argv[8]);
+    const double logemax = std::stod(argv[9]);
+    const std::string lepton_flavor = argv[10];
+    
     std::cout << std::endl;
     std::cout << "=============================================" << std::endl;
     std::cout << "Config Path: " << config_path << std::endl;
@@ -38,8 +41,8 @@ int main(int argc, char* argv[]){
     int NE = 551;
     int Nz = 551;
 
-    double logemin = std::log10(1e1);
-    double logemax = std::log10(1e12);
+    // double logemin = std::log10(1e1);
+    // double logemax = std::log10(1e12);
     double dE = (logemax - logemin) / (NE-1);
 
     PhysConst* pc = new PhysConst();
@@ -52,7 +55,7 @@ int main(int argc, char* argv[]){
     std::cout << "Loading/saving data to: " << data_folder << std::endl;
 
     // Make the cross sections folder if it doesn't exist
-    boost::filesystem::path out_folder = data_folder + "/cross_sections/";
+    boost::filesystem::path out_folder = data_folder + "/cross_sections/"+lepton_flavor;
     if (!boost::filesystem::exists(out_folder)) {
         boost::filesystem::create_directories(out_folder);
     }
@@ -61,18 +64,25 @@ int main(int argc, char* argv[]){
     config.Set_Projectile(projectile);
     config.Set_Target(target);
     config.Set_SF_Type(xs_type);
-    config.Set_Lepton_Mass(pc->muon_mass);
+
+    if (lepton_flavor == "electron") {config.Set_Lepton_Mass(pc->electron_mass);}
+    else if (lepton_flavor == "muon") {config.Set_Lepton_Mass(pc->muon_mass);}
+    else if (lepton_flavor == "tau") {config.Set_Lepton_Mass(pc->tau_mass);}
+    else { return 1; }
+
+    if (current == "NC") {config.Set_Lepton_Mass(0.);}
+    
     config.Set_Mode(mode);
 
     PhaseSpace ps(config);
     ps.Print();
 
     CrossSection* xs = new CrossSection(config, ps);
-    std::string outfilename = data_folder + "/cross_sections/nusquids_sigma_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out";
+    std::string outfilename = data_folder + "/cross_sections/"+lepton_flavor+"/nusquids_sigma_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode)+".out";
     if (config.XS.enable_radiative_corrections) {
         std::cout << "Radiative corrections enabled!" << std::endl;
-        xs->Load_InterpGrid(data_folder + "/cross_sections/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
-        outfilename = data_folder + "/cross_sections/nusquids_sigma_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
+        xs->Load_InterpGrid(data_folder + "/cross_sections/"+lepton_flavor+"/dsdxdy_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".out");
+        outfilename = data_folder + "/cross_sections/"+lepton_flavor+"/nusquids_sigma_" + current + "_" + projectile + "_" + target + "_" + xs_type + "."+std::to_string(mode) + ".rc";
     }
 
     std::ofstream outfile;
@@ -83,7 +93,11 @@ int main(int argc, char* argv[]){
         double E = pc->GeV * std::pow(10, logemin + ei * dE);
         double _xs;
         std::cout << "E [GeV] = " << E / pc->GeV << std::endl;
-        _xs = xs->TotalXS(E);
+        if ((xs_type == "top") && (E / pc->GeV < 5e3)) {
+            _xs = 0.0;
+        } else {
+            _xs = xs->TotalXS(E);
+        }
         outfile << E << "," << _xs << "\n";
     }
     outfile.close();
